@@ -25,11 +25,66 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
+  // Interaction tracking for pausing the gentle auto-scroll
+  const isInteracting = useRef(false);
+  const resumeTimer = useRef(null);
+
   // Mouse drag-to-scroll state for desktop
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeftStart = useRef(0);
   const hasMoved = useRef(false);
+
+  // Triplicate list for endless, continuous scrolling without walls
+  const carouselItems = cosplayers.length > 0 
+    ? [...cosplayers, ...cosplayers, ...cosplayers] 
+    : [];
+
+  // Slow, gentle continuous auto-scroll loop (40-45px per second)
+  useEffect(() => {
+    let animationFrameId;
+    let lastTime = performance.now();
+
+    const animate = (time) => {
+      const delta = time - lastTime;
+      lastTime = time;
+
+      if (!isInteracting.current && sliderRef.current && carouselItems.length > 0) {
+        // Slow, elegant cinematic drift speed
+        const speed = 0.045; // pixels per millisecond (~45px/sec)
+        sliderRef.current.scrollLeft += speed * delta;
+
+        const { scrollLeft, scrollWidth } = sliderRef.current;
+        const singleSetWidth = scrollWidth / 3;
+
+        // Loop seamlessly when passing the second set
+        if (singleSetWidth > 0 && scrollLeft >= singleSetWidth * 2) {
+          sliderRef.current.scrollLeft -= singleSetWidth;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    };
+  }, [carouselItems.length]);
+
+  const pauseInteraction = () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    isInteracting.current = true;
+  };
+
+  const resumeInteractionAfterDelay = (delayMs = 2500) => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => {
+      isInteracting.current = false;
+    }, delayMs);
+  };
 
   const checkScrollBounds = () => {
     if (!sliderRef.current) return;
@@ -53,17 +108,20 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
 
   const scroll = (direction) => {
     if (!sliderRef.current) return;
+    pauseInteraction();
     const cardWidth = sliderRef.current.querySelector('.cosplayer-swipe-card')?.offsetWidth || 300;
     const scrollAmount = (cardWidth + 20) * 1.5;
     sliderRef.current.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     });
+    resumeInteractionAfterDelay(3500);
   };
 
   // Mouse drag handlers (Desktop enhancement)
   const handleMouseDown = (e) => {
     if (e.button !== 0 || e.target.closest('a') || e.target.closest('button')) return;
+    pauseInteraction();
     isDragging.current = true;
     hasMoved.current = false;
     startX.current = e.pageX - sliderRef.current.offsetLeft;
@@ -83,6 +141,17 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
 
   const handleMouseUp = () => {
     isDragging.current = false;
+    resumeInteractionAfterDelay(2500);
+  };
+
+  // Touch handlers for mobile
+  const handleTouchStart = () => {
+    pauseInteraction();
+    hasMoved.current = false;
+  };
+
+  const handleTouchEnd = () => {
+    resumeInteractionAfterDelay(2500);
   };
 
   return (
@@ -145,18 +214,22 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
         </div>
       </div>
 
-      {/* Touch & Drag Horizontal Slider */}
+      {/* Auto-moving + Touch & Drag Horizontal Slider */}
       <div 
         ref={sliderRef}
         className="cosplay-touch-slider"
+        onMouseEnter={pauseInteraction}
+        onMouseLeave={handleMouseUp}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
-        {cosplayers.map((cosplayer) => (
+        {carouselItems.map((cosplayer, index) => (
           <div 
-            key={cosplayer.id}
+            key={`${cosplayer.id}-${index}`}
             className="cosplayer-swipe-card glass-card"
           >
             {/* Background Cosplay Image / Fallback Gradient */}
@@ -261,14 +334,13 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           display: flex;
           gap: 18px;
           overflow-x: auto;
-          scroll-snap-type: x mandatory;
           -webkit-overflow-scrolling: touch;
-          scroll-behavior: smooth;
           padding: 10px 20px 24px;
           width: 100%;
           cursor: grab;
           scrollbar-width: none;
           -ms-overflow-style: none;
+          touch-action: pan-x pan-y pinch-zoom;
         }
         .cosplay-touch-slider::-webkit-scrollbar {
           display: none;
@@ -283,7 +355,6 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           border-radius: 24px;
           overflow: hidden;
           position: relative;
-          scroll-snap-align: start;
           box-shadow: 0 8px 24px rgba(0,0,0,0.12);
           transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
           user-select: none;
