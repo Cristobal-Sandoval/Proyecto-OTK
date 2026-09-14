@@ -232,6 +232,7 @@ function App() {
               setCommunities={setCommunities}
               schedule={schedule}
               setSchedule={setSchedule}
+              onNavigate={handleNavigate}
             />
           )}
         </Suspense>

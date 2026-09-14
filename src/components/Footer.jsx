@@ -22,25 +22,25 @@ const Instagram = ({ size = 20, ...props }) => (
 
 const Footer = ({ setActiveTab }) => {
   const pressTimerRef = useRef(null);
-  const tapCountRef = useRef(0);
-  const lastTapRef = useRef(0);
 
   const triggerAdminPortal = () => {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(60);
+      navigator.vibrate([80, 50, 80]);
     }
+    sessionStorage.removeItem('otakonce_admin_auth');
     window.location.hash = 'stf-portal';
     setActiveTab('admin');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleTouchStart = () => {
+  const handleStartPress = () => {
+    // Requiere mantener presionado durante 5 segundos completos
     pressTimerRef.current = setTimeout(() => {
       triggerAdminPortal();
-    }, 2200);
+    }, 5000);
   };
 
-  const handleTouchEnd = () => {
+  const handleEndPress = () => {
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
@@ -48,20 +48,6 @@ const Footer = ({ setActiveTab }) => {
   };
 
   const handleBrandClick = () => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 450) {
-      tapCountRef.current += 1;
-    } else {
-      tapCountRef.current = 1;
-    }
-    lastTapRef.current = now;
-
-    if (tapCountRef.current >= 5) {
-      tapCountRef.current = 0;
-      triggerAdminPortal();
-      return;
-    }
-
     handleNavClick('home');
   };
 
@@ -91,13 +77,16 @@ const Footer = ({ setActiveTab }) => {
           textAlign: 'center'
         }}
       >
-        {/* Branding & Logo with secret stealth admin access */}
+        {/* Branding & Logo with secret stealth admin access (5-second hold) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <h2 
             onClick={handleBrandClick}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchEnd}
+            onTouchStart={handleStartPress}
+            onTouchEnd={handleEndPress}
+            onTouchCancel={handleEndPress}
+            onMouseDown={handleStartPress}
+            onMouseUp={handleEndPress}
+            onMouseLeave={handleEndPress}
             style={{
               fontSize: '1.8rem',
               fontWeight: 900,

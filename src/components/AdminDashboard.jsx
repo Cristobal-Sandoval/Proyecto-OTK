@@ -16,11 +16,11 @@ const AdminDashboard = ({
   newsList, setNewsList,
   cosplayers, setCosplayers,
   communities, setCommunities,
-  schedule, setSchedule
+  schedule, setSchedule,
+  onNavigate
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => sessionStorage.getItem('otakonce_admin_auth') === 'true'
-  );
+  // Always prompt for password whenever the secret portal is accessed
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   
@@ -192,12 +192,12 @@ const AdminDashboard = ({
     const computedHash = await hashPassword(password);
     if (computedHash === expectedHash) {
       setIsAuthenticated(true);
-      sessionStorage.setItem('otakonce_admin_auth', 'true');
       sessionStorage.removeItem('otakonce_login_attempts');
       sessionStorage.removeItem('otakonce_login_lockout');
       setFailedAttempts(0);
       setLockoutUntil(0);
       setLoginError('');
+      setPassword('');
     } else {
       const nextAttempts = failedAttempts + 1;
       setFailedAttempts(nextAttempts);
@@ -216,6 +216,10 @@ const AdminDashboard = ({
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('otakonce_admin_auth');
+    window.location.hash = '';
+    if (typeof onNavigate === 'function') {
+      onNavigate('home');
+    }
   };
 
   // 1. Save general config
