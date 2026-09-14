@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
-  Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield 
+  Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield,
+  Cloud, ExternalLink, Loader2, AlertCircle
 } from 'lucide-react';
 import { SEASONAL_THEMES } from '../data/defaults';
+import { 
+  uploadToCloudinary, isCloudinaryConfigured, getCloudinaryConfig, saveCloudinaryConfig 
+} from '../services/cloudinary';
 
 const AdminDashboard = ({
   eventConfig, setEventConfig,
@@ -76,15 +80,72 @@ const AdminDashboard = ({
     time: '', title: '', stage: 'Escenario Principal', description: ''
   });
 
-  // Handle image conversion to Base64
-  const handleImageUpload = (e, callback) => {
+  // Cloudinary State & Settings
+  const [cloudinarySettings, setCloudinarySettings] = useState(() => getCloudinaryConfig());
+  const [cloudinarySaveSuccess, setCloudinarySaveSuccess] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadStatusMsg, setUploadStatusMsg] = useState('');
+  const [testUploadResult, setTestUploadResult] = useState(null);
+  const [testUploadLoading, setTestUploadLoading] = useState(false);
+  const [testUploadError, setTestUploadError] = useState('');
+
+  // Smart Image Upload: Cloudinary CDN with graceful Base64 local fallback
+  const handleSmartImageUpload = async (e, callback) => {
     const file = e.target.files[0];
-    if (file) {
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('La imagen es demasiado grande. El límite recomendado es de 10MB.');
+      return;
+    }
+
+    if (isCloudinaryConfigured()) {
+      try {
+        setUploadingImage(true);
+        setUploadStatusMsg('Subiendo imagen a Cloudinary CDN...');
+        const result = await uploadToCloudinary(file);
+        callback(result.url);
+        setUploadStatusMsg('¡Imagen subida a Cloudinary exitosamente!');
+        setTimeout(() => setUploadStatusMsg(''), 4000);
+      } catch (err) {
+        alert('Error al subir a Cloudinary: ' + err.message + '\n\nGuardando copia local en Base64 temporalmente.');
+        const reader = new FileReader();
+        reader.onloadend = () => callback(reader.result);
+        reader.readAsDataURL(file);
+      } finally {
+        setUploadingImage(false);
+      }
+    } else {
+      // Local Base64 fallback when Cloudinary is not yet configured
       const reader = new FileReader();
       reader.onloadend = () => {
         callback(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveCloudinaryConfig = (e) => {
+    e.preventDefault();
+    saveCloudinaryConfig(cloudinarySettings);
+    setCloudinarySaveSuccess(true);
+    setTimeout(() => setCloudinarySaveSuccess(false), 4000);
+    alert('Configuración de Cloudinary guardada correctamente.');
+  };
+
+  const handleTestCloudinaryUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setTestUploadLoading(true);
+    setTestUploadError('');
+    setTestUploadResult(null);
+    try {
+      const res = await uploadToCloudinary(file);
+      setTestUploadResult(res);
+    } catch (err) {
+      setTestUploadError(err.message);
+    } finally {
+      setTestUploadLoading(false);
     }
   };
 
@@ -298,19 +359,9 @@ const AdminDashboard = ({
   };
 
   const handleHeroBannerImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert('La imagen es demasiado grande. El límite recomendado es de 2MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setHeroBannerForm(prev => ({ ...prev, image: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    handleSmartImageUpload(e, (url) => {
+      setHeroBannerForm(prev => ({ ...prev, image: url }));
+    });
   };
 
   // Login view if not authenticated
@@ -391,6 +442,7 @@ const AdminDashboard = ({
         >
           {[
             { id: 'themes', label: 'Modos & Fechas', icon: Sparkles },
+            { id: 'cloudinary', label: 'Cloudinary CDN', icon: Cloud },
             { id: 'config', label: 'Evento Principal', icon: Settings },
             { id: 'hero_banners', label: 'Banners de Inicio', icon: ImageIcon },
             { id: 'banner', label: 'Alerta Flotante', icon: Megaphone },
@@ -625,6 +677,196 @@ const AdminDashboard = ({
             </div>
           )}
 
+          {/* TAB: CLOUDINARY CDN CONFIGURATION */}
+          {adminTab === 'cloudinary' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+                <h3 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <Cloud size={24} color="var(--cyan)" /> Conexión con Cloudinary (Almacenamiento CDN en la Nube)
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                  Cloudinary permite que todas las fotos que subas desde este panel se guarden en la nube con entrega global ultrarrápida (CDN) y formato WebP optimizado, quedando disponibles para todos los visitantes al desplegar en <strong>Vercel</strong>.
+                </p>
+              </div>
+
+              {/* Status Banner */}
+              <div
+                style={{
+                  background: isCloudinaryConfigured() ? 'rgba(16, 185, 129, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                  border: `1.5px solid ${isCloudinaryConfigured() ? '#10B981' : '#EAB308'}`,
+                  borderRadius: '16px',
+                  padding: '16px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {isCloudinaryConfigured() ? (
+                    <CheckCircle2 size={24} color="#10B981" />
+                  ) : (
+                    <AlertCircle size={24} color="#EAB308" />
+                  )}
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 800, color: isCloudinaryConfigured() ? '#10B981' : '#EAB308' }}>
+                      {isCloudinaryConfigured() 
+                        ? '🟢 Cloudinary está Activo y Conectado' 
+                        : '🟡 Modo Local Activo (Base64)'}
+                    </h4>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
+                      {isCloudinaryConfigured()
+                        ? `Las nuevas imágenes se subirán directamente a la nube "${cloudinarySettings.cloudName}" (carpeta: ${cloudinarySettings.folder}).`
+                        : 'Las imágenes se están guardando temporalmente en el navegador (Base64). Ingresa tus datos abajo para activar Cloudinary.'}
+                    </p>
+                  </div>
+                </div>
+
+                {cloudinarySettings.isFromEnv && (
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(0, 136, 255, 0.12)', color: 'var(--cyan)', border: '1px solid var(--border-color)', padding: '4px 10px', borderRadius: '20px', fontWeight: 700 }}>
+                    Configurado vía .env / Vercel
+                  </span>
+                )}
+              </div>
+
+              {/* Form Settings */}
+              <form onSubmit={handleSaveCloudinaryConfig} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Credenciales de Cloudinary</h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }} className="grid-2-col">
+                  <div className="form-group">
+                    <label>Cloud Name (Nombre de tu nube) *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ej: dxyz1234 o otakonce-cloud"
+                      value={cloudinarySettings.cloudName}
+                      onChange={(e) => setCloudinarySettings({ ...cloudinarySettings, cloudName: e.target.value })}
+                      required
+                    />
+                    <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Lo encuentras en la parte superior izquierda de tu Dashboard en Cloudinary.</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Upload Preset (Modo Unsigned) *</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Ej: otakonce_unsigned"
+                      value={cloudinarySettings.uploadPreset}
+                      onChange={(e) => setCloudinarySettings({ ...cloudinarySettings, uploadPreset: e.target.value })}
+                      required
+                    />
+                    <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Debe estar configurado en modo <strong>Unsigned</strong> (sin firma) en Settings &gt; Upload.</small>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ maxWidth: '400px' }}>
+                  <label>Carpeta en Cloudinary (Opcional)</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="otakonce"
+                    value={cloudinarySettings.folder}
+                    onChange={(e) => setCloudinarySettings({ ...cloudinarySettings, folder: e.target.value })}
+                  />
+                  <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Organiza tus fotos dentro de esta carpeta en Cloudinary (por defecto: otakonce).</small>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '6px' }}>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '10px 22px' }}>
+                    <Check size={18} /> Guardar Configuración
+                  </button>
+
+                  {cloudinarySaveSuccess && (
+                    <span style={{ fontSize: '0.85rem', color: '#10B981', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <CheckCircle2 size={18} /> ¡Configuración guardada!
+                    </span>
+                  )}
+                </div>
+              </form>
+
+              {/* Test Upload Box */}
+              <div style={{ background: 'rgba(0, 136, 255, 0.04)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Upload size={18} color="var(--cyan)" /> Probar Subida en Vivo a Cloudinary
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Selecciona una imagen pequeña para comprobar que tu Cloud Name y Upload Preset funcionen correctamente antes de publicar.
+                </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                  <label className="btn btn-secondary" style={{ cursor: testUploadLoading ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
+                    {testUploadLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    {testUploadLoading ? 'Subiendo a Cloudinary...' : 'Seleccionar imagen de prueba'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} disabled={testUploadLoading} onChange={handleTestCloudinaryUpload} />
+                  </label>
+                </div>
+
+                {testUploadError && (
+                  <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #EF4444', color: '#EF4444', padding: '10px 14px', borderRadius: '10px', fontSize: '0.82rem' }}>
+                    ❌ <strong>Error:</strong> {testUploadError}
+                  </div>
+                )}
+
+                {testUploadResult && (
+                  <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10B981', borderRadius: '12px', padding: '14px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <img src={testUploadResult.url} alt="Prueba" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <div style={{ overflow: 'hidden' }}>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#10B981', margin: '0 0 4px 0' }}>¡Subida Exitosa a Cloudinary CDN!</p>
+                      <a href={testUploadResult.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--cyan)', textDecoration: 'underline', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {testUploadResult.url} <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Step by step instructions guide */}
+              <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 800 }}>📖 Guía Rápida: Cómo obtener tu Cloud Name y Upload Preset gratis (2 min)</h4>
+                
+                <ol style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <li>
+                    Regístrate gratis en <a href="https://cloudinary.com/users/register_free" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', fontWeight: 700, textDecoration: 'underline' }}>cloudinary.com <ExternalLink size={12} style={{ display: 'inline' }} /></a> (Tier gratis permanente de 25 GB).
+                  </li>
+                  <li>
+                    En tu Dashboard principal, copia tu <strong>Cloud Name</strong> que aparece en la esquina superior izquierda.
+                  </li>
+                  <li>
+                    Haz clic en el engranaje de <strong>Settings</strong> (abajo a la izquierda) y ve a la pestaña <strong>Upload</strong>.
+                  </li>
+                  <li>
+                    Baja hasta la sección <strong>Upload presets</strong> y haz clic en <strong>Add upload preset</strong>.
+                  </li>
+                  <li>
+                    En <strong>Signing Mode</strong> selecciona <strong>Unsigned</strong> (¡muy importante!).
+                  </li>
+                  <li>
+                    (Opcional) En <strong>Folder</strong> escribe <code>otakonce</code>.
+                  </li>
+                  <li>
+                    Haz clic en <strong>Save</strong> (Guardar) arriba a la derecha y copia el nombre del Preset (ej: <code>my_preset_name</code>).
+                  </li>
+                  <li>
+                    Pega esos dos datos aquí arriba y haz clic en <strong>Guardar Configuración</strong>. ¡Todas las fotos se subirán automáticamente a Cloudinary!
+                  </li>
+                </ol>
+
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '4px' }}>
+                  <h5 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '6px' }}>🚀 Para desplegar en Vercel:</h5>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    En tu proyecto de Vercel ve a <strong>Settings &gt; Environment Variables</strong> y agrega:<br />
+                    <code>VITE_CLOUDINARY_CLOUD_NAME = tu_cloud_name</code><br />
+                    <code>VITE_CLOUDINARY_UPLOAD_PRESET = tu_upload_preset</code><br />
+                    ¡Y listo! Vercel compilará la web con conexión directa al CDN de Cloudinary.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 1: EVENT CONFIGURATION */}
           {adminTab === 'config' && (
             <form onSubmit={handleSaveConfig} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -697,7 +939,7 @@ const AdminDashboard = ({
                     <Upload size={16} /> Subir nueva imagen
                     <input 
                       type="file" accept="image/*" style={{ display: 'none' }}
-                      onChange={(e) => handleImageUpload(e, (base64) => setConfigForm({ ...configForm, bannerImage: base64 }))} 
+                      onChange={(e) => handleSmartImageUpload(e, (url) => setConfigForm({ ...configForm, bannerImage: url }))} 
                     />
                   </label>
                 </div>
@@ -1029,7 +1271,7 @@ const AdminDashboard = ({
                       <Upload size={16} /> Seleccionar Imagen
                       <input 
                         type="file" accept="image/*" style={{ display: 'none' }}
-                        onChange={(e) => handleImageUpload(e, (base64) => setNewsForm({ ...newsForm, image: base64 }))} 
+                        onChange={(e) => handleSmartImageUpload(e, (url) => setNewsForm({ ...newsForm, image: url }))} 
                       />
                     </label>
                   </div>
@@ -1161,7 +1403,7 @@ const AdminDashboard = ({
                         <Upload size={16} /> Subir Imagen
                         <input 
                           type="file" accept="image/*" style={{ display: 'none' }}
-                          onChange={(e) => handleImageUpload(e, (base64) => setCosplayerForm({ ...cosplayerForm, image: base64 }))} 
+                          onChange={(e) => handleSmartImageUpload(e, (url) => setCosplayerForm({ ...cosplayerForm, image: url }))} 
                         />
                       </label>
                     </div>
@@ -1305,7 +1547,7 @@ const AdminDashboard = ({
                         <Upload size={16} /> Subir Logo
                         <input 
                           type="file" accept="image/*" style={{ display: 'none' }}
-                          onChange={(e) => handleImageUpload(e, (base64) => setCommunityForm({ ...communityForm, logo: base64 }))} 
+                          onChange={(e) => handleSmartImageUpload(e, (url) => setCommunityForm({ ...communityForm, logo: url }))} 
                         />
                       </label>
                     </div>
@@ -1527,6 +1769,32 @@ const AdminDashboard = ({
           }
         }
       `}</style>
+
+      {/* Floating Upload Progress Toast */}
+      {uploadingImage && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            bottom: '28px', 
+            right: '28px', 
+            zIndex: 9999, 
+            background: 'var(--bg-surface-solid)', 
+            border: '2px solid var(--cyan)', 
+            padding: '14px 20px', 
+            borderRadius: '16px', 
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            animation: 'slideInUp var(--transition-fast)'
+          }}
+        >
+          <Loader2 size={22} className="animate-spin" color="var(--cyan)" />
+          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            {uploadStatusMsg || 'Subiendo imagen a Cloudinary CDN...'}
+          </span>
+        </div>
+      )}
     </section>
   );
 };
