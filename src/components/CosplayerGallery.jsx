@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ExternalLink, Pause, Play } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
   <svg
@@ -21,211 +21,292 @@ const Instagram = ({ size = 20, ...props }) => (
 );
 
 const CosplayerGallery = ({ cosplayers = [] }) => {
-  const [isPaused, setIsPaused] = useState(false);
+  const sliderRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Duplicar elementos para asegurar un bucle infinito continuo sin cortes
-  const carouselItems = cosplayers.length > 0 
-    ? [...cosplayers, ...cosplayers, ...cosplayers] 
-    : [];
+  // Mouse drag-to-scroll state for desktop
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftStart = useRef(0);
+  const hasMoved = useRef(false);
+
+  const checkScrollBounds = () => {
+    if (!sliderRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScrollBounds();
+    const slider = sliderRef.current;
+    if (slider) {
+      slider.addEventListener('scroll', checkScrollBounds, { passive: true });
+      window.addEventListener('resize', checkScrollBounds);
+    }
+    return () => {
+      if (slider) slider.removeEventListener('scroll', checkScrollBounds);
+      window.removeEventListener('resize', checkScrollBounds);
+    };
+  }, [cosplayers]);
+
+  const scroll = (direction) => {
+    if (!sliderRef.current) return;
+    const cardWidth = sliderRef.current.querySelector('.cosplayer-swipe-card')?.offsetWidth || 300;
+    const scrollAmount = (cardWidth + 20) * 1.5;
+    sliderRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+  };
+
+  // Mouse drag handlers (Desktop enhancement)
+  const handleMouseDown = (e) => {
+    if (e.button !== 0 || e.target.closest('a') || e.target.closest('button')) return;
+    isDragging.current = true;
+    hasMoved.current = false;
+    startX.current = e.pageX - sliderRef.current.offsetLeft;
+    scrollLeftStart.current = sliderRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging.current || !sliderRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.3;
+    if (Math.abs(walk) > 5) {
+      hasMoved.current = true;
+    }
+    sliderRef.current.scrollLeft = scrollLeftStart.current - walk;
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
 
   return (
     <section className="section-padding" id="cosplay" style={{ background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
       <div className="container">
-        {/* Section Header */}
-        <div className="section-title">
-          <h2>Pasarela <span className="text-neon-pink">Cosplay</span></h2>
-          <p>Conoce a los artistas del cosplay que darán vida a tus personajes favoritos en Otakonce 2026.</p>
-        </div>
+        {/* Section Header with Navigation Controls */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+          <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
+            <h2 style={{ textAlign: 'left' }}>Pasarela <span className="text-neon-pink">Cosplay</span></h2>
+            <p style={{ textAlign: 'left', maxWidth: '600px' }}>Conoce a los artistas del cosplay que darán vida a tus personajes favoritos en Otakonce 2026.</p>
+          </div>
 
-        {/* Carousel Control Badge */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-          <button
-            onClick={() => setIsPaused(!isPaused)}
-            style={{
-              background: 'var(--bg-surface-solid)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-secondary)',
-              padding: '6px 14px',
-              borderRadius: '20px',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-              cursor: 'pointer'
-            }}
-          >
-            {isPaused ? <Play size={12} style={{ color: 'var(--cyan)' }} /> : <Pause size={12} style={{ color: 'var(--secondary)' }} />}
-            {isPaused ? 'Reanudar carrusel' : 'Pausar al tocar o pasar el mouse'}
-          </button>
+          {/* Desktop Navigation Arrows */}
+          <div className="cosplay-nav-controls" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
+              aria-label="Cosplayers anteriores"
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'var(--bg-surface-solid)',
+                border: '1.5px solid var(--border-color)',
+                color: canScrollLeft ? 'var(--text-primary)' : 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: canScrollLeft ? 'pointer' : 'default',
+                opacity: canScrollLeft ? 1 : 0.4,
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              disabled={!canScrollRight}
+              aria-label="Siguientes cosplayers"
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'var(--bg-surface-solid)',
+                border: '1.5px solid var(--border-color)',
+                color: canScrollRight ? 'var(--text-primary)' : 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: canScrollRight ? 'pointer' : 'default',
+                opacity: canScrollRight ? 1 : 0.4,
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Infinite Moving Marquee Wrapper */}
+      {/* Touch & Drag Horizontal Slider */}
       <div 
-        className="cosplay-marquee-wrapper"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-        onTouchStart={() => setIsPaused(true)}
-        onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
+        ref={sliderRef}
+        className="cosplay-touch-slider"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
       >
-        <div 
-          className={`cosplay-marquee-track ${isPaused ? 'is-paused' : ''}`}
-        >
-          {carouselItems.map((cosplayer, index) => (
-            <div 
-              key={`${cosplayer.id}-${index}`}
-              className="cosplay-marquee-card glass-card"
+        {cosplayers.map((cosplayer) => (
+          <div 
+            key={cosplayer.id}
+            className="cosplayer-swipe-card glass-card"
+          >
+            {/* Background Cosplay Image / Fallback Gradient */}
+            <div
+              role="img"
+              aria-label={`Foto de cosplay de ${cosplayer.name} como ${cosplayer.character}`}
+              style={{
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)',
+                backgroundImage: cosplayer.image ? `url(${cosplayer.image})` : 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center 20%',
+                position: 'relative'
+              }}
+              className="image-loader-bg"
             >
-              {/* Background Cosplay Image / Fallback Gradient */}
-              <div
-                role="img"
-                aria-label={`Foto de cosplay de ${cosplayer.name} como ${cosplayer.character}`}
+              {/* Floating Character Tag */}
+              <span 
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)',
-                  backgroundImage: cosplayer.image ? `url(${cosplayer.image})` : 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center 20%',
-                  position: 'relative'
+                  position: 'absolute',
+                  top: '18px',
+                  left: '18px',
+                  zIndex: 2,
+                  background: 'rgba(8,7,17,0.85)',
+                  border: '1.5px solid var(--secondary)',
+                  borderRadius: '8px',
+                  padding: '4px 10px',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  color: '#FFFFFF',
+                  backdropFilter: 'blur(6px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
                 }}
-                className="image-loader-bg"
               >
-                {/* Floating Character Tag */}
-                <span 
-                  style={{
-                    position: 'absolute',
-                    top: '18px',
-                    left: '18px',
-                    zIndex: 2,
-                    background: 'rgba(8,7,17,0.85)',
-                    border: '1.5px solid var(--secondary)',
-                    borderRadius: '8px',
-                    padding: '4px 10px',
-                    fontSize: '0.8rem',
-                    fontWeight: 800,
-                    color: '#FFFFFF',
-                    backdropFilter: 'blur(6px)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                  }}
-                >
-                  {cosplayer.character}
-                </span>
+                {cosplayer.character}
+              </span>
 
-                {/* Bottom Overlay Gradient & Details */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '65%',
-                    background: 'linear-gradient(to top, rgba(8, 7, 17, 0.96) 0%, rgba(8, 7, 17, 0.72) 45%, transparent 100%)',
-                    zIndex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-end',
-                    padding: '22px',
-                    gap: '6px'
-                  }}
-                  className="cosplay-details"
-                >
-                  <h3 style={{ fontSize: '1.35rem', fontWeight: 850, color: '#FFFFFF', lineHeight: 1.2 }}>
-                    {cosplayer.name}
-                  </h3>
-                  <p style={{ fontSize: '0.84rem', color: '#F1F5F9', lineHeight: 1.4, margin: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {cosplayer.bio}
-                  </p>
+              {/* Bottom Overlay Gradient & Details */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '65%',
+                  background: 'linear-gradient(to top, rgba(8, 7, 17, 0.96) 0%, rgba(8, 7, 17, 0.72) 45%, transparent 100%)',
+                  zIndex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                  padding: '22px',
+                  gap: '6px'
+                }}
+                className="cosplay-details"
+              >
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 850, color: '#FFFFFF', lineHeight: 1.2 }}>
+                  {cosplayer.name}
+                </h3>
+                <p style={{ fontSize: '0.84rem', color: '#F1F5F9', lineHeight: 1.4, margin: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {cosplayer.bio}
+                </p>
 
-                  <a 
-                    href={cosplayer.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      color: 'var(--secondary)',
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                      alignSelf: 'flex-start',
-                      marginTop: '4px',
-                      padding: '4px 8px',
-                      borderRadius: '6px',
-                      background: 'rgba(253, 52, 132, 0.12)'
-                    }}
-                    className="instagram-link"
-                  >
-                    <Instagram size={14} />
-                    @{cosplayer.instagram.split('/').pop() || 'instagram'}
-                    <ExternalLink size={11} style={{ opacity: 0.8 }} />
-                  </a>
-                </div>
+                <a 
+                  href={cosplayer.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    if (hasMoved.current) {
+                      e.preventDefault();
+                      return;
+                    }
+                    e.stopPropagation();
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: 'var(--secondary)',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    alignSelf: 'flex-start',
+                    marginTop: '4px',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    background: 'rgba(253, 52, 132, 0.12)'
+                  }}
+                  className="instagram-link"
+                >
+                  <Instagram size={14} />
+                  @{cosplayer.instagram.split('/').pop() || 'instagram'}
+                  <ExternalLink size={11} style={{ opacity: 0.8 }} />
+                </a>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
       <style>{`
-        @keyframes infiniteCosplayScroll {
-          0% {
-            transform: translate3d(0, 0, 0);
-          }
-          100% {
-            transform: translate3d(-33.333%, 0, 0);
-          }
-        }
-        .cosplay-marquee-wrapper {
-          overflow: hidden;
-          position: relative;
-          width: 100vw;
-          margin-left: calc(-50vw + 50%);
-          padding: 16px 0 32px;
-          mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-          cursor: grab;
-        }
-        .cosplay-marquee-track {
+        .cosplay-touch-slider {
           display: flex;
-          gap: 20px;
-          width: max-content;
-          animation: infiniteCosplayScroll 40s linear infinite;
-          will-change: transform;
+          gap: 18px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+          padding: 10px 20px 24px;
+          width: 100%;
+          cursor: grab;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
-        .cosplay-marquee-track.is-paused {
-          animation-play-state: paused !important;
+        .cosplay-touch-slider::-webkit-scrollbar {
+          display: none;
         }
-        .cosplay-marquee-wrapper:hover .cosplay-marquee-track {
-          animation-play-state: paused;
+        .cosplay-touch-slider:active {
+          cursor: grabbing;
         }
-        .cosplay-marquee-card {
+        .cosplayer-swipe-card {
           flex: 0 0 280px;
           width: 280px;
           height: 420px;
           border-radius: 24px;
           overflow: hidden;
           position: relative;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-          transition: transform var(--transition-fast), border-color var(--transition-fast);
+          scroll-snap-align: start;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+          transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+          user-select: none;
         }
-        .cosplay-marquee-card:hover {
-          transform: translateY(-8px) scale(1.02);
+        .cosplayer-swipe-card:hover {
+          transform: translateY(-4px);
           border-color: var(--secondary) !important;
-          box-shadow: 0 16px 36px rgba(253, 52, 132, 0.25) !important;
+          box-shadow: 0 14px 30px rgba(253, 52, 132, 0.22) !important;
         }
         @media (min-width: 768px) {
-          .cosplay-marquee-card {
-            flex: 0 0 320px;
-            width: 320px;
+          .cosplay-touch-slider {
+            gap: 24px;
+            padding: 12px calc((100vw - 1200px) / 2 + 20px) 28px;
+          }
+          .cosplayer-swipe-card {
+            flex: 0 0 310px;
+            width: 310px;
             height: 460px;
           }
-          .cosplay-marquee-track {
-            gap: 26px;
-            animation-duration: 48s;
+        }
+        @media (max-width: 640px) {
+          .cosplay-nav-controls {
+            display: none !important;
           }
         }
       `}</style>
