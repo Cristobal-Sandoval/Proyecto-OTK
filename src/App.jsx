@@ -24,7 +24,18 @@ import {
 } from './services/db';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#stf-portal' || hash === '#staff-access' || hash === '#admin') {
+        return 'admin';
+      }
+      if (['#news', '#cosplay', '#communities', '#schedule'].includes(hash)) {
+        return hash.replace('#', '');
+      }
+    }
+    return 'home';
+  });
 
   // Load state from local storage or fallback to defaults
   const [eventConfig, setEventConfigState] = useState(() => getEventConfig());

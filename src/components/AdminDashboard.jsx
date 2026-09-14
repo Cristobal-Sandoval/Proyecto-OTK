@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
   Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield 
