@@ -52,7 +52,7 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
           zIndex: 100,
           display: 'flex',
           alignItems: 'center',
-          background: scrolled ? 'var(--bg-surface)' : 'rgba(240, 249, 255, 0.3)',
+          background: scrolled ? 'var(--bg-surface)' : 'transparent',
           borderBottom: '1px solid',
           borderColor: scrolled ? 'var(--border-color)' : 'transparent',
           backdropFilter: 'blur(var(--glass-blur))',
@@ -94,12 +94,12 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
           <span style={{ 
             fontSize: '0.68rem', 
             fontWeight: 900, 
-            border: '2px solid #0F172A', 
+            border: '2px solid var(--border-pop, #0F172A)', 
             padding: '2px 6px', 
             borderRadius: '6px', 
             color: '#FFFFFF', 
             background: 'var(--secondary)', 
-            boxShadow: '2px 2px 0px #0F172A',
+            boxShadow: '2px 2px 0px var(--border-pop, #0F172A)',
             letterSpacing: '0.04em'
           }}>
             2026

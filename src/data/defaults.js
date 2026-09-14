@@ -54,10 +54,10 @@ export const SEASONAL_THEMES = [
     name: "Modo Fiestas Patrias",
     emoji: "🇨🇱",
     tagline: "18 de Septiembre Chileno",
-    description: "Banderines tricolor, volantines tradicionales en vuelo y copihues decorativos.",
-    primaryColor: "#D52B1E",
-    secondaryColor: "#0039A6",
-    accentColor: "#FEDC00"
+    description: "Colores oficiales de la bandera de Chile, banderines tricolor y volantines tradicionales.",
+    primaryColor: "#0039A6",
+    secondaryColor: "#D52B1E",
+    accentColor: "#FFFFFF"
   }
 ];
 

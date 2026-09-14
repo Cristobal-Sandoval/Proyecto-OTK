@@ -72,14 +72,14 @@ const NewsSection = ({ newsList = [] }) => {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 style={{
-                  background: selectedCategory === cat ? 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)' : 'rgba(255,255,255,0.05)',
+                  background: selectedCategory === cat ? 'var(--filter-btn-active-bg)' : 'var(--filter-btn-bg)',
                   border: '1px solid',
-                  borderColor: selectedCategory === cat ? 'transparent' : 'var(--border-color)',
-                  color: selectedCategory === cat ? 'white' : 'var(--text-secondary)',
+                  borderColor: selectedCategory === cat ? 'var(--border-pop)' : 'var(--filter-btn-border)',
+                  color: selectedCategory === cat ? 'var(--filter-btn-active-text)' : 'var(--filter-btn-text)',
                   padding: '8px 18px',
                   borderRadius: '10px',
                   cursor: 'pointer',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   fontSize: '0.85rem',
                   whiteSpace: 'nowrap',
                   transition: 'var(--transition-fast)'

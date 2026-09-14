@@ -38,14 +38,14 @@ const ScheduleTimeline = ({ schedule = [] }) => {
               key={stage}
               onClick={() => setSelectedStage(stage)}
               style={{
-                background: selectedStage === stage ? 'linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%)' : 'rgba(255,255,255,0.05)',
+                background: selectedStage === stage ? 'var(--filter-btn-active-bg)' : 'var(--filter-btn-bg)',
                 border: '1px solid',
-                borderColor: selectedStage === stage ? 'transparent' : 'var(--border-color)',
-                color: selectedStage === stage ? 'white' : 'var(--text-secondary)',
+                borderColor: selectedStage === stage ? 'var(--border-pop)' : 'var(--filter-btn-border)',
+                color: selectedStage === stage ? 'var(--filter-btn-active-text)' : 'var(--filter-btn-text)',
                 padding: '8px 18px',
                 borderRadius: '10px',
                 cursor: 'pointer',
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: '0.85rem',
                 whiteSpace: 'nowrap',
                 transition: 'var(--transition-fast)'

@@ -85,8 +85,7 @@ const Hero = ({ config, onNavigate, banners }) => {
         justifyContent: 'center',
         padding: '24px 16px',
         overflowX: 'hidden',
-        background: '#F0F9FF',
-        backgroundAttachment: 'scroll'
+        backgroundColor: 'var(--bg-deep)'
       }}
       className="hero-section"
     >
@@ -311,11 +310,11 @@ const Hero = ({ config, onNavigate, banners }) => {
             alignItems: 'center',
             gap: '20px',
             width: '100%',
-            background: '#FFFFFF',
-            border: '3px solid #0F172A',
+            background: 'var(--bg-surface-solid)',
+            border: '3px solid var(--border-pop, #0F172A)',
             borderRadius: '28px',
             padding: '20px 32px',
-            boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.15)',
+            boxShadow: '8px 8px 0px var(--shadow-pop, rgba(15, 23, 42, 0.15))',
             zIndex: 10,
             marginTop: 'auto',
             marginBottom: 'max(32px, env(safe-area-inset-bottom, 32px))'
@@ -335,7 +334,7 @@ const Hero = ({ config, onNavigate, banners }) => {
           </div>
 
           {/* Countdown column */}
-          {!timeLeft.expired && (
+          {!timeLeft.expired ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} className="hero-bottom-col">
               <span style={{ fontSize: '0.8rem', fontWeight: 950, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>Faltan:</span>
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -348,21 +347,42 @@ const Hero = ({ config, onNavigate, banners }) => {
                   <div 
                     key={idx} 
                     style={{ 
-                      background: 'rgba(15, 23, 42, 0.04)', 
-                      border: '2px solid #0F172A', 
+                      background: 'var(--countdown-box-bg, rgba(15, 23, 42, 0.04))', 
+                      border: '2px solid var(--countdown-box-border, var(--border-pop, #0F172A))', 
                       borderRadius: '12px', 
                       padding: '6px 12px', 
                       display: 'flex', 
                       alignItems: 'baseline', 
                       gap: '3px',
-                      boxShadow: '2px 2px 0px rgba(15, 23, 42, 0.05)'
+                      boxShadow: '2px 2px 0px var(--shadow-pop, rgba(15, 23, 42, 0.05))'
                     }}
                   >
-                    <span style={{ fontWeight: 950, fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontFamily: 'var(--font-display)', color: 'var(--text-primary)', lineHeight: 1 }}>{String(item.val).padStart(2, '0')}</span>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{item.unit}</span>
+                    <span style={{ fontWeight: 950, fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontFamily: 'var(--font-display)', color: 'var(--countdown-num-color, var(--text-primary))', lineHeight: 1 }}>{String(item.val).padStart(2, '0')}</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--countdown-unit-color, var(--text-secondary))', textTransform: 'uppercase' }}>{item.unit}</span>
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="hero-bottom-col">
+              <span 
+                style={{ 
+                  background: 'var(--btn-primary-bg, var(--primary))', 
+                  color: 'var(--btn-primary-text, #FFFFFF)', 
+                  border: '2px solid var(--border-pop, #0F172A)', 
+                  boxShadow: '3px 3px 0px var(--border-pop, #0F172A)', 
+                  padding: '8px 18px', 
+                  borderRadius: '14px', 
+                  fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', 
+                  fontWeight: 900,
+                  letterSpacing: '0.02em',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                Próximamente más información
+              </span>
             </div>
           )}
 
@@ -371,7 +391,7 @@ const Hero = ({ config, onNavigate, banners }) => {
             <button 
               className="btn btn-primary" 
               onClick={() => onNavigate('schedule')}
-              style={{ minHeight: '44px', padding: '8px 24px', fontSize: '0.9rem', border: '2px solid #0F172A', boxShadow: '3px 3px 0px #0F172A' }}
+              style={{ minHeight: '44px', padding: '8px 24px', fontSize: '0.9rem' }}
             >
               Cronograma
               <ChevronRight size={16} />
@@ -379,7 +399,7 @@ const Hero = ({ config, onNavigate, banners }) => {
             <button 
               className="btn btn-secondary" 
               onClick={() => onNavigate('news')}
-              style={{ minHeight: '44px', padding: '8px 24px', fontSize: '0.9rem', border: '2px solid #0F172A', boxShadow: '3px 3px 0px #0F172A' }}
+              style={{ minHeight: '44px', padding: '8px 24px', fontSize: '0.9rem' }}
             >
               Noticias
             </button>

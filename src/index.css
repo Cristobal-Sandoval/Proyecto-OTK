@@ -36,6 +36,33 @@
   --shadow-neon-pink: 0 8px 30px rgba(255, 59, 108, 0.08);
   --shadow-card: 0 10px 30px -5px rgba(0, 163, 255, 0.08), 0 4px 12px -2px rgba(0, 163, 255, 0.04);
 
+  /* Button System & Contrast Tokens */
+  --btn-primary-bg: linear-gradient(135deg, #FEDC00 0%, #FD3484 100%);
+  --btn-primary-text: #0F172A;
+  --btn-primary-border: #0F172A;
+  --btn-primary-shadow: 3px 3px 0px #0F172A;
+
+  --btn-secondary-bg: #FFFFFF;
+  --btn-secondary-text: #0F172A;
+  --btn-secondary-border: #0F172A;
+  --btn-secondary-shadow: 3px 3px 0px rgba(15, 23, 42, 0.15);
+  --btn-secondary-hover-bg: #F0F9FF;
+  --btn-secondary-hover-text: #0088FF;
+  --btn-secondary-hover-border: #0088FF;
+
+  --border-pop: #0F172A;
+  --shadow-pop: rgba(15, 23, 42, 0.12);
+  --countdown-box-bg: rgba(15, 23, 42, 0.04);
+  --countdown-box-border: #0F172A;
+  --countdown-num-color: #0F172A;
+  --countdown-unit-color: #475569;
+
+  --filter-btn-bg: rgba(15, 23, 42, 0.05);
+  --filter-btn-text: #475569;
+  --filter-btn-border: rgba(15, 23, 42, 0.15);
+  --filter-btn-active-bg: linear-gradient(135deg, #0088FF 0%, #FD3484 100%);
+  --filter-btn-active-text: #FFFFFF;
+
   /* Transitions */
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -207,15 +234,15 @@ button {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  color: #0F172A;
-  box-shadow: 0 4px 15px rgba(255, 59, 108, 0.25);
-  border: 2px solid #0F172A;
+  background: var(--btn-primary-bg, linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%));
+  color: var(--btn-primary-text, #0F172A);
+  box-shadow: var(--btn-primary-shadow, 3px 3px 0px var(--border-pop, #0F172A));
+  border: 2px solid var(--btn-primary-border, var(--border-pop, #0F172A));
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 59, 108, 0.45);
+  filter: brightness(1.08);
 }
 
 .btn-primary:active {
@@ -223,17 +250,16 @@ button {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  box-shadow: 0 4px 12px rgba(0, 163, 255, 0.05);
+  background: var(--btn-secondary-bg, #FFFFFF);
+  border: 2px solid var(--btn-secondary-border, var(--border-pop, #0F172A));
+  color: var(--btn-secondary-text, var(--text-primary));
+  box-shadow: var(--btn-secondary-shadow, 3px 3px 0px var(--shadow-pop, rgba(15, 23, 42, 0.15)));
 }
 
 .btn-secondary:hover {
-  background: #FFFFFF;
-  border-color: var(--cyan);
-  color: var(--cyan);
-  box-shadow: 0 6px 15px rgba(0, 163, 255, 0.1);
+  background: var(--btn-secondary-hover-bg, var(--bg-surface-hover));
+  border-color: var(--btn-secondary-hover-border, var(--secondary));
+  color: var(--btn-secondary-hover-text, var(--secondary));
 }
 
 .btn-cyan {
@@ -516,65 +542,117 @@ textarea.form-control {
   --cyan: #10B981;
   --cyan-glow: rgba(16, 185, 129, 0.35);
   
-  --bg-deep: #0D0714;
-  --bg-surface: rgba(26, 16, 40, 0.90);
-  --bg-surface-solid: #1A1028;
-  --bg-surface-hover: rgba(42, 26, 64, 0.95);
+  --bg-deep: #0B0612;
+  --bg-surface: rgba(23, 13, 36, 0.92);
+  --bg-surface-solid: #170D24;
+  --bg-surface-hover: rgba(45, 26, 69, 0.95);
 
   --text-primary: #F8FAFC;
   --text-secondary: #CBD5E1;
   --text-muted: #94A3B8;
 
-  --border-color: rgba(255, 107, 0, 0.28);
-  --border-hover: rgba(168, 85, 247, 0.5);
-  --border-cyan: rgba(16, 185, 129, 0.35);
+  --border-color: rgba(255, 107, 0, 0.35);
+  --border-hover: rgba(168, 85, 247, 0.6);
+  --border-cyan: rgba(16, 185, 129, 0.45);
+  --border-pop: #FF7700;
+  --shadow-pop: rgba(255, 107, 0, 0.25);
 
-  --shadow-neon: 0 8px 30px rgba(255, 107, 0, 0.22);
-  --shadow-neon-pink: 0 8px 30px rgba(168, 85, 247, 0.22);
-  --shadow-card: 0 10px 30px -5px rgba(255, 107, 0, 0.18), 0 4px 12px -2px rgba(168, 85, 247, 0.12);
+  --btn-primary-bg: linear-gradient(135deg, #FF6B00 0%, #A855F7 100%);
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-border: #FFAA44;
+  --btn-primary-shadow: 3px 3px 0px #FFAA44;
+
+  --btn-secondary-bg: #1E1231;
+  --btn-secondary-text: #F8FAFC;
+  --btn-secondary-border: rgba(255, 107, 0, 0.6);
+  --btn-secondary-shadow: 3px 3px 0px rgba(255, 107, 0, 0.3);
+  --btn-secondary-hover-bg: #2B1845;
+  --btn-secondary-hover-text: #FF9433;
+  --btn-secondary-hover-border: #FF7700;
+
+  --countdown-box-bg: rgba(255, 107, 0, 0.1);
+  --countdown-box-border: #FF7700;
+  --countdown-num-color: #F8FAFC;
+  --countdown-unit-color: #FFB366;
+
+  --filter-btn-bg: rgba(255, 255, 255, 0.07);
+  --filter-btn-text: #CBD5E1;
+  --filter-btn-border: rgba(255, 107, 0, 0.35);
+  --filter-btn-active-bg: linear-gradient(135deg, #FF6B00 0%, #A855F7 100%);
+  --filter-btn-active-text: #FFFFFF;
+
+  --shadow-neon: 0 8px 30px rgba(255, 107, 0, 0.25);
+  --shadow-neon-pink: 0 8px 30px rgba(168, 85, 247, 0.25);
+  --shadow-card: 0 10px 30px -5px rgba(255, 107, 0, 0.2), 0 4px 12px -2px rgba(168, 85, 247, 0.15);
 }
 
 [data-theme="halloween"] body {
   background-color: var(--bg-deep);
   color: var(--text-primary);
   background-image: 
-    radial-gradient(ellipse at 15% 20%, rgba(168, 85, 247, 0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 85% 75%, rgba(255, 107, 0, 0.12) 0%, transparent 45%);
+    radial-gradient(ellipse at 15% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 75%, rgba(255, 107, 0, 0.15) 0%, transparent 45%);
 }
 
 /* --- 2. MODO NAVIDAD (Anime Christmas & Nieve) --- */
 [data-theme="navidad"] {
   --primary: #DC2626;
   --primary-glow: rgba(220, 38, 38, 0.45);
-  --secondary: #15803D;
-  --secondary-glow: rgba(21, 128, 61, 0.4);
-  --cyan: #EAB308;
-  --cyan-glow: rgba(234, 179, 8, 0.4);
+  --secondary: #16A34A;
+  --secondary-glow: rgba(22, 163, 74, 0.4);
+  --cyan: #FBBF24;
+  --cyan-glow: rgba(251, 191, 36, 0.4);
   
-  --bg-deep: #0B192C;
-  --bg-surface: rgba(16, 36, 64, 0.90);
-  --bg-surface-solid: #132B4F;
-  --bg-surface-hover: rgba(22, 48, 84, 0.95);
+  --bg-deep: #071326;
+  --bg-surface: rgba(14, 32, 60, 0.92);
+  --bg-surface-solid: #0F223D;
+  --bg-surface-hover: rgba(21, 46, 84, 0.95);
 
   --text-primary: #FFFFFF;
   --text-secondary: #E2E8F0;
   --text-muted: #94A3B8;
 
-  --border-color: rgba(234, 179, 8, 0.28);
-  --border-hover: rgba(220, 38, 38, 0.5);
-  --border-cyan: rgba(21, 128, 61, 0.4);
+  --border-color: rgba(251, 191, 36, 0.35);
+  --border-hover: rgba(220, 38, 38, 0.6);
+  --border-cyan: rgba(22, 163, 74, 0.45);
+  --border-pop: #FBBF24;
+  --shadow-pop: rgba(251, 191, 36, 0.25);
 
-  --shadow-neon: 0 8px 30px rgba(220, 38, 38, 0.2);
-  --shadow-neon-pink: 0 8px 30px rgba(21, 128, 61, 0.2);
-  --shadow-card: 0 10px 30px -5px rgba(220, 38, 38, 0.16), 0 4px 12px -2px rgba(234, 179, 8, 0.12);
+  --btn-primary-bg: linear-gradient(135deg, #DC2626 0%, #16A34A 100%);
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-border: #FBBF24;
+  --btn-primary-shadow: 3px 3px 0px #FBBF24;
+
+  --btn-secondary-bg: #132B4F;
+  --btn-secondary-text: #FFFFFF;
+  --btn-secondary-border: rgba(251, 191, 36, 0.6);
+  --btn-secondary-shadow: 3px 3px 0px rgba(251, 191, 36, 0.3);
+  --btn-secondary-hover-bg: #1B3B6B;
+  --btn-secondary-hover-text: #FDE68A;
+  --btn-secondary-hover-border: #FBBF24;
+
+  --countdown-box-bg: rgba(251, 191, 36, 0.1);
+  --countdown-box-border: #FBBF24;
+  --countdown-num-color: #FFFFFF;
+  --countdown-unit-color: #FDE68A;
+
+  --filter-btn-bg: rgba(255, 255, 255, 0.07);
+  --filter-btn-text: #E2E8F0;
+  --filter-btn-border: rgba(251, 191, 36, 0.35);
+  --filter-btn-active-bg: linear-gradient(135deg, #DC2626 0%, #16A34A 100%);
+  --filter-btn-active-text: #FFFFFF;
+
+  --shadow-neon: 0 8px 30px rgba(220, 38, 38, 0.25);
+  --shadow-neon-pink: 0 8px 30px rgba(22, 163, 74, 0.25);
+  --shadow-card: 0 10px 30px -5px rgba(220, 38, 38, 0.2), 0 4px 12px -2px rgba(251, 191, 36, 0.15);
 }
 
 [data-theme="navidad"] body {
   background-color: var(--bg-deep);
   color: var(--text-primary);
   background-image: 
-    radial-gradient(ellipse at 20% 15%, rgba(220, 38, 38, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(21, 128, 61, 0.14) 0%, transparent 50%);
+    radial-gradient(ellipse at 20% 15%, rgba(220, 38, 38, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(22, 163, 74, 0.16) 0%, transparent 50%);
 }
 
 /* --- 3. MODO TELETÓN (Solidaridad Chilena 24.500-03) --- */
@@ -583,60 +661,114 @@ textarea.form-control {
   --primary-glow: rgba(225, 29, 72, 0.45);
   --secondary: #0039A6;
   --secondary-glow: rgba(0, 57, 166, 0.35);
-  --cyan: #FEDC00;
-  --cyan-glow: rgba(254, 220, 0, 0.4);
+  --cyan: #F59E0B;
+  --cyan-glow: rgba(245, 158, 11, 0.4);
   
-  --bg-deep: #FFF1F2;
-  --bg-surface: rgba(255, 255, 255, 0.92);
+  --bg-deep: #FFF5F7;
+  --bg-surface: rgba(255, 255, 255, 0.94);
   --bg-surface-solid: #FFFFFF;
-  --bg-surface-hover: rgba(255, 245, 247, 0.98);
+  --bg-surface-hover: rgba(255, 241, 244, 0.98);
 
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
+  --text-primary: #1E1B4B;
+  --text-secondary: #334155;
   --text-muted: #64748B;
 
-  --border-color: rgba(225, 29, 72, 0.24);
-  --border-hover: rgba(225, 29, 72, 0.5);
-  --border-cyan: rgba(0, 57, 166, 0.25);
+  --border-color: rgba(225, 29, 72, 0.28);
+  --border-hover: rgba(225, 29, 72, 0.55);
+  --border-cyan: rgba(0, 57, 166, 0.3);
+  --border-pop: #E11D48;
+  --shadow-pop: rgba(225, 29, 72, 0.16);
 
-  --shadow-neon: 0 8px 30px rgba(225, 29, 72, 0.16);
-  --shadow-neon-pink: 0 8px 30px rgba(0, 57, 166, 0.14);
-  --shadow-card: 0 10px 30px -5px rgba(225, 29, 72, 0.12), 0 4px 12px -2px rgba(0, 57, 166, 0.08);
+  --btn-primary-bg: linear-gradient(135deg, #E11D48 0%, #0039A6 100%);
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-border: #1E1B4B;
+  --btn-primary-shadow: 3px 3px 0px #1E1B4B;
+
+  --btn-secondary-bg: #FFFFFF;
+  --btn-secondary-text: #E11D48;
+  --btn-secondary-border: #E11D48;
+  --btn-secondary-shadow: 3px 3px 0px rgba(225, 29, 72, 0.2);
+  --btn-secondary-hover-bg: #FFF1F2;
+  --btn-secondary-hover-text: #BE123C;
+  --btn-secondary-hover-border: #BE123C;
+
+  --countdown-box-bg: rgba(225, 29, 72, 0.05);
+  --countdown-box-border: #E11D48;
+  --countdown-num-color: #1E1B4B;
+  --countdown-unit-color: #E11D48;
+
+  --filter-btn-bg: rgba(225, 29, 72, 0.05);
+  --filter-btn-text: #334155;
+  --filter-btn-border: rgba(225, 29, 72, 0.25);
+  --filter-btn-active-bg: linear-gradient(135deg, #E11D48 0%, #0039A6 100%);
+  --filter-btn-active-text: #FFFFFF;
+
+  --shadow-neon: 0 8px 30px rgba(225, 29, 72, 0.2);
+  --shadow-neon-pink: 0 8px 30px rgba(0, 57, 166, 0.18);
+  --shadow-card: 0 10px 30px -5px rgba(225, 29, 72, 0.14), 0 4px 12px -2px rgba(0, 57, 166, 0.1);
 }
 
 [data-theme="teleton"] body {
   background-color: var(--bg-deep);
   color: var(--text-primary);
   background-image: 
-    radial-gradient(ellipse at 15% 20%, rgba(225, 29, 72, 0.08) 0%, transparent 45%),
-    radial-gradient(ellipse at 85% 75%, rgba(0, 57, 166, 0.06) 0%, transparent 45%);
+    radial-gradient(ellipse at 15% 20%, rgba(225, 29, 72, 0.1) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 75%, rgba(0, 57, 166, 0.08) 0%, transparent 45%);
 }
 
-/* --- 4. MODO FIESTAS PATRIAS (18 de Septiembre Chileno) --- */
+/* --- 4. MODO FIESTAS PATRIAS (18 de Septiembre Chileno — Colores Oficiales Bandera Chilena) --- */
 [data-theme="fiestas_patrias"] {
-  --primary: #D52B1E;
-  --primary-glow: rgba(213, 43, 30, 0.45);
-  --secondary: #0039A6;
-  --secondary-glow: rgba(0, 57, 166, 0.4);
-  --cyan: #FEDC00;
-  --cyan-glow: rgba(254, 220, 0, 0.4);
+  /* Official Flag Tokens: Azul #0039A6, Blanco #FFFFFF, Rojo #D52B1E */
+  --primary: #0039A6;       /* Azul oficial del cantón y la estrella */
+  --primary-glow: rgba(0, 57, 166, 0.45);
+  --secondary: #D52B1E;     /* Rojo oficial de la bandera chilena */
+  --secondary-glow: rgba(213, 43, 30, 0.45);
+  --cyan: #0039A6;
+  --cyan-glow: rgba(0, 57, 166, 0.35);
   
-  --bg-deep: #F8FAFC;
-  --bg-surface: rgba(255, 255, 255, 0.94);
+  --bg-deep: #F1F5F9;
+  --bg-surface: rgba(255, 255, 255, 0.96);
   --bg-surface-solid: #FFFFFF;
-  --bg-surface-hover: rgba(248, 250, 252, 0.98);
+  --bg-surface-hover: #F8FAFC;
 
-  --text-primary: #0F172A;
-  --text-secondary: #334155;
-  --text-muted: #64748B;
+  /* Text: Ultra legible deep navy and slate (WCAG AAA contrast 16.5:1) */
+  --text-primary: #001A4D;   /* Azul marino chileno profundo */
+  --text-secondary: #1E293B; /* Pizarra 800 */
+  --text-muted: #475569;     /* Pizarra 600 */
 
   --border-color: rgba(0, 57, 166, 0.25);
-  --border-hover: rgba(213, 43, 30, 0.45);
+  --border-hover: rgba(213, 43, 30, 0.5);
   --border-cyan: rgba(0, 57, 166, 0.35);
+  --border-pop: #0039A6;
+  --shadow-pop: rgba(0, 57, 166, 0.18);
 
-  --shadow-neon: 0 8px 30px rgba(213, 43, 30, 0.16);
-  --shadow-neon-pink: 0 8px 30px rgba(0, 57, 166, 0.16);
-  --shadow-card: 0 10px 30px -5px rgba(213, 43, 30, 0.12), 0 4px 12px -2px rgba(0, 57, 166, 0.1);
+  --btn-primary-bg: linear-gradient(135deg, #0039A6 0%, #D52B1E 100%);
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-border: #001A4D;
+  --btn-primary-shadow: 3px 3px 0px #001A4D;
+
+  --btn-secondary-bg: #FFFFFF;
+  --btn-secondary-text: #0039A6;
+  --btn-secondary-border: #0039A6;
+  --btn-secondary-shadow: 3px 3px 0px rgba(0, 57, 166, 0.2);
+  --btn-secondary-hover-bg: #0039A6;
+  --btn-secondary-hover-text: #FFFFFF;
+  --btn-secondary-hover-border: #001A4D;
+
+  --countdown-box-bg: rgba(0, 57, 166, 0.05);
+  --countdown-box-border: #0039A6;
+  --countdown-num-color: #001A4D;
+  --countdown-unit-color: #D52B1E;
+
+  --filter-btn-bg: rgba(0, 57, 166, 0.06);
+  --filter-btn-text: #001A4D;
+  --filter-btn-border: rgba(0, 57, 166, 0.28);
+  --filter-btn-active-bg: linear-gradient(135deg, #0039A6 0%, #D52B1E 100%);
+  --filter-btn-active-text: #FFFFFF;
+
+  --shadow-neon: 0 8px 30px rgba(0, 57, 166, 0.2);
+  --shadow-neon-pink: 0 8px 30px rgba(213, 43, 30, 0.2);
+  --shadow-card: 0 10px 30px -5px rgba(0, 57, 166, 0.15), 0 4px 12px -2px rgba(213, 43, 30, 0.1);
 }
 
 [data-theme="fiestas_patrias"] body {

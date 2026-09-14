@@ -114,7 +114,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                   <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {cosplayer.name}
                   </h3>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: '4px 0' }}>
+                  <p style={{ fontSize: '0.85rem', color: '#F1F5F9', lineHeight: 1.45, margin: '4px 0', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
                     {cosplayer.bio}
                   </p>
 

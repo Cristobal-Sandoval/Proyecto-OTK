@@ -2,10 +2,9 @@ import React, { useEffect, useRef } from 'react';
 
 /**
  * SeasonalOverlay Component
- * Injects lightweight, zero-dependency visual decorations and animations
- * corresponding to the active seasonal theme mode.
- * - All overlays use pointer-events: none so they never block clicks.
- * - Snowfall uses a tiny, lightweight HTML5 Canvas loop (~40 particles).
+ * Non-intrusive, pure aesthetic visual overlays for special dates.
+ * Zero floating pill badges at bottom (per user request).
+ * All overlays use pointer-events: none so they never block user clicks.
  */
 const SeasonalOverlay = ({ theme = 'normal' }) => {
   const canvasRef = useRef(null);
@@ -14,7 +13,6 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
   useEffect(() => {
     if (theme !== 'navidad') return;
 
-    // Check prefers-reduced-motion
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const canvas = canvasRef.current;
@@ -32,11 +30,10 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
     };
     window.addEventListener('resize', handleResize);
 
-    // 40 gentle snowflakes for optimal 60fps performance
-    const flakes = Array.from({ length: 42 }, () => ({
+    const flakes = Array.from({ length: 45 }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      radius: Math.random() * 2.5 + 1,
+      radius: Math.random() * 2.2 + 1,
       speedY: Math.random() * 0.9 + 0.5,
       speedX: Math.sin(Math.random() * Math.PI) * 0.4,
       opacity: Math.random() * 0.6 + 0.35,
@@ -92,9 +89,7 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
       }}
       aria-hidden="true"
     >
-      {/* ============================================================
-          1. HALLOWEEN OVERLAY (Noche de Brujas & Vampiros)
-         ============================================================ */}
+      {/* 1. HALLOWEEN OVERLAY (Noche de Brujas & Vampiros) */}
       {theme === 'halloween' && (
         <>
           {/* Top-Left Spiderweb SVG */}
@@ -103,9 +98,9 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '140px',
-              height: '140px',
-              opacity: 0.5,
+              width: '130px',
+              height: '130px',
+              opacity: 0.45,
             }}
             viewBox="0 0 100 100"
             fill="none"
@@ -126,10 +121,10 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
               position: 'absolute',
               top: 0,
               right: 0,
-              width: '140px',
-              height: '140px',
+              width: '130px',
+              height: '130px',
               transform: 'scaleX(-1)',
-              opacity: 0.5,
+              opacity: 0.45,
             }}
             viewBox="0 0 100 100"
             fill="none"
@@ -143,14 +138,14 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
             <path d="M80,0 Q72,32 56,56 Q32,72 0,80" />
           </svg>
 
-          {/* Flying Bats Animation */}
+          {/* Flying Bats */}
           <div
             style={{
               position: 'absolute',
-              top: '18vh',
+              top: '16vh',
               left: 0,
-              width: '48px',
-              height: '24px',
+              width: '44px',
+              height: '22px',
               animation: 'batFlyHorizontal 14s ease-in-out infinite',
             }}
           >
@@ -166,11 +161,11 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
           <div
             style={{
               position: 'absolute',
-              top: '32vh',
+              top: '30vh',
               left: 0,
-              width: '36px',
-              height: '18px',
-              animation: 'batFlyHorizontal 18s ease-in-out infinite 6s',
+              width: '34px',
+              height: '17px',
+              animation: 'batFlyHorizontal 19s ease-in-out infinite 5s',
             }}
           >
             <svg
@@ -181,44 +176,10 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
               <path d="M25,12 C18,0 8,2 0,8 C5,14 12,14 15,22 C18,17 22,17 25,24 C28,17 32,17 35,22 C38,14 45,14 50,8 C42,2 32,0 25,12 Z" />
             </svg>
           </div>
-
-          {/* Floating Jack-o'-Lantern Mascot in Bottom-Left Corner */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '24px',
-              left: '20px',
-              fontSize: '2.4rem',
-              filter: 'drop-shadow(0 0 12px rgba(255, 107, 0, 0.6))',
-              animation: 'heartbeat 4s ease-in-out infinite',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <span>??</span>
-            <span
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 900,
-                color: '#FF6B00',
-                background: 'rgba(13, 7, 20, 0.85)',
-                border: '1px solid rgba(255, 107, 0, 0.4)',
-                padding: '3px 8px',
-                borderRadius: '8px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
-              Otakonce Spooky Night
-            </span>
-          </div>
         </>
       )}
 
-      {/* ============================================================
-          2. NAVIDAD OVERLAY (Anime Christmas & Nieve)
-         ============================================================ */}
+      {/* 2. NAVIDAD OVERLAY (Anime Christmas & Nieve) */}
       {theme === 'navidad' && (
         <>
           {/* Real-time Snowfall Canvas */}
@@ -234,7 +195,7 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
             }}
           />
 
-          {/* Christmas Fairy Lights Garland along the Header */}
+          {/* Fairy Lights Garland along the Header */}
           <div
             style={{
               position: 'absolute',
@@ -246,89 +207,32 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
               padding: '0 10px',
             }}
           >
-            {Array.from({ length: 18 }).map((_, i) => {
+            {Array.from({ length: 20 }).map((_, i) => {
               const colors = ['#DC2626', '#EAB308', '#15803D', '#38BDF8', '#F43F5E'];
               const color = colors[i % colors.length];
               return (
                 <div
                   key={i}
                   style={{
-                    width: '10px',
-                    height: '14px',
+                    width: '9px',
+                    height: '13px',
                     borderRadius: '50% 50% 60% 60%',
                     background: color,
                     color: color,
-                    marginTop: i % 2 === 0 ? '2px' : '6px',
+                    marginTop: i % 2 === 0 ? '2px' : '5px',
                     animation: `lightTwinkle 1.8s ease-in-out infinite ${i * 0.15}s`,
                   }}
                 />
               );
             })}
           </div>
-
-          {/* Santa Hat on Bottom Right Festive Badge */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '24px',
-              right: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(11, 25, 44, 0.85)',
-              border: '1px solid rgba(234, 179, 8, 0.4)',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              boxShadow: '0 4px 15px rgba(220, 38, 38, 0.25)',
-            }}
-          >
-            <span style={{ fontSize: '1.4rem' }}>??</span>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#EAB308', letterSpacing: '0.04em' }}>
-              ?Feliz Navidad Otaku! ??
-            </span>
-          </div>
         </>
       )}
 
-      {/* ============================================================
-          3. TELET?N OVERLAY (Solidaridad Chilena 24.500-03)
-         ============================================================ */}
-      {theme === 'teleton' && (
-        <>
-          {/* Floating Telet?n Heart Badge in Bottom-Right Corner */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '24px',
-              right: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              background: 'linear-gradient(135deg, #E11D48 0%, #BE123C 100%)',
-              color: '#FFFFFF',
-              padding: '8px 16px',
-              borderRadius: '24px',
-              boxShadow: '0 6px 20px rgba(225, 29, 72, 0.45)',
-              border: '2px solid #FFFFFF',
-              animation: 'heartbeat 2.8s ease-in-out infinite',
-            }}
-          >
-            <span style={{ fontSize: '1.6rem' }}>??</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.9 }}>
-                Telet?n Chile
-              </span>
-              <span style={{ fontSize: '0.92rem', fontWeight: 900, letterSpacing: '0.05em' }}>
-                Cuenta 24.500-03
-              </span>
-            </div>
-          </div>
-        </>
-      )}
+      {/* 3. TELET?N OVERLAY - Atmospheric and clean */}
+      {theme === 'teleton' && null}
 
-      {/* ============================================================
-          4. FIESTAS PATRIAS OVERLAY (18 de Septiembre Chileno)
-         ============================================================ */}
+      {/* 4. FIESTAS PATRIAS OVERLAY (18 de Septiembre Chileno) */}
       {theme === 'fiestas_patrias' && (
         <>
           {/* Tricolor Garland Bunting along Top */}
@@ -344,7 +248,7 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
               animation: 'garlandWave 3s ease-in-out infinite',
             }}
           >
-            {Array.from({ length: 30 }).map((_, i) => {
+            {Array.from({ length: 32 }).map((_, i) => {
               const flags = ['#0039A6', '#FFFFFF', '#D52B1E'];
               const bg = flags[i % 3];
               return (
@@ -368,20 +272,20 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
               position: 'absolute',
               top: '12vh',
               right: '8vw',
-              width: '54px',
-              height: '54px',
+              width: '50px',
+              height: '50px',
               animation: 'volantinSway 4s ease-in-out infinite',
             }}
           >
-            {/* Volant?n Square Diamond Shape with 4 colored quadrants */}
+            {/* Volant?n Square Diamond Shape with Chilean Flag quadrants */}
             <div
               style={{
-                width: '40px',
-                height: '40px',
+                width: '38px',
+                height: '38px',
                 transform: 'rotate(45deg)',
                 position: 'relative',
                 boxShadow: '0 4px 15px rgba(0, 57, 166, 0.25)',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
+                border: '1.5px solid #0039A6',
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gridTemplateRows: '1fr 1fr',
@@ -397,37 +301,15 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
             <div
               style={{
                 position: 'absolute',
-                top: '42px',
-                left: '20px',
+                top: '40px',
+                left: '19px',
                 width: '3px',
-                height: '45px',
+                height: '42px',
                 background: 'linear-gradient(to bottom, #D52B1E, #0039A6, #FEDC00)',
                 transformOrigin: 'top center',
                 animation: 'volantinSway 2s ease-in-out infinite reverse',
               }}
             />
-          </div>
-
-          {/* Copihue & Viva Chile Badge Bottom Right */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '24px',
-              right: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(255, 255, 255, 0.95)',
-              border: '2px solid #0039A6',
-              padding: '6px 14px',
-              borderRadius: '20px',
-              boxShadow: '0 4px 16px rgba(213, 43, 30, 0.25)',
-            }}
-          >
-            <span style={{ fontSize: '1.3rem' }}>????</span>
-            <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#D52B1E', letterSpacing: '0.04em' }}>
-              ?Tiqui tiqui ti! ?Viva Chile!
-            </span>
           </div>
         </>
       )}
