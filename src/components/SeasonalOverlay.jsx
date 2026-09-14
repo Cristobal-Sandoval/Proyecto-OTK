@@ -266,50 +266,137 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
             })}
           </div>
 
-          {/* Flying Volant?n Chileno in Upper Hero Background */}
+          {/* Flying Volantín Chileno con Bandera de Chile y Cola Fluida */}
           <div
             style={{
               position: 'absolute',
-              top: '12vh',
-              right: '8vw',
-              width: '50px',
-              height: '50px',
-              animation: 'volantinSway 4s ease-in-out infinite',
+              top: '11vh',
+              right: '6vw',
+              width: '74px',
+              height: '150px',
+              animation: 'volantinFloat 6s ease-in-out infinite',
+              filter: 'drop-shadow(0 8px 18px rgba(0, 57, 166, 0.22))',
+              pointerEvents: 'none',
+              zIndex: 92
             }}
           >
-            {/* Volant?n Square Diamond Shape with Chilean Flag quadrants */}
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                transform: 'rotate(45deg)',
-                position: 'relative',
-                boxShadow: '0 4px 15px rgba(0, 57, 166, 0.25)',
-                border: '1.5px solid #0039A6',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gridTemplateRows: '1fr 1fr',
-                overflow: 'hidden',
-              }}
+            <svg
+              viewBox="0 0 80 160"
+              width="100%"
+              height="100%"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ overflow: 'visible' }}
             >
-              <div style={{ background: '#0039A6' }} />
-              <div style={{ background: '#FFFFFF' }} />
-              <div style={{ background: '#D52B1E' }} />
-              <div style={{ background: '#0039A6' }} />
-            </div>
-            {/* Volant?n Tail */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '40px',
-                left: '19px',
-                width: '3px',
-                height: '42px',
-                background: 'linear-gradient(to bottom, #D52B1E, #0039A6, #FEDC00)',
-                transformOrigin: 'top center',
-                animation: 'volantinSway 2s ease-in-out infinite reverse',
-              }}
-            />
+              {/* Kite Body (Rombo / Cuadrado Volantín Bandera Chilena) */}
+              <g id="volantin-kite-body">
+                {/* 1. Cantón Azul Superior Izquierdo */}
+                <polygon
+                  points="8,40 40,8 40,40"
+                  fill="#0039A6"
+                  stroke="#002D80"
+                  strokeWidth="0.8"
+                />
+
+                {/* Estrella Blanca Solitaria de 5 puntas */}
+                <polygon
+                  points="26,23.5 27.1,26.8 30.5,26.8 27.8,28.8 28.8,32.2 26,30.1 23.2,32.2 24.2,28.8 21.5,26.8 24.9,26.8"
+                  fill="#FFFFFF"
+                />
+
+                {/* 2. Campo Blanco Superior Derecho */}
+                <polygon
+                  points="40,8 72,40 40,40"
+                  fill="#FFFFFF"
+                  stroke="#E2E8F0"
+                  strokeWidth="0.8"
+                />
+
+                {/* 3. Campo Rojo Inferior Completo */}
+                <polygon
+                  points="8,40 72,40 40,72"
+                  fill="#D52B1E"
+                  stroke="#B91C1C"
+                  strokeWidth="0.8"
+                />
+
+                {/* Borde exterior del rombo */}
+                <polygon
+                  points="40,8 72,40 40,72 8,40"
+                  fill="none"
+                  stroke="#001A4D"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+
+                {/* Maderos Tradicionales de Coligüe */}
+                {/* Madero central recto */}
+                <line
+                  x1="40"
+                  y1="8"
+                  x2="40"
+                  y2="72"
+                  stroke="#78350F"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  opacity="0.8"
+                />
+                {/* Arco curvo flexible superior */}
+                <path
+                  d="M 8,40 Q 40,20 72,40"
+                  fill="none"
+                  stroke="#92400E"
+                  strokeWidth="1.2"
+                  opacity="0.85"
+                />
+
+                {/* Tirantes de Hilo de Volantín */}
+                <path
+                  d="M 40,24 L 30,42 M 40,58 L 30,42 M 30,42 L 18,80"
+                  stroke="rgba(255, 255, 255, 0.7)"
+                  strokeWidth="0.75"
+                  strokeDasharray="2,2"
+                />
+              </g>
+
+              {/* Cola del Volantín: Conectada EXACTAMENTE al vértice inferior (40, 72) */}
+              <g
+                style={{
+                  transformOrigin: '40px 72px',
+                  animation: 'volantinTail 3s ease-in-out infinite alternate',
+                }}
+              >
+                {/* Línea ondeante de la cola */}
+                <path
+                  d="M 40,72 C 46,88 28,102 44,118 C 54,130 32,142 38,158"
+                  fill="none"
+                  stroke="#0039A6"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+
+                {/* Lazo 1: Azul de la bandera chilena */}
+                <g transform="translate(35, 95) rotate(-15)">
+                  <ellipse cx="0" cy="0" rx="6" ry="2.5" fill="#0039A6" />
+                  <ellipse cx="0" cy="0" rx="2.5" ry="5" fill="#0039A6" opacity="0.85" />
+                  <circle cx="0" cy="0" r="1.5" fill="#FFFFFF" />
+                </g>
+
+                {/* Lazo 2: Blanco cordillera */}
+                <g transform="translate(42, 118) rotate(20)">
+                  <ellipse cx="0" cy="0" rx="6" ry="2.5" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="0.5" />
+                  <ellipse cx="0" cy="0" rx="2.5" ry="5" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="0.5" opacity="0.85" />
+                  <circle cx="0" cy="0" r="1.5" fill="#0039A6" />
+                </g>
+
+                {/* Lazo 3: Rojo patrio */}
+                <g transform="translate(36, 142) rotate(-10)">
+                  <ellipse cx="0" cy="0" rx="6" ry="2.5" fill="#D52B1E" />
+                  <ellipse cx="0" cy="0" rx="2.5" ry="5" fill="#D52B1E" opacity="0.85" />
+                  <circle cx="0" cy="0" r="1.5" fill="#FFFFFF" />
+                </g>
+              </g>
+            </svg>
           </div>
         </>
       )}

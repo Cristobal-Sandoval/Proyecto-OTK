@@ -813,12 +813,33 @@ textarea.form-control {
   50% { transform: scaleY(0.4); }
 }
 
-@keyframes volantinSway {
-  0%, 100% {
-    transform: translateY(0) rotate(-4deg);
+@keyframes volantinFloat {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+  25% {
+    transform: translate3d(6px, -10px, 0) rotate(2deg);
   }
   50% {
-    transform: translateY(-16px) rotate(5deg);
+    transform: translate3d(-5px, -20px, 0) rotate(-3deg);
+  }
+  75% {
+    transform: translate3d(4px, -8px, 0) rotate(5deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+}
+
+@keyframes volantinTail {
+  0% {
+    transform: rotate(6deg) skewX(-4deg);
+  }
+  50% {
+    transform: rotate(-10deg) skewX(8deg);
+  }
+  100% {
+    transform: rotate(6deg) skewX(-4deg);
   }
 }
 
