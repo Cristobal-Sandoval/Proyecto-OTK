@@ -60,7 +60,17 @@ export const initializeDB = () => {
 // Config
 export const getEventConfig = () => {
   initializeDB();
-  return JSON.parse(localStorage.getItem(KEYS.EVENT_CONFIG));
+  try {
+    const cfg = JSON.parse(localStorage.getItem(KEYS.EVENT_CONFIG));
+    if (cfg && !cfg.themeMode) {
+      cfg.themeMode = 'normal';
+      localStorage.setItem(KEYS.EVENT_CONFIG, JSON.stringify(cfg));
+    }
+    return cfg || defaultEventConfig;
+  } catch (e) {
+    console.error(e);
+    return defaultEventConfig;
+  }
 };
 
 export const saveEventConfig = (config) => {

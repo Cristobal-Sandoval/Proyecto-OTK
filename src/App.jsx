@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import FloatingBanner from './components/FloatingBanner';
 import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
+import SeasonalOverlay from './components/SeasonalOverlay';
 
 // Code-split non-critical and heavy components
 const NewsSection = lazy(() => import('./components/NewsSection'));
@@ -67,10 +68,17 @@ function App() {
     saveSchedule(val);
   };
 
-  // Listen for admin shortcut (Ctrl+Shift+A or Cmd+Shift+A) or direct hash (#admin)
+  // Synchronize documentElement data-theme attribute with active seasonal theme
+  useEffect(() => {
+    const currentTheme = eventConfig.themeMode || 'normal';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+  }, [eventConfig.themeMode]);
+
+  // Listen for stealth admin shortcut (Ctrl+Shift+A or Cmd+Shift+A) or stealth hash (#stf-portal / #staff-access)
   useEffect(() => {
     const checkHash = () => {
-      if (window.location.hash === '#admin') {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#stf-portal' || hash === '#staff-access' || hash === '#admin') {
         setActiveTab('admin');
       }
     };
@@ -111,6 +119,9 @@ function App() {
         '--announcement-height': isAnnouncementVisible ? '32px' : '0px'
       }}
     >
+      {/* Visual Festive Theme Overlay (Halloween bats/webs, Christmas snowfall/lights, Teletón heart, Fiestas Patrias) */}
+      <SeasonalOverlay theme={eventConfig.themeMode || 'normal'} />
+
       {/* Top Floating Announcement Bar */}
       {isAnnouncementVisible && (
         <FloatingBanner config={floatingBanner} onNavigate={handleNavigate} onDismiss={() => setBannerDismissed(true)} />

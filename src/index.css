@@ -502,3 +502,201 @@ textarea.form-control {
   cursor: pointer;
   user-select: none;
 }
+
+/* ==========================================
+   SEASONAL THEME ENGINE (MODOS ESTACIONALES)
+   ========================================== */
+
+/* --- 1. MODO HALLOWEEN (Noche de Brujas & Vampiros) --- */
+[data-theme="halloween"] {
+  --primary: #FF6B00;
+  --primary-glow: rgba(255, 107, 0, 0.45);
+  --secondary: #A855F7;
+  --secondary-glow: rgba(168, 85, 247, 0.4);
+  --cyan: #10B981;
+  --cyan-glow: rgba(16, 185, 129, 0.35);
+  
+  --bg-deep: #0D0714;
+  --bg-surface: rgba(26, 16, 40, 0.90);
+  --bg-surface-solid: #1A1028;
+  --bg-surface-hover: rgba(42, 26, 64, 0.95);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+
+  --border-color: rgba(255, 107, 0, 0.28);
+  --border-hover: rgba(168, 85, 247, 0.5);
+  --border-cyan: rgba(16, 185, 129, 0.35);
+
+  --shadow-neon: 0 8px 30px rgba(255, 107, 0, 0.22);
+  --shadow-neon-pink: 0 8px 30px rgba(168, 85, 247, 0.22);
+  --shadow-card: 0 10px 30px -5px rgba(255, 107, 0, 0.18), 0 4px 12px -2px rgba(168, 85, 247, 0.12);
+}
+
+[data-theme="halloween"] body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  background-image: 
+    radial-gradient(ellipse at 15% 20%, rgba(168, 85, 247, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 75%, rgba(255, 107, 0, 0.12) 0%, transparent 45%);
+}
+
+/* --- 2. MODO NAVIDAD (Anime Christmas & Nieve) --- */
+[data-theme="navidad"] {
+  --primary: #DC2626;
+  --primary-glow: rgba(220, 38, 38, 0.45);
+  --secondary: #15803D;
+  --secondary-glow: rgba(21, 128, 61, 0.4);
+  --cyan: #EAB308;
+  --cyan-glow: rgba(234, 179, 8, 0.4);
+  
+  --bg-deep: #0B192C;
+  --bg-surface: rgba(16, 36, 64, 0.90);
+  --bg-surface-solid: #132B4F;
+  --bg-surface-hover: rgba(22, 48, 84, 0.95);
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0;
+  --text-muted: #94A3B8;
+
+  --border-color: rgba(234, 179, 8, 0.28);
+  --border-hover: rgba(220, 38, 38, 0.5);
+  --border-cyan: rgba(21, 128, 61, 0.4);
+
+  --shadow-neon: 0 8px 30px rgba(220, 38, 38, 0.2);
+  --shadow-neon-pink: 0 8px 30px rgba(21, 128, 61, 0.2);
+  --shadow-card: 0 10px 30px -5px rgba(220, 38, 38, 0.16), 0 4px 12px -2px rgba(234, 179, 8, 0.12);
+}
+
+[data-theme="navidad"] body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  background-image: 
+    radial-gradient(ellipse at 20% 15%, rgba(220, 38, 38, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(21, 128, 61, 0.14) 0%, transparent 50%);
+}
+
+/* --- 3. MODO TELETÓN (Solidaridad Chilena 24.500-03) --- */
+[data-theme="teleton"] {
+  --primary: #E11D48;
+  --primary-glow: rgba(225, 29, 72, 0.45);
+  --secondary: #0039A6;
+  --secondary-glow: rgba(0, 57, 166, 0.35);
+  --cyan: #FEDC00;
+  --cyan-glow: rgba(254, 220, 0, 0.4);
+  
+  --bg-deep: #FFF1F2;
+  --bg-surface: rgba(255, 255, 255, 0.92);
+  --bg-surface-solid: #FFFFFF;
+  --bg-surface-hover: rgba(255, 245, 247, 0.98);
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+
+  --border-color: rgba(225, 29, 72, 0.24);
+  --border-hover: rgba(225, 29, 72, 0.5);
+  --border-cyan: rgba(0, 57, 166, 0.25);
+
+  --shadow-neon: 0 8px 30px rgba(225, 29, 72, 0.16);
+  --shadow-neon-pink: 0 8px 30px rgba(0, 57, 166, 0.14);
+  --shadow-card: 0 10px 30px -5px rgba(225, 29, 72, 0.12), 0 4px 12px -2px rgba(0, 57, 166, 0.08);
+}
+
+[data-theme="teleton"] body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  background-image: 
+    radial-gradient(ellipse at 15% 20%, rgba(225, 29, 72, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 75%, rgba(0, 57, 166, 0.06) 0%, transparent 45%);
+}
+
+/* --- 4. MODO FIESTAS PATRIAS (18 de Septiembre Chileno) --- */
+[data-theme="fiestas_patrias"] {
+  --primary: #D52B1E;
+  --primary-glow: rgba(213, 43, 30, 0.45);
+  --secondary: #0039A6;
+  --secondary-glow: rgba(0, 57, 166, 0.4);
+  --cyan: #FEDC00;
+  --cyan-glow: rgba(254, 220, 0, 0.4);
+  
+  --bg-deep: #F8FAFC;
+  --bg-surface: rgba(255, 255, 255, 0.94);
+  --bg-surface-solid: #FFFFFF;
+  --bg-surface-hover: rgba(248, 250, 252, 0.98);
+
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+
+  --border-color: rgba(0, 57, 166, 0.25);
+  --border-hover: rgba(213, 43, 30, 0.45);
+  --border-cyan: rgba(0, 57, 166, 0.35);
+
+  --shadow-neon: 0 8px 30px rgba(213, 43, 30, 0.16);
+  --shadow-neon-pink: 0 8px 30px rgba(0, 57, 166, 0.16);
+  --shadow-card: 0 10px 30px -5px rgba(213, 43, 30, 0.12), 0 4px 12px -2px rgba(0, 57, 166, 0.1);
+}
+
+[data-theme="fiestas_patrias"] body {
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  background-image: 
+    radial-gradient(ellipse at 15% 15%, rgba(0, 57, 166, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 85%, rgba(213, 43, 30, 0.08) 0%, transparent 45%);
+}
+
+/* ==========================================
+   FESTIVE ANIMATIONS & KEYFRAMES
+   ========================================== */
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.15); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+  60% { transform: scale(1); }
+}
+
+@keyframes batFlyHorizontal {
+  0% {
+    transform: translate3d(-100px, 0, 0) scale(0.7);
+    opacity: 0;
+  }
+  10% { opacity: 0.85; }
+  50% {
+    transform: translate3d(50vw, -30px, 0) scale(1);
+    opacity: 0.95;
+  }
+  90% { opacity: 0.85; }
+  100% {
+    transform: translate3d(calc(100vw + 100px), 15px, 0) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes batWingFlap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.4); }
+}
+
+@keyframes volantinSway {
+  0%, 100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(5deg);
+  }
+}
+
+@keyframes lightTwinkle {
+  0%, 100% { opacity: 0.35; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 6px currentColor); }
+}
+
+@keyframes garlandWave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+

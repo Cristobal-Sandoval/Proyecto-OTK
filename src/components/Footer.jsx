@@ -1,4 +1,4 @@
-import { ArrowUp, ShieldCheck } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
   <svg
@@ -84,9 +84,6 @@ const Footer = ({ setActiveTab }) => {
           <a href="#cosplay" onClick={(e) => { e.preventDefault(); handleNavClick('cosplay'); }}>Cosplayers</a>
           <a href="#communities" onClick={(e) => { e.preventDefault(); handleNavClick('communities'); }}>Comunidades</a>
           <a href="#schedule" onClick={(e) => { e.preventDefault(); handleNavClick('schedule'); }}>Cronograma</a>
-          <a href="#admin" onClick={(e) => { e.preventDefault(); handleNavClick('admin'); }} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--primary)' }}>
-            <ShieldCheck size={14} /> Panel Staff
-          </a>
         </nav>
 
         {/* Social Media Link */}

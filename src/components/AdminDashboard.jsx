@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
-  Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon 
+  Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield 
 } from 'lucide-react';
+import { SEASONAL_THEMES } from '../data/defaults';
 
 const AdminDashboard = ({
   eventConfig, setEventConfig,
@@ -20,11 +20,29 @@ const AdminDashboard = ({
   const [loginError, setLoginError] = useState('');
   
   // Dashboard Sub-navigation Tabs
-  const [adminTab, setAdminTab] = useState('config'); // config, hero_banners, banner, news, cosplayers, communities, schedule
+  const [adminTab, setAdminTab] = useState('themes'); // themes, config, hero_banners, banner, news, cosplayers, communities, schedule
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [themeSuccessMsg, setThemeSuccessMsg] = useState('');
 
   // Form states
   const [configForm, setConfigForm] = useState({ ...eventConfig });
   const [bannerForm, setBannerForm] = useState({ ...floatingBanner });
+
+  const handleCopySecretUrl = () => {
+    const secretUrl = `${window.location.origin}/#stf-portal`;
+    navigator.clipboard.writeText(secretUrl);
+    setCopiedUrl(true);
+    setTimeout(() => setCopiedUrl(false), 3000);
+  };
+
+  const handleSelectTheme = (themeId) => {
+    const updated = { ...configForm, themeMode: themeId };
+    setConfigForm(updated);
+    setEventConfig(updated);
+    const themeName = SEASONAL_THEMES.find(t => t.id === themeId)?.name || themeId;
+    setThemeSuccessMsg(`¡${themeName} activado exitosamente!`);
+    setTimeout(() => setThemeSuccessMsg(''), 4000);
+  };
   
   // Hero Banners CRUD state
   const [editingHeroBanner, setEditingHeroBanner] = useState(null);
@@ -372,6 +390,7 @@ const AdminDashboard = ({
           className="admin-tabs-list"
         >
           {[
+            { id: 'themes', label: 'Modos & Fechas', icon: Sparkles },
             { id: 'config', label: 'Evento Principal', icon: Settings },
             { id: 'hero_banners', label: 'Banners de Inicio', icon: ImageIcon },
             { id: 'banner', label: 'Alerta Flotante', icon: Megaphone },
@@ -412,6 +431,195 @@ const AdminDashboard = ({
         {/* TAB CONTENTS */}
         <div className="glass-card" style={{ padding: '24px', minHeight: '400px' }}>
           
+          {/* TAB 0: SEASONAL THEMES & CHILEAN FESTIVITIES */}
+          {adminTab === 'themes' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+                <h3 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <Sparkles size={22} color="var(--primary)" /> Modos de Temporada & Fechas Importantes de Chile
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                  Activa con un solo clic la ambientación de la página. El tema, los colores y las decoraciones visuales (nieve, murciélagos, volantines, etc.) se aplican y sincronizan al instante en toda la web.
+                </p>
+              </div>
+
+              {themeSuccessMsg && (
+                <div 
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid #10B981',
+                    color: '#10B981',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    fontWeight: 700,
+                    fontSize: '0.9rem'
+                  }}
+                  className="animate-fade-in"
+                >
+                  <CheckCircle2 size={20} />
+                  {themeSuccessMsg}
+                </div>
+              )}
+
+              {/* Theme Cards Grid */}
+              <div 
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gap: '20px'
+                }}
+              >
+                {SEASONAL_THEMES.map((theme) => {
+                  const isActive = (configForm.themeMode || 'normal') === theme.id;
+                  return (
+                    <div
+                      key={theme.id}
+                      style={{
+                        background: isActive ? 'var(--bg-surface-hover)' : 'rgba(255, 255, 255, 0.03)',
+                        border: '2px solid',
+                        borderColor: isActive ? 'var(--primary)' : 'var(--border-color)',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '16px',
+                        boxShadow: isActive ? '0 8px 25px var(--primary-glow)' : 'none',
+                        transition: 'all var(--transition-fast)',
+                        position: 'relative'
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '2.2rem' }}>{theme.emoji}</span>
+                          {isActive ? (
+                            <span 
+                              style={{
+                                background: '#10B981',
+                                color: '#FFFFFF',
+                                fontSize: '0.72rem',
+                                fontWeight: 900,
+                                padding: '4px 10px',
+                                borderRadius: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                letterSpacing: '0.04em'
+                              }}
+                            >
+                              <Check size={14} /> ACTIVO AHORA
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                              Inactivo
+                            </span>
+                          )}
+                        </div>
+
+                        <h4 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '4px' }}>
+                          {theme.name}
+                        </h4>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--cyan)', marginBottom: '10px' }}>
+                          {theme.tagline}
+                        </p>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '14px' }}>
+                          {theme.description}
+                        </p>
+
+                        {/* Palette Previews */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 'auto' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>Paleta:</span>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <span title="Color Primario" style={{ width: '18px', height: '18px', borderRadius: '50%', background: theme.primaryColor, border: '1px solid rgba(0,0,0,0.1)' }} />
+                            <span title="Color Secundario" style={{ width: '18px', height: '18px', borderRadius: '50%', background: theme.secondaryColor, border: '1px solid rgba(0,0,0,0.1)' }} />
+                            <span title="Color Acento" style={{ width: '18px', height: '18px', borderRadius: '50%', background: theme.accentColor, border: '1px solid rgba(0,0,0,0.1)' }} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleSelectTheme(theme.id)}
+                        disabled={isActive}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          cursor: isActive ? 'default' : 'pointer',
+                          fontWeight: 700,
+                          fontSize: '0.85rem',
+                          background: isActive 
+                            ? 'rgba(16, 185, 129, 0.2)' 
+                            : 'linear-gradient(135deg, var(--cyan) 0%, var(--secondary) 100%)',
+                          color: isActive ? '#10B981' : '#FFFFFF',
+                          transition: 'var(--transition-fast)'
+                        }}
+                      >
+                        {isActive ? 'Modo en Uso' : 'Activar este Modo'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Secret Link Access Card */}
+              <div 
+                style={{
+                  marginTop: '16px',
+                  background: 'rgba(15, 23, 42, 0.05)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '14px',
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Shield size={20} color="var(--primary)" />
+                  <h4 style={{ fontSize: '1rem', fontWeight: 800 }}>
+                    Acceso Secreto y Seguridad del Panel
+                  </h4>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  El botón de administración ha sido <strong>completamente removido</strong> del pie de página público. Solo quienes conozcan el enlace secreto o el atajo de teclado pueden acceder:
+                </p>
+                
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/#stf-portal`}
+                    style={{
+                      flex: '1 1 280px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.88rem',
+                      fontFamily: 'monospace'
+                    }}
+                  />
+                  <button
+                    onClick={handleCopySecretUrl}
+                    className="btn btn-secondary"
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
+                  >
+                    {copiedUrl ? <CheckCircle2 size={16} color="#10B981" /> : <Copy size={16} />}
+                    {copiedUrl ? '¡Copiado!' : 'Copiar Enlace Secreto'}
+                  </button>
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  💡 <strong>Atajo de teclado invisible:</strong> Presiona <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Ctrl + Shift + A</kbd> (o <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Cmd + Shift + A</kbd> en Mac) en cualquier pantalla para abrir o cerrar el panel.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* TAB 1: EVENT CONFIGURATION */}
           {adminTab === 'config' && (
             <form onSubmit={handleSaveConfig} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

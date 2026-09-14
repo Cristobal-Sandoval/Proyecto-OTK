@@ -5,7 +5,61 @@ export const defaultEventConfig = {
   location: "Gimnasio USM Sede Concepción",
   countdownDate: "2026-11-14T11:00:00",
   bannerImage: "/assets/hero_banner.webp",
+  themeMode: "normal"
 };
+
+export const SEASONAL_THEMES = [
+  {
+    id: "normal",
+    name: "Modo Normal",
+    emoji: "🌟",
+    tagline: "Otakonce Anime Pop Oficial",
+    description: "Estilo original con cielo eléctrico, amarillo cómic y rosado cereza neón.",
+    primaryColor: "#FEDC00",
+    secondaryColor: "#FD3484",
+    accentColor: "#0088FF"
+  },
+  {
+    id: "halloween",
+    name: "Modo Halloween",
+    emoji: "🎃",
+    tagline: "Noche de Brujas & Vampiros",
+    description: "Murciélagos voladores, telarañas góticas, calabazas y paleta nocturna misteriosa.",
+    primaryColor: "#FF6B00",
+    secondaryColor: "#A855F7",
+    accentColor: "#10B981"
+  },
+  {
+    id: "navidad",
+    name: "Modo Navidad",
+    emoji: "🎄",
+    tagline: "Anime Christmas & Nieve",
+    description: "Animación de nieve cayendo en tiempo real, gorrito de Santa y luces navideñas.",
+    primaryColor: "#DC2626",
+    secondaryColor: "#15803D",
+    accentColor: "#EAB308"
+  },
+  {
+    id: "teleton",
+    name: "Modo Teletón",
+    emoji: "❤️",
+    tagline: "Solidaridad Chilena 24.500-03",
+    description: "Corazón icónico palpitante, distintivo oficial conmemorativo y espíritu solidario.",
+    primaryColor: "#E11D48",
+    secondaryColor: "#FFFFFF",
+    accentColor: "#0039A6"
+  },
+  {
+    id: "fiestas_patrias",
+    name: "Modo Fiestas Patrias",
+    emoji: "🇨🇱",
+    tagline: "18 de Septiembre Chileno",
+    description: "Banderines tricolor, volantines tradicionales en vuelo y copihues decorativos.",
+    primaryColor: "#D52B1E",
+    secondaryColor: "#0039A6",
+    accentColor: "#FEDC00"
+  }
+];
 
 export const defaultBanners = [
   {
