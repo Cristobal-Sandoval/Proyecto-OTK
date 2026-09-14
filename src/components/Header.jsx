@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Menu, X, Calendar, Users, Camera, Newspaper, LayoutDashboard } from 'lucide-react';
 
 const Header = ({ activeTab, setActiveTab, topOffset }) => {
@@ -167,109 +168,114 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
         </button>
       </div>
 
-      {/* Mobile Drawer Overlay */}
-      {isOpen && (
-        <div
-          onClick={() => setIsOpen(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(0,0,0,0.6)',
-            zIndex: 104,
-            animation: 'fadeIn var(--transition-fast)'
-          }}
-        />
-      )}
-
-      {/* Mobile Drawer Menu */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          width: '290px',
-          height: '100vh',
-          background: 'var(--bg-surface-solid)',
-          borderLeft: '1px solid var(--border-color)',
-          zIndex: 115,
-          padding: '24px 20px 40px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform var(--transition-smooth)',
-          boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
-          overflowY: 'auto'
-        }}
-        className="mobile-nav-drawer"
-      >
-        {/* Drawer Top Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Menú</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: 'var(--secondary)', color: '#FFF' }}>2026</span>
-          </div>
-          <button
-            onClick={() => setIsOpen(false)}
-            aria-label="Cerrar menú"
-            style={{
-              background: 'rgba(0, 163, 255, 0.08)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              padding: '6px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '36px',
-              minWidth: '36px'
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.id)}
+      {/* Mobile Drawer (Rendered at root document.body via Portal to eliminate stacking context clipping) */}
+      {typeof document !== 'undefined' && createPortal(
+        <>
+          {isOpen && (
+            <div
+              onClick={() => setIsOpen(false)}
               style={{
-                background: isActive ? 'linear-gradient(135deg, rgba(0, 163, 255, 0.15) 0%, rgba(255, 59, 108, 0.08) 100%)' : 'transparent',
-                border: '1px solid',
-                borderColor: isActive ? 'var(--border-color)' : 'transparent',
-                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                padding: '14px 18px',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                fontWeight: isActive ? 750 : 600,
-                fontSize: '0.98rem',
-                textAlign: 'left',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-                minHeight: '48px',
-                transition: 'var(--transition-fast)'
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0,0,0,0.65)',
+                zIndex: 9998,
+                animation: 'fadeIn var(--transition-fast)'
               }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {Icon && <Icon size={20} style={{ color: isActive ? 'var(--secondary)' : 'var(--text-muted)' }} />}
-                {item.label}
-              </span>
-              {isActive && (
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 8px var(--secondary-glow)' }} />
-              )}
-            </button>
-          );
-        })}
-      </div>
+            />
+          )}
+
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              width: '290px',
+              height: '100vh',
+              background: 'var(--bg-surface-solid)',
+              borderLeft: '1px solid var(--border-color)',
+              zIndex: 9999,
+              padding: '24px 20px 40px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+              transition: 'transform var(--transition-smooth)',
+              boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+              overflowY: 'auto',
+              pointerEvents: isOpen ? 'auto' : 'none'
+            }}
+            className="mobile-nav-drawer"
+          >
+            {/* Drawer Top Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Menú</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: 'var(--secondary)', color: '#FFF' }}>2026</span>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                aria-label="Cerrar menú"
+                style={{
+                  background: 'rgba(0, 163, 255, 0.08)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                  padding: '6px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '36px',
+                  minWidth: '36px'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  style={{
+                    background: isActive ? 'linear-gradient(135deg, rgba(0, 163, 255, 0.15) 0%, rgba(255, 59, 108, 0.08) 100%)' : 'transparent',
+                    border: '1px solid',
+                    borderColor: isActive ? 'var(--border-color)' : 'transparent',
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    padding: '14px 18px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontWeight: isActive ? 750 : 600,
+                    fontSize: '0.98rem',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    minHeight: '48px',
+                    transition: 'var(--transition-fast)'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {Icon && <Icon size={20} style={{ color: isActive ? 'var(--secondary)' : 'var(--text-muted)' }} />}
+                    {item.label}
+                  </span>
+                  {isActive && (
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 8px var(--secondary-glow)' }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>,
+        document.body
+      )}
 
       {/* CSS injection for responsive navbar layout */}
       <style>{`

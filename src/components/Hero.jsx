@@ -335,9 +335,9 @@ const Hero = ({ config, onNavigate, banners }) => {
 
           {/* Countdown column */}
           {!timeLeft.expired ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} className="hero-bottom-col">
+            <div className="hero-countdown-container hero-bottom-col">
               <span style={{ fontSize: '0.8rem', fontWeight: 950, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>Faltan:</span>
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div className="hero-countdown-grid">
                 {[
                   { val: timeLeft.days, unit: 'd' },
                   { val: timeLeft.hours, unit: 'h' },
@@ -351,14 +351,14 @@ const Hero = ({ config, onNavigate, banners }) => {
                       background: 'var(--countdown-box-bg, rgba(15, 23, 42, 0.04))', 
                       border: '2px solid var(--countdown-box-border, var(--border-pop, #0F172A))', 
                       borderRadius: '12px', 
-                      padding: '6px 12px', 
                       display: 'flex', 
                       alignItems: 'baseline', 
+                      justifyContent: 'center',
                       gap: '3px',
                       boxShadow: '2px 2px 0px var(--shadow-pop, rgba(15, 23, 42, 0.05))'
                     }}
                   >
-                    <span style={{ fontWeight: 950, fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontFamily: 'var(--font-display)', color: 'var(--countdown-num-color, var(--text-primary))', lineHeight: 1 }}>{String(item.val).padStart(2, '0')}</span>
+                    <span style={{ fontWeight: 950, fontSize: 'clamp(1.05rem, 2.5vw, 1.35rem)', fontFamily: 'var(--font-display)', color: 'var(--countdown-num-color, var(--text-primary))', lineHeight: 1 }}>{String(item.val).padStart(2, '0')}</span>
                     <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--countdown-unit-color, var(--text-secondary))', textTransform: 'uppercase' }}>{item.unit}</span>
                   </div>
                 ))}
@@ -419,10 +419,26 @@ const Hero = ({ config, onNavigate, banners }) => {
           transform: translateY(-2px);
           box-shadow: 6px 6px 0px rgba(15, 23, 42, 0.25) !important;
         }
+        .hero-countdown-container {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .hero-countdown-grid {
+          display: flex;
+          gap: 6px;
+          align-items: center;
+        }
+        .hero-countdown-box {
+          padding: 6px 12px;
+          min-width: 46px;
+        }
         .hero-bottom-bar {
           flex-direction: column;
           align-items: stretch !important;
           gap: 16px !important;
+          width: 100%;
+          box-sizing: border-box;
         }
         @media (min-width: 768px) {
           .hero-bottom-bar {
@@ -432,6 +448,33 @@ const Hero = ({ config, onNavigate, banners }) => {
           }
         }
         @media (max-width: 767px) {
+          .hero-bottom-bar {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            padding: 20px 16px !important;
+            border-radius: 22px !important;
+            box-shadow: 4px 4px 0px var(--shadow-pop, rgba(15, 23, 42, 0.15)) !important;
+          }
+          .hero-countdown-container {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+          }
+          .hero-countdown-grid {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 8px !important;
+            width: 100% !important;
+            max-width: 320px !important;
+          }
+          .hero-countdown-box {
+            padding: 8px 4px !important;
+            border-radius: 10px !important;
+            width: 100% !important;
+          }
           .hero-bottom-col {
             justify-content: center;
             display: flex;
@@ -443,14 +486,16 @@ const Hero = ({ config, onNavigate, banners }) => {
             flex: 1;
           }
         }
-        @media (max-width: 420px) {
+        @media (max-width: 380px) {
           .hero-bottom-bar {
-            padding: 16px 12px !important;
-            border-radius: 20px !important;
+            padding: 16px 10px !important;
+            border-radius: 18px !important;
+          }
+          .hero-countdown-grid {
+            gap: 5px !important;
           }
           .hero-countdown-box {
-            padding: 5px 8px !important;
-            border-radius: 8px !important;
+            padding: 6px 2px !important;
           }
         }
         @media (min-width: 768px) {

@@ -8,11 +8,13 @@ import SeasonalOverlay from './components/SeasonalOverlay';
 
 // Code-split non-critical and heavy components
 const NewsSection = lazy(() => import('./components/NewsSection'));
+const NewsDetail = lazy(() => import('./components/NewsDetail'));
 const CosplayerGallery = lazy(() => import('./components/CosplayerGallery'));
 const CommunityList = lazy(() => import('./components/CommunityList'));
 const ScheduleTimeline = lazy(() => import('./components/ScheduleTimeline'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
+import { slugify } from './utils/slugify';
 import {
   getEventConfig, saveEventConfig,
   getFloatingBanner, saveFloatingBanner,
@@ -30,6 +32,9 @@ function App() {
       if (hash === '#stf-portal' || hash === '#staff-access' || hash === '#admin') {
         return 'admin';
       }
+      if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
+        return 'news-detail';
+      }
       if (['#news', '#cosplay', '#communities', '#schedule'].includes(hash)) {
         return hash.replace('#', '');
       }
@@ -42,6 +47,7 @@ function App() {
   const [banners, setBannersState] = useState(() => getBanners());
   const [floatingBanner, setFloatingBannerState] = useState(() => getFloatingBanner());
   const [newsList, setNewsListState] = useState(() => getNews());
+  const [selectedArticle, setSelectedArticle] = useState(null);
   const [cosplayers, setCosplayersState] = useState(() => getCosplayers());
   const [communities, setCommunitiesState] = useState(() => getCommunities());
   const [schedule, setScheduleState] = useState(() => getSchedule());
@@ -87,6 +93,11 @@ function App() {
 
   // Synchronize document.title dynamically for SEO and browser history
   useEffect(() => {
+    if (activeTab === 'news-detail' && selectedArticle) {
+      document.title = `${selectedArticle.title} | Otakonce 2026`;
+      return;
+    }
+
     const titles = {
       home: 'Otakonce 2026 | El Evento de Anime y Cultura Geek de Concepción',
       news: 'Noticias y Comunicados | Otakonce 2026',
@@ -101,12 +112,28 @@ function App() {
       if (window.location.hash && window.location.hash !== '#home') {
         history.replaceState(null, '', window.location.pathname);
       }
-    } else if (activeTab !== 'admin') {
+    } else if (activeTab !== 'admin' && activeTab !== 'news-detail') {
       if (window.location.hash !== `#${activeTab}`) {
         history.replaceState(null, '', `#${activeTab}`);
       }
     }
-  }, [activeTab]);
+  }, [activeTab, selectedArticle]);
+
+  // Handle article resolution from hash (e.g. #noticia/slug-de-la-noticia)
+  useEffect(() => {
+    const resolveHashArticle = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
+        const slug = hash.replace(/^#(noticia|news)\//, '').toLowerCase();
+        const found = newsList.find(n => slugify(n.title) === slug || String(n.id) === slug);
+        if (found) {
+          setSelectedArticle(found);
+          setActiveTab('news-detail');
+        }
+      }
+    };
+    resolveHashArticle();
+  }, [newsList]);
 
   // Listen for stealth admin shortcut (Ctrl+Shift+A or Cmd+Shift+A) or stealth hash (#stf-portal / #staff-access)
   useEffect(() => {
@@ -114,6 +141,13 @@ function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#stf-portal' || hash === '#staff-access' || hash === '#admin') {
         setActiveTab('admin');
+      } else if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
+        const slug = hash.replace(/^#(noticia|news)\//, '').toLowerCase();
+        const found = newsList.find(n => slugify(n.title) === slug || String(n.id) === slug);
+        if (found) {
+          setSelectedArticle(found);
+          setActiveTab('news-detail');
+        }
       }
     };
     checkHash();
@@ -131,11 +165,23 @@ function App() {
       window.removeEventListener('hashchange', checkHash);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [newsList]);
 
   // Nav helper for components
   const handleNavigate = (tabId) => {
+    if (tabId !== 'news-detail') {
+      setSelectedArticle(null);
+    }
     setActiveTab(tabId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Select article and navigate to dedicated news view with slug URL
+  const handleSelectArticle = (article) => {
+    setSelectedArticle(article);
+    setActiveTab('news-detail');
+    const slug = slugify(article.title);
+    window.location.hash = `noticia/${slug}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -176,7 +222,7 @@ function App() {
               <div style={{ background: 'rgba(255, 255, 255, 0.005)' }}>
                 
                 {/* News Preview */}
-                <NewsSection newsList={newsList.slice(0, 3)} />
+                <NewsSection newsList={newsList.slice(0, 3)} onSelectArticle={handleSelectArticle} />
                 <div style={{ textAlign: 'center', marginTop: '-30px', marginBottom: '60px' }}>
                   <button className="btn btn-secondary" onClick={() => handleNavigate('news')}>
                     Ver todas las noticias &rarr;
@@ -201,7 +247,17 @@ function App() {
 
           {/* Full Section Tabs */}
           {activeTab === 'news' && (
-            <NewsSection newsList={newsList} />
+            <NewsSection newsList={newsList} onSelectArticle={handleSelectArticle} />
+          )}
+
+          {/* Dedicated Individual News Article Page */}
+          {activeTab === 'news-detail' && selectedArticle && (
+            <NewsDetail 
+              article={selectedArticle} 
+              newsList={newsList} 
+              onBack={() => handleNavigate('news')} 
+              onSelectArticle={handleSelectArticle} 
+            />
           )}
 
           {activeTab === 'cosplay' && (

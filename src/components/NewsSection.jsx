@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Calendar, Clock, X, Newspaper } from 'lucide-react';
 
-const NewsSection = ({ newsList = [] }) => {
+const NewsSection = ({ newsList = [], onSelectArticle }) => {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -134,7 +134,13 @@ const NewsSection = ({ newsList = [] }) => {
               <article 
                 key={article.id}
                 className="glass-card"
-                onClick={() => setSelectedArticle(article)}
+                onClick={() => {
+                  if (onSelectArticle) {
+                    onSelectArticle(article);
+                  } else {
+                    setSelectedArticle(article);
+                  }
+                }}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
