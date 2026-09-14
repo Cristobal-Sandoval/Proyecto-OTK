@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, ChevronRight, Clock } from 'lucide-react';
+import { Calendar, MapPin, ChevronRight } from 'lucide-react';
 const OtakonceLogo = ({ size = '260px' }) => (
   <div 
     style={{
