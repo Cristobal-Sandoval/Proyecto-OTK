@@ -190,21 +190,49 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
           position: 'fixed',
           top: 0,
           right: 0,
-          width: '280px',
+          width: '290px',
           height: '100vh',
           background: 'var(--bg-surface-solid)',
           borderLeft: '1px solid var(--border-color)',
-          zIndex: 105,
-          padding: '80px 24px 40px',
+          zIndex: 115,
+          padding: '24px 20px 40px',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform var(--transition-smooth)',
-          boxShadow: '-10px 0 30px rgba(0,0,0,0.5)'
+          boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+          overflowY: 'auto'
         }}
         className="mobile-nav-drawer"
       >
+        {/* Drawer Top Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Menú</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: 'var(--secondary)', color: '#FFF' }}>2026</span>
+          </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            aria-label="Cerrar menú"
+            style={{
+              background: 'rgba(0, 163, 255, 0.08)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              padding: '6px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '36px',
+              minWidth: '36px'
+            }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -217,21 +245,27 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
                 border: '1px solid',
                 borderColor: isActive ? 'var(--border-color)' : 'transparent',
                 color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                padding: '14px 20px',
+                padding: '14px 18px',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '1rem',
+                fontWeight: isActive ? 750 : 600,
+                fontSize: '0.98rem',
                 textAlign: 'left',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                justifyContent: 'space-between',
                 width: '100%',
+                minHeight: '48px',
                 transition: 'var(--transition-fast)'
               }}
             >
-              {Icon && <Icon size={20} style={{ color: isActive ? 'var(--secondary)' : 'var(--text-muted)' }} />}
-              {item.label}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {Icon && <Icon size={20} style={{ color: isActive ? 'var(--secondary)' : 'var(--text-muted)' }} />}
+                {item.label}
+              </span>
+              {isActive && (
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 8px var(--secondary-glow)' }} />
+              )}
             </button>
           );
         })}

@@ -85,6 +85,29 @@ function App() {
     document.documentElement.setAttribute('data-theme', currentTheme);
   }, [eventConfig.themeMode]);
 
+  // Synchronize document.title dynamically for SEO and browser history
+  useEffect(() => {
+    const titles = {
+      home: 'Otakonce 2026 | El Evento de Anime y Cultura Geek de Concepción',
+      news: 'Noticias y Comunicados | Otakonce 2026',
+      cosplay: 'Pasarela Cosplay & Invitados | Otakonce 2026',
+      communities: 'Comunidades y Agrupaciones | Otakonce 2026',
+      schedule: 'Cronograma de Actividades | Otakonce 2026',
+      admin: 'Acceso Administrativo | Otakonce Staff'
+    };
+    document.title = titles[activeTab] || 'Otakonce 2026';
+
+    if (activeTab === 'home') {
+      if (window.location.hash && window.location.hash !== '#home') {
+        history.replaceState(null, '', window.location.pathname);
+      }
+    } else if (activeTab !== 'admin') {
+      if (window.location.hash !== `#${activeTab}`) {
+        history.replaceState(null, '', `#${activeTab}`);
+      }
+    }
+  }, [activeTab]);
+
   // Listen for stealth admin shortcut (Ctrl+Shift+A or Cmd+Shift+A) or stealth hash (#stf-portal / #staff-access)
   useEffect(() => {
     const checkHash = () => {

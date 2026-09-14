@@ -853,3 +853,55 @@ textarea.form-control {
   50% { transform: translateY(3px); }
 }
 
+/* ==========================================
+   ACCESSIBILITY & FOCUS-VISIBLE
+   ========================================== */
+:focus-visible {
+  outline: 2px solid var(--cyan) !important;
+  outline-offset: 3px !important;
+}
+
+/* ==========================================
+   MOBILE INPUTS & AUTO-ZOOM PREVENTION (iOS)
+   ========================================== */
+@media screen and (max-width: 768px) {
+  input, select, textarea, .form-control {
+    font-size: 16px !important; /* Prevents iOS Safari from auto-zooming */
+  }
+}
+
+/* ==========================================
+   MOBILE VOLANTIN SCALING
+   ========================================== */
+@media screen and (max-width: 600px) {
+  .seasonal-volantin {
+    transform: scale(0.65) !important;
+    transform-origin: top right !important;
+    top: 70px !important;
+    right: 12px !important;
+  }
+}
+
+/* ==========================================
+   ADMIN RESPONSIVE TABLES VS MOBILE CARDS
+   ========================================== */
+.admin-table-desktop {
+  display: block;
+}
+
+.admin-cards-mobile {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .admin-table-desktop {
+    display: none !important;
+  }
+  .admin-cards-mobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 14px;
+  }
+}
+
+

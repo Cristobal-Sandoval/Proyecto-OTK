@@ -268,6 +268,7 @@ const SeasonalOverlay = ({ theme = 'normal' }) => {
 
           {/* Flying Volantín Chileno con Bandera de Chile y Cola Fluida */}
           <div
+            className="seasonal-volantin"
             style={{
               position: 'absolute',
               top: '11vh',

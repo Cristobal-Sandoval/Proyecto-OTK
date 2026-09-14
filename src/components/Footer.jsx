@@ -1,3 +1,4 @@
+import React, { useRef } from 'react';
 import { ArrowUp } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
@@ -20,7 +21,50 @@ const Instagram = ({ size = 20, ...props }) => (
 );
 
 const Footer = ({ setActiveTab }) => {
-  
+  const pressTimerRef = useRef(null);
+  const tapCountRef = useRef(0);
+  const lastTapRef = useRef(0);
+
+  const triggerAdminPortal = () => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(60);
+    }
+    window.location.hash = 'stf-portal';
+    setActiveTab('admin');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTouchStart = () => {
+    pressTimerRef.current = setTimeout(() => {
+      triggerAdminPortal();
+    }, 2200);
+  };
+
+  const handleTouchEnd = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+
+  const handleBrandClick = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 450) {
+      tapCountRef.current += 1;
+    } else {
+      tapCountRef.current = 1;
+    }
+    lastTapRef.current = now;
+
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      triggerAdminPortal();
+      return;
+    }
+
+    handleNavClick('home');
+  };
+
   const handleNavClick = (tabId) => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -47,17 +91,23 @@ const Footer = ({ setActiveTab }) => {
           textAlign: 'center'
         }}
       >
-        {/* Branding & Logo */}
+        {/* Branding & Logo with secret stealth admin access */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <h2 
-            onClick={() => handleNavClick('home')}
+            onClick={handleBrandClick}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
             style={{
               fontSize: '1.8rem',
               fontWeight: 900,
               fontFamily: 'var(--font-display)',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              userSelect: 'none',
+              WebkitUserSelect: 'none'
             }}
             className="text-gradient"
+            title="Otakonce 2026"
           >
             OTAKONCE
           </h2>

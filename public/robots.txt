@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /*stf-portal*
+Disallow: /*admin*
+Disallow: /*staff-access*
+
 Sitemap: https://laotakonce.cl/sitemap.xml

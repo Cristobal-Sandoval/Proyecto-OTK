@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
   Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield,
@@ -23,6 +23,33 @@ const AdminDashboard = ({
   );
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  
+  // Rate limiting & brute force protection
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    return parseInt(sessionStorage.getItem('otakonce_login_attempts') || '0', 10);
+  });
+  const [lockoutUntil, setLockoutUntil] = useState(() => {
+    return parseInt(sessionStorage.getItem('otakonce_login_lockout') || '0', 10);
+  });
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+
+  useEffect(() => {
+    const updateCooldown = () => {
+      const remainingMs = lockoutUntil - Date.now();
+      if (remainingMs > 0) {
+        setLockoutRemaining(Math.ceil(remainingMs / 1000));
+      } else {
+        setLockoutRemaining(0);
+        if (lockoutUntil > 0) {
+          sessionStorage.removeItem('otakonce_login_lockout');
+          setLockoutUntil(0);
+        }
+      }
+    };
+    updateCooldown();
+    const interval = setInterval(updateCooldown, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
   
   // Dashboard Sub-navigation Tabs
   const [adminTab, setAdminTab] = useState('themes'); // themes, config, hero_banners, banner, news, cosplayers, communities, schedule
@@ -159,14 +186,30 @@ const AdminDashboard = ({
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (lockoutRemaining > 0) return;
+
     const expectedHash = import.meta.env.VITE_ADMIN_HASH || 'd33d224668fd2090897bb907c3b73e4dd42a1c9aac76b7b6590d329276a235ba';
     const computedHash = await hashPassword(password);
     if (computedHash === expectedHash) {
       setIsAuthenticated(true);
       sessionStorage.setItem('otakonce_admin_auth', 'true');
+      sessionStorage.removeItem('otakonce_login_attempts');
+      sessionStorage.removeItem('otakonce_login_lockout');
+      setFailedAttempts(0);
+      setLockoutUntil(0);
       setLoginError('');
     } else {
-      setLoginError('Contraseña incorrecta.');
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+      sessionStorage.setItem('otakonce_login_attempts', String(nextAttempts));
+      if (nextAttempts >= 5) {
+        const lockoutTime = Date.now() + 30000; // 30 seconds
+        setLockoutUntil(lockoutTime);
+        sessionStorage.setItem('otakonce_login_lockout', String(lockoutTime));
+        setLoginError('Demasiados intentos fallidos. Bloqueado temporalmente por 30 segundos.');
+      } else {
+        setLoginError(`Contraseña incorrecta. (${5 - nextAttempts} intento${5 - nextAttempts === 1 ? '' : 's'} restante${5 - nextAttempts === 1 ? '' : 's'})`);
+      }
     }
   };
 
@@ -387,14 +430,25 @@ const AdminDashboard = ({
                   placeholder="Introduce la contraseña..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={lockoutRemaining > 0}
                   required
                 />
               </div>
 
-              {loginError && <p style={{ fontSize: '0.8rem', color: 'var(--secondary)', fontWeight: 600 }}>{loginError}</p>}
+              {loginError && (
+                <div style={{ fontSize: '0.82rem', color: 'var(--secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                  <span>{lockoutRemaining > 0 ? `Bloqueo de seguridad: espera ${lockoutRemaining}s para volver a intentar` : loginError}</span>
+                </div>
+              )}
 
-              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>
-                Entrar al Panel
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                disabled={lockoutRemaining > 0}
+                style={{ width: '100%', marginTop: '8px', opacity: lockoutRemaining > 0 ? 0.6 : 1 }}
+              >
+                {lockoutRemaining > 0 ? `Bloqueado (${lockoutRemaining}s)` : 'Entrar al Panel'}
               </button>
             </form>
           </div>
@@ -1296,10 +1350,12 @@ const AdminDashboard = ({
                 </div>
               </form>
 
-              {/* News List Table */}
+              {/* News List Table & Mobile Cards */}
               <div>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Artículos Publicados</h4>
-                <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Artículos Publicados ({newsList.length})</h4>
+                
+                {/* Desktop View */}
+                <div className="admin-table-desktop" style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
                       <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
@@ -1326,12 +1382,14 @@ const AdminDashboard = ({
                               <button 
                                 onClick={() => handleEditNews(article)} 
                                 style={{ background: 'transparent', color: 'var(--cyan)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Editar noticia"
                               >
                                 <Edit size={16} />
                               </button>
                               <button 
                                 onClick={() => handleDeleteNews(article.id)} 
                                 style={{ background: 'transparent', color: 'var(--secondary)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Eliminar noticia"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1341,6 +1399,53 @@ const AdminDashboard = ({
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Cards View */}
+                <div className="admin-cards-mobile">
+                  {newsList.map((article) => (
+                    <div 
+                      key={article.id}
+                      style={{
+                        background: 'var(--bg-surface-solid)',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                        <div style={{ width: '64px', height: '48px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', flexShrink: 0 }}>
+                          {article.image ? <img src={article.image} alt="News Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><ImageIcon size={16} style={{color:'var(--text-muted)'}} /></div>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span className="badge badge-announcement" style={{ fontSize: '0.68rem', padding: '2px 8px', marginBottom: '4px' }}>{article.category}</span>
+                          <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.3 }}>{article.title}</h5>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{article.date}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditNews(article)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
+                        >
+                          <Edit size={16} /> Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteNews(article.id)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                        >
+                          <Trash2 size={16} /> Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1440,10 +1545,12 @@ const AdminDashboard = ({
                 </div>
               </form>
 
-              {/* Cosplayers List */}
+              {/* Cosplayers List & Mobile Cards */}
               <div>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Invitados Agregados</h4>
-                <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Invitados Agregados ({cosplayers.length})</h4>
+                
+                {/* Desktop Table */}
+                <div className="admin-table-desktop" style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
                       <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
@@ -1470,12 +1577,14 @@ const AdminDashboard = ({
                               <button 
                                 onClick={() => handleEditCosplayer(cos)} 
                                 style={{ background: 'transparent', color: 'var(--cyan)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Editar cosplayer"
                               >
                                 <Edit size={16} />
                               </button>
                               <button 
                                 onClick={() => handleDeleteCosplayer(cos.id)} 
                                 style={{ background: 'transparent', color: 'var(--secondary)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Eliminar cosplayer"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1485,6 +1594,53 @@ const AdminDashboard = ({
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="admin-cards-mobile">
+                  {cosplayers.map((cos) => (
+                    <div 
+                      key={cos.id}
+                      style={{
+                        background: 'var(--bg-surface-solid)',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ width: '52px', height: '52px', borderRadius: '50%', overflow: 'hidden', border: '1.5px solid var(--border-color)', flexShrink: 0 }}>
+                          {cos.image ? <img src={cos.image} alt="Cos Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><ImageIcon size={18} style={{color:'var(--text-muted)'}} /></div>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{cos.name}</h5>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Personaje: <strong style={{ color: 'var(--text-primary)' }}>{cos.character}</strong></p>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>@{cos.instagram.split('/').pop()}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditCosplayer(cos)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
+                        >
+                          <Edit size={16} /> Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCosplayer(cos.id)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                        >
+                          <Trash2 size={16} /> Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1584,10 +1740,12 @@ const AdminDashboard = ({
                 </div>
               </form>
 
-              {/* Communities Table */}
+              {/* Communities Table & Mobile Cards */}
               <div>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Comunidades Registradas</h4>
-                <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Comunidades Registradas ({communities.length})</h4>
+                
+                {/* Desktop Table */}
+                <div className="admin-table-desktop" style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
                       <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
@@ -1612,12 +1770,14 @@ const AdminDashboard = ({
                               <button 
                                 onClick={() => handleEditCommunity(comm)} 
                                 style={{ background: 'transparent', color: 'var(--cyan)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Editar comunidad"
                               >
                                 <Edit size={16} />
                               </button>
                               <button 
                                 onClick={() => handleDeleteCommunity(comm.id)} 
                                 style={{ background: 'transparent', color: 'var(--secondary)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Eliminar comunidad"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1627,6 +1787,53 @@ const AdminDashboard = ({
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="admin-cards-mobile">
+                  {communities.map((comm) => (
+                    <div 
+                      key={comm.id}
+                      style={{
+                        background: 'var(--bg-surface-solid)',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', border: '1.5px solid var(--border-color)', flexShrink: 0 }}>
+                          {comm.logo ? <img src={comm.logo} alt="Logo Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', fontSize:'0.75rem', fontWeight: 800 }}>TCG</div>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span className="badge badge-community" style={{ fontSize: '0.68rem', padding: '2px 8px', marginBottom: '4px' }}>{comm.type}</span>
+                          <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{comm.name}</h5>
+                          {comm.instagram && <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>@{comm.instagram.split('/').pop()}</span>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditCommunity(comm)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
+                        >
+                          <Edit size={16} /> Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCommunity(comm.id)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                        >
+                          <Trash2 size={16} /> Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1705,10 +1912,12 @@ const AdminDashboard = ({
                 </div>
               </form>
 
-              {/* Schedule Table */}
+              {/* Schedule Table & Mobile Cards */}
               <div>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Cronograma Programado</h4>
-                <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Cronograma Programado ({schedule.length})</h4>
+                
+                {/* Desktop Table */}
+                <div className="admin-table-desktop" style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
                       <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
@@ -1729,12 +1938,14 @@ const AdminDashboard = ({
                               <button 
                                 onClick={() => handleEditSchedule(item)} 
                                 style={{ background: 'transparent', color: 'var(--cyan)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Editar actividad"
                               >
                                 <Edit size={16} />
                               </button>
                               <button 
                                 onClick={() => handleDeleteSchedule(item.id)} 
                                 style={{ background: 'transparent', color: 'var(--secondary)', cursor: 'pointer', padding: '6px' }}
+                                aria-label="Eliminar actividad"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1744,6 +1955,62 @@ const AdminDashboard = ({
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="admin-cards-mobile">
+                  {schedule.map((item) => (
+                    <div 
+                      key={item.id}
+                      style={{
+                        background: 'var(--bg-surface-solid)',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span 
+                          style={{
+                            background: 'rgba(253, 52, 132, 0.12)',
+                            color: 'var(--secondary)',
+                            fontWeight: 900,
+                            padding: '4px 10px',
+                            borderRadius: '8px',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          {item.time} hrs
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--cyan)', fontWeight: 700 }}>{item.stage}</span>
+                      </div>
+                      <div>
+                        <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>{item.title}</h5>
+                        {item.description && <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{item.description}</p>}
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditSchedule(item)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
+                        >
+                          <Edit size={16} /> Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSchedule(item.id)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                        >
+                          <Trash2 size={16} /> Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

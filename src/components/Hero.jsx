@@ -346,6 +346,7 @@ const Hero = ({ config, onNavigate, banners }) => {
                 ].map((item, idx) => (
                   <div 
                     key={idx} 
+                    className="hero-countdown-box"
                     style={{ 
                       background: 'var(--countdown-box-bg, rgba(15, 23, 42, 0.04))', 
                       border: '2px solid var(--countdown-box-border, var(--border-pop, #0F172A))', 
@@ -440,6 +441,16 @@ const Hero = ({ config, onNavigate, banners }) => {
           }
           .hero-bottom-actions button {
             flex: 1;
+          }
+        }
+        @media (max-width: 420px) {
+          .hero-bottom-bar {
+            padding: 16px 12px !important;
+            border-radius: 20px !important;
+          }
+          .hero-countdown-box {
+            padding: 5px 8px !important;
+            border-radius: 8px !important;
           }
         }
         @media (min-width: 768px) {
