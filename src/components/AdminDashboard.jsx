@@ -381,12 +381,11 @@ const AdminDashboard = ({
         <div 
           style={{
             display: 'flex',
-            gap: '8px',
-            overflowX: 'auto',
-            paddingBottom: '8px',
-            marginBottom: '32px',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch'
+            flexWrap: 'wrap',
+            gap: '10px',
+            alignItems: 'center',
+            marginBottom: '28px',
+            width: '100%'
           }}
           className="admin-tabs-list"
         >
@@ -401,28 +400,33 @@ const AdminDashboard = ({
             { id: 'schedule', label: 'Cronograma', icon: Calendar }
           ].map((tab) => {
             const Icon = tab.icon;
+            const isActive = adminTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setAdminTab(tab.id)}
                 style={{
-                  background: adminTab === tab.id ? 'linear-gradient(135deg, var(--cyan) 0%, var(--secondary) 100%)' : 'rgba(0, 163, 255, 0.05)',
-                  border: '1px solid',
-                  borderColor: adminTab === tab.id ? 'transparent' : 'var(--border-color)',
-                  color: adminTab === tab.id ? 'white' : 'var(--text-primary)',
-                  padding: '10px 16px',
+                  background: isActive 
+                    ? 'linear-gradient(135deg, var(--cyan) 0%, var(--secondary) 100%)' 
+                    : 'var(--bg-surface-solid)',
+                  border: '1.5px solid',
+                  borderColor: isActive ? 'transparent' : 'var(--border-color)',
+                  color: isActive ? '#FFFFFF' : 'var(--text-primary)',
+                  padding: '10px 18px',
                   borderRadius: '12px',
                   cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  display: 'flex',
+                  fontWeight: isActive ? 800 : 600,
+                  fontSize: '0.88rem',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
                   whiteSpace: 'nowrap',
+                  boxShadow: isActive ? '0 4px 15px rgba(0, 136, 255, 0.25)' : '0 2px 6px rgba(0, 0, 0, 0.04)',
                   transition: 'var(--transition-fast)'
                 }}
+                className="admin-tab-btn"
               >
-                <Icon size={16} />
+                <Icon size={17} />
                 {tab.label}
               </button>
             );
@@ -1507,11 +1511,12 @@ const AdminDashboard = ({
       </div>
 
       <style>{`
+        .admin-tab-btn:hover {
+          transform: translateY(-2px);
+          border-color: var(--cyan) !important;
+        }
         .table-row-hover:hover {
           background: rgba(255,255,255,0.01) !important;
-        }
-        .admin-tabs-list::-webkit-scrollbar {
-          display: none;
         }
         @media (min-width: 768px) {
           .grid-2-col {
