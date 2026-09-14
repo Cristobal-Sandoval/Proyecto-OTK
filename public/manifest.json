@@ -1,0 +1,16 @@
+{
+  "name": "Otakonce 2026",
+  "short_name": "Otakonce",
+  "description": "El evento de anime, videojuegos y cultura geek más grande de Concepción",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#00A3FF",
+  "background_color": "#F0F9FF",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,435 @@
+import React, { useState, useEffect } from 'react';
+import { Calendar, MapPin, ChevronRight, Clock } from 'lucide-react';
+const OtakonceLogo = ({ size = '260px' }) => (
+  <div 
+    style={{
+      width: size,
+      maxWidth: 'min(75vw, 320px)',
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      userSelect: 'none',
+      animation: 'float 5s ease-in-out infinite',
+      flexShrink: 0,
+      margin: '0 auto',
+      filter: 'drop-shadow(0 10px 24px rgba(0, 0, 0, 0.4))'
+    }}
+    className="otakonce-main-logo"
+  >
+    <img 
+      src="/otakonce-logo.svg" 
+      alt="Otakonce 2026 Logo Oficial" 
+      style={{ width: '100%', height: 'auto', display: 'block' }} 
+    />
+  </div>
+);
+
+const Hero = ({ config, onNavigate, banners }) => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    expired: false
+  });
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const targetDate = new Date(config.countdownDate).getTime();
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days, hours, minutes, seconds, expired: false });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [config.countdownDate]);
+
+  // Auto-rotate banners
+  useEffect(() => {
+    if (!banners || banners.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % banners.length);
+    }, 6000); // 6 seconds slide duration
+    return () => clearInterval(interval);
+  }, [banners]);
+
+  const activeBanner = banners && banners.length > 0 && banners[currentSlide]
+    ? banners[currentSlide]
+    : { title: config.title, subtitle: config.subtitle, image: config.bannerImage || '/assets/hero_banner.png' };
+
+  return (
+    <section 
+      style={{
+        position: 'relative',
+        minHeight: 'calc(100vh - var(--header-height) - var(--announcement-height, 0px))',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        overflowX: 'hidden',
+        background: '#F0F9FF',
+        backgroundAttachment: 'scroll'
+      }}
+      className="hero-section"
+    >
+      {/* Widescreen Background Slider (cross-fade transition) with dynamic alignment gradient mask */}
+      {(banners && banners.length > 0 ? banners : [{ id: 'default', image: config.bannerImage || '/assets/hero_banner.png', alignmentX: 'left' }]).map((banner, idx) => {
+        const isActive = (banners && banners.length > 0 ? idx === currentSlide : true);
+        
+        // Define overlay gradient based on text alignment
+        let overlayGradient = 'linear-gradient(to right, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.45) 50%, transparent 100%)';
+        if (banner.alignmentX === 'right') {
+          overlayGradient = 'linear-gradient(to left, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.45) 50%, transparent 100%)';
+        } else if (banner.alignmentX === 'center') {
+          overlayGradient = 'radial-gradient(circle, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.55) 50%, rgba(15, 23, 42, 0.25) 100%)';
+        }
+
+        return (
+          <div
+            key={banner.id || idx}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              opacity: isActive ? 1 : 0,
+              transition: 'opacity 1.2s ease-in-out',
+              willChange: 'opacity',
+              zIndex: 1,
+              pointerEvents: 'none'
+            }}
+          >
+            {/* Background Image */}
+            <div 
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundImage: `url(${banner.image})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                zIndex: 1
+              }}
+            />
+            {/* Legibility Gradient Overlay */}
+            <div 
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: overlayGradient,
+                zIndex: 2
+              }}
+            />
+          </div>
+        );
+      })}
+
+      {/* Decorative Glowing Orbs */}
+      <div style={{ position: 'absolute', top: '15%', left: '15%', width: '120px', height: '120px', background: 'var(--primary)', filter: 'blur(80px)', opacity: 0.15, pointerEvents: 'none', zIndex: 2 }} />
+      <div style={{ position: 'absolute', bottom: '15%', right: '15%', width: '150px', height: '150px', background: 'var(--cyan)', filter: 'blur(90px)', opacity: 0.1, pointerEvents: 'none', zIndex: 2 }} />
+
+      <div 
+        className="container"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          minHeight: 'calc(100vh - var(--header-height) - var(--announcement-height, 0px) - 48px)',
+          zIndex: 10,
+          gap: '24px',
+          width: '100%'
+        }}
+      >
+        {/* CSS Official Logo Replica */}
+        <div style={{ marginTop: '12px' }}>
+          <OtakonceLogo size="140px" />
+        </div>
+
+        {/* Dynamic pop-art text overlay (keyed on currentSlide to trigger slide-in / fade-in animation) */}
+        <div
+          key={currentSlide}
+          style={{
+            width: '100%',
+            maxWidth: '1200px',
+            textAlign: activeBanner.alignmentX === 'right' ? 'right' : activeBanner.alignmentX === 'center' ? 'center' : 'left',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: activeBanner.alignmentX === 'right' ? 'flex-end' : activeBanner.alignmentX === 'center' ? 'center' : 'flex-start',
+            gap: '12px',
+            marginTop: '20px',
+            marginBottom: '40px',
+            animation: 'fadeIn var(--transition-fast)'
+          }}
+          className="hero-text-overlay"
+        >
+          {/* Optional Badge */}
+          {activeBanner.badge && (
+            <span 
+              style={{
+                background: activeBanner.badgeBgColor || 'var(--cyan)',
+                color: '#FFFFFF',
+                padding: '4px 12px',
+                borderRadius: '9999px',
+                fontSize: '0.72rem',
+                fontWeight: 900,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                border: '2px solid #0F172A',
+                boxShadow: '3px 3px 0px #0F172A',
+                display: 'inline-block'
+              }}
+            >
+              {activeBanner.badge}
+            </span>
+          )}
+
+          {/* Title */}
+          <h1 
+            style={{
+              fontSize: 'clamp(1.8rem, 5.5vw, 3.4rem)',
+              fontWeight: 950,
+              lineHeight: 1.1,
+              letterSpacing: '-0.03em',
+              color: activeBanner.titleColor || '#FFFFFF',
+              textShadow: '2px 2px 0px #0F172A, -2px -2px 0px #0F172A, 2px -2px 0px #0F172A, -2px 2px 0px #0F172A, 5px 5px 0px rgba(15, 23, 42, 0.45)',
+              maxWidth: '750px',
+              margin: 0
+            }}
+          >
+            {activeBanner.title}
+          </h1>
+
+          {/* Subtitle */}
+          <p 
+            style={{
+              fontSize: 'clamp(0.9rem, 2.2vw, 1.15rem)',
+              color: activeBanner.subtitleColor || '#FFFFFF',
+              fontWeight: 650,
+              lineHeight: 1.45,
+              textShadow: '1px 1px 0px #0F172A, -1px -1px 0px #0F172A, 1px -1px 0px #0F172A, -1px 1px 0px #0F172A, 3px 3px 0px rgba(15, 23, 42, 0.4)',
+              maxWidth: '550px',
+              margin: 0,
+              marginLeft: activeBanner.alignmentX === 'right' ? 'auto' : activeBanner.alignmentX === 'center' ? 'auto' : '0',
+              marginRight: activeBanner.alignmentX === 'left' ? 'auto' : activeBanner.alignmentX === 'center' ? 'auto' : '0'
+            }}
+          >
+            {activeBanner.subtitle}
+          </p>
+
+          {/* CTA Button */}
+          {activeBanner.linkUrl && activeBanner.linkUrl !== '#' && (
+            <a 
+              href={activeBanner.linkUrl}
+              onClick={(e) => {
+                if (activeBanner.linkUrl.startsWith('#')) {
+                  e.preventDefault();
+                  onNavigate(activeBanner.linkUrl.substring(1));
+                }
+              }}
+              style={{
+                background: 'var(--primary)',
+                color: '#0F172A',
+                padding: '10px 22px',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                border: '2px solid #0F172A',
+                boxShadow: '3px 3px 0px #0F172A',
+                marginTop: '10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'var(--transition-fast)'
+              }}
+              className="banner-cta-btn"
+            >
+              {activeBanner.linkLabel || 'Saber Más'}
+              <ChevronRight size={16} />
+            </a>
+          )}
+        </div>
+
+        {/* Carousel Indicators (Dots) */}
+        {banners && banners.length > 1 && (
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '4px 0', zIndex: 12, alignItems: 'center' }}>
+            {banners.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                style={{
+                  width: idx === currentSlide ? '16px' : '6px',
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: idx === currentSlide ? 'var(--secondary)' : 'rgba(255, 255, 255, 0.4)',
+                  border: idx === currentSlide ? '1.5px solid #0F172A' : 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  flexShrink: 0,
+                  alignSelf: 'center',
+                  minWidth: 0,
+                  minHeight: 0,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                aria-label={`Ir al banner ${idx + 1} de ${banners.length}`}
+                aria-current={idx === currentSlide ? 'true' : undefined}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Bottom sticky bar containing Date, Location, and Countdown */}
+        <div 
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '20px',
+            width: '100%',
+            background: '#FFFFFF',
+            border: '3px solid #0F172A',
+            borderRadius: '28px',
+            padding: '20px 32px',
+            boxShadow: '8px 8px 0px rgba(15, 23, 42, 0.15)',
+            zIndex: 10,
+            marginTop: 'auto',
+            marginBottom: 'max(32px, env(safe-area-inset-bottom, 32px))'
+          }}
+          className="hero-bottom-bar"
+        >
+          {/* Date & Location column */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'center' }} className="hero-bottom-col">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Calendar size={22} style={{ color: 'var(--cyan)' }} />
+              <span style={{ fontSize: 'clamp(0.9rem, 2vw, 1.05rem)', fontWeight: 850, color: 'var(--text-primary)' }}>{config.date}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <MapPin size={22} style={{ color: 'var(--secondary)' }} />
+              <span style={{ fontSize: 'clamp(0.9rem, 2vw, 1.05rem)', fontWeight: 850, color: 'var(--text-primary)' }}>{config.location}</span>
+            </div>
+          </div>
+
+          {/* Countdown column */}
+          {!timeLeft.expired && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }} className="hero-bottom-col">
+              <span style={{ fontSize: '0.8rem', fontWeight: 950, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>Faltan:</span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[
+                  { val: timeLeft.days, unit: 'd' },
+                  { val: timeLeft.hours, unit: 'h' },
+                  { val: timeLeft.minutes, unit: 'm' },
+                  { val: timeLeft.seconds, unit: 's' }
+                ].map((item, idx) => (
+                  <div 
+                    key={idx} 
+                    style={{ 
+                      background: 'rgba(15, 23, 42, 0.04)', 
+                      border: '2px solid #0F172A', 
+                      borderRadius: '12px', 
+                      padding: '6px 12px', 
+                      display: 'flex', 
+                      alignItems: 'baseline', 
+                      gap: '3px',
+                      boxShadow: '2px 2px 0px rgba(15, 23, 42, 0.05)'
+                    }}
+                  >
+                    <span style={{ fontWeight: 950, fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontFamily: 'var(--font-display)', color: 'var(--text-primary)', lineHeight: 1 }}>{String(item.val).padStart(2, '0')}</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{item.unit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action buttons column */}
+          <div style={{ display: 'flex', gap: '12px' }} className="hero-bottom-actions hero-bottom-col">
+            <button 
+              className="btn btn-primary" 
+              onClick={() => onNavigate('schedule')}
+              style={{ minHeight: '44px', padding: '8px 24px', fontSize: '0.9rem', border: '2px solid #0F172A', boxShadow: '3px 3px 0px #0F172A' }}
+            >
+              Cronograma
+              <ChevronRight size={16} />
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => onNavigate('news')}
+              style={{ minHeight: '44px', padding: '8px 24px', fontSize: '0.9rem', border: '2px solid #0F172A', boxShadow: '3px 3px 0px #0F172A' }}
+            >
+              Noticias
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        .banner-cta-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 5px 5px 0px #0F172A;
+        }
+        .hero-btn-secondary:hover {
+          background-color: var(--primary) !important;
+          color: #0F172A !important;
+          transform: translateY(-2px);
+          box-shadow: 6px 6px 0px rgba(15, 23, 42, 0.25) !important;
+        }
+        .hero-bottom-bar {
+          flex-direction: column;
+          align-items: stretch !important;
+          gap: 16px !important;
+        }
+        @media (min-width: 768px) {
+          .hero-bottom-bar {
+            flex-direction: row;
+            align-items: center !important;
+            margin-bottom: 56px !important;
+          }
+        }
+        @media (max-width: 767px) {
+          .hero-bottom-col {
+            justify-content: center;
+            display: flex;
+          }
+          .hero-bottom-actions {
+            width: 100%;
+          }
+          .hero-bottom-actions button {
+            flex: 1;
+          }
+        }
+        @media (min-width: 768px) {
+          .hero-section {
+            padding: 80px 0 !important;
+          }
+        }
+      `}</style>
+    </section>
+  );
+};
+
+export default Hero;
