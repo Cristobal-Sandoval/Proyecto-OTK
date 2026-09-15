@@ -120,7 +120,8 @@ const Footer = ({ setActiveTab }) => {
         >
           <a href="#home" onClick={(e) => { e.preventDefault(); handleNavClick('home'); }}>Inicio</a>
           <a href="#news" onClick={(e) => { e.preventDefault(); handleNavClick('news'); }}>Noticias</a>
-          <a href="#cosplay" onClick={(e) => { e.preventDefault(); handleNavClick('cosplay'); }}>Cosplayers</a>
+          <a href="#invitados" onClick={(e) => { e.preventDefault(); handleNavClick('invitados'); }}>Invitados</a>
+          <a href="#cosplay" onClick={(e) => { e.preventDefault(); handleNavClick('cosplay'); }}>Pasarela Cosplay</a>
           <a href="#communities" onClick={(e) => { e.preventDefault(); handleNavClick('communities'); }}>Comunidades</a>
           <a href="#schedule" onClick={(e) => { e.preventDefault(); handleNavClick('schedule'); }}>Cronograma</a>
         </nav>

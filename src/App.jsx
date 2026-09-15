@@ -9,6 +9,7 @@ import SeasonalOverlay from './components/SeasonalOverlay';
 // Code-split non-critical and heavy components
 const NewsSection = lazy(() => import('./components/NewsSection'));
 const NewsDetail = lazy(() => import('./components/NewsDetail'));
+const GuestsSection = lazy(() => import('./components/GuestsSection'));
 const CosplayerGallery = lazy(() => import('./components/CosplayerGallery'));
 const CommunityList = lazy(() => import('./components/CommunityList'));
 const ScheduleTimeline = lazy(() => import('./components/ScheduleTimeline'));
@@ -34,6 +35,9 @@ function App() {
       }
       if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
         return 'news-detail';
+      }
+      if (hash === '#invitados' || hash === '#guests') {
+        return 'invitados';
       }
       if (['#news', '#cosplay', '#communities', '#schedule'].includes(hash)) {
         return hash.replace('#', '');
@@ -101,7 +105,8 @@ function App() {
     const titles = {
       home: 'Otakonce 2026 | El Evento de Anime y Cultura Geek de Concepción',
       news: 'Noticias y Comunicados | Otakonce 2026',
-      cosplay: 'Pasarela Cosplay & Invitados | Otakonce 2026',
+      invitados: 'Invitados Especiales | Otakonce 2026',
+      cosplay: 'Pasarela Cosplay & Comunidad | Otakonce 2026',
       communities: 'Comunidades y Agrupaciones | Otakonce 2026',
       schedule: 'Cronograma de Actividades | Otakonce 2026',
       admin: 'Acceso Administrativo | Otakonce Staff'
@@ -141,6 +146,10 @@ function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#stf-portal' || hash === '#staff-access' || hash === '#admin') {
         setActiveTab('admin');
+      } else if (hash === '#invitados' || hash === '#guests') {
+        setActiveTab('invitados');
+      } else if (['#news', '#cosplay', '#communities', '#schedule'].includes(hash)) {
+        setActiveTab(hash.replace('#', ''));
       } else if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
         const slug = hash.replace(/^#(noticia|news)\//, '').toLowerCase();
         const found = newsList.find(n => slugify(n.title) === slug || String(n.id) === slug);
@@ -229,8 +238,11 @@ function App() {
                   </button>
                 </div>
 
-                {/* Cosplayer Preview */}
-                <CosplayerGallery cosplayers={cosplayers} />
+                {/* Invitados Especiales (VIP & Jurados) */}
+                <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} />
+
+                {/* Pasarela Cosplay & Comunidad (Regional & Local) */}
+                <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} />
                 
                 {/* Communities Preview */}
                 <CommunityList communities={communities.slice(0, 3)} />
@@ -260,8 +272,12 @@ function App() {
             />
           )}
 
+          {activeTab === 'invitados' && (
+            <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} />
+          )}
+
           {activeTab === 'cosplay' && (
-            <CosplayerGallery cosplayers={cosplayers} />
+            <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} />
           )}
 
           {activeTab === 'communities' && (

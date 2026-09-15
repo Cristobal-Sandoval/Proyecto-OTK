@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
   Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield,
-  Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers
+  Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers, Star, MapPin
 } from 'lucide-react';
 import { SEASONAL_THEMES } from '../data/defaults';
 import { 
@@ -99,8 +99,12 @@ const AdminDashboard = ({
 
   // Cosplayer CRUD state
   const [editingCosplayer, setEditingCosplayer] = useState(null);
+  const [cosplayerAdminFilter, setCosplayerAdminFilter] = useState('all'); // 'all' | 'guest' | 'community'
   const [cosplayerForm, setCosplayerForm] = useState({
-    name: '', character: '', instagram: '', image: '', bio: ''
+    name: '', character: '', instagram: '', image: '', bio: '',
+    type: 'guest',
+    role: 'Invitado Especial',
+    city: 'Concepción'
   });
 
   // Community CRUD state
@@ -336,18 +340,33 @@ const AdminDashboard = ({
       const updatedList = cosplayers.map(c => c.id === editingCosplayer.id ? { ...editingCosplayer, ...cosplayerForm } : c);
       setCosplayers(updatedList);
       setEditingCosplayer(null);
-      alert('Cosplayer actualizado.');
+      alert('Ficha de cosplayer actualizada.');
     } else {
-      const newCos = { id: Date.now(), ...cosplayerForm };
+      const newCos = { 
+        id: Date.now(), 
+        type: cosplayerForm.type || 'guest',
+        role: cosplayerForm.role || (cosplayerForm.type === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'),
+        city: cosplayerForm.city || 'Concepción',
+        ...cosplayerForm 
+      };
       setCosplayers([...cosplayers, newCos]);
-      alert('Cosplayer agregado.');
+      alert(cosplayerForm.type === 'guest' ? 'Invitado Especial agregado.' : 'Cosplayer de Pasarela agregado.');
     }
-    setCosplayerForm({ name: '', character: '', instagram: '', image: '', bio: '' });
+    setCosplayerForm({ name: '', character: '', instagram: '', image: '', bio: '', type: 'guest', role: 'Invitado Especial', city: 'Concepción' });
   };
 
   const handleEditCosplayer = (cos) => {
     setEditingCosplayer(cos);
-    setCosplayerForm({ ...cos });
+    setCosplayerForm({
+      name: cos.name || '',
+      character: cos.character || '',
+      instagram: cos.instagram || '',
+      image: cos.image || '',
+      bio: cos.bio || '',
+      type: cos.type || 'community',
+      role: cos.role || (cos.type === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'),
+      city: cos.city || 'Concepción'
+    });
   };
 
   const handleDeleteCosplayer = (id) => {
@@ -1744,47 +1763,104 @@ const AdminDashboard = ({
           )}
 
           {/* TAB 4: COSPLAYERS CRUD */}
-          {adminTab === 'cosplayers' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-              <form onSubmit={handleCosplayerSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', background: 'rgba(255,255,255,0.01)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-                <h4 style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
-                  <Plus size={18} style={{ color: 'var(--secondary)' }} />
-                  {editingCosplayer ? 'Editar Ficha Cosplayer' : 'Agregar Invitado Cosplayer'}
-                </h4>
+          {adminTab === 'cosplayers' && (() => {
+            const guestList = cosplayers.filter(c => c.type === 'guest');
+            const communityList = cosplayers.filter(c => c.type !== 'guest');
+            const displayedCosplayers = cosplayers.filter(c => {
+              if (cosplayerAdminFilter === 'guest') return c.type === 'guest';
+              if (cosplayerAdminFilter === 'community') return c.type !== 'guest';
+              return true;
+            });
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }} className="grid-2-col">
-                  <div className="form-group">
-                    <label>Nombre del Cosplayer</label>
-                    <input 
-                      type="text" className="form-control" 
-                      value={cosplayerForm.name} 
-                      onChange={(e) => setCosplayerForm({ ...cosplayerForm, name: e.target.value })} 
-                      required 
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Personaje Destacado</label>
-                    <input 
-                      type="text" className="form-control" 
-                      value={cosplayerForm.character} 
-                      onChange={(e) => setCosplayerForm({ ...cosplayerForm, character: e.target.value })} 
-                      placeholder="ej: Frieren"
-                      required 
-                    />
-                  </div>
-                </div>
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                <form onSubmit={handleCosplayerSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', background: 'rgba(255,255,255,0.01)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                  <h4 style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
+                    <Plus size={18} style={{ color: 'var(--secondary)' }} />
+                    {editingCosplayer ? 'Editar Ficha Cosplayer / Invitado' : 'Agregar Cosplayer / Invitado'}
+                  </h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }} className="grid-2-col">
-                  <div className="form-group">
-                    <label>Enlace de Instagram</label>
-                    <input 
-                      type="url" className="form-control" 
-                      value={cosplayerForm.instagram} 
-                      onChange={(e) => setCosplayerForm({ ...cosplayerForm, instagram: e.target.value })} 
-                      placeholder="https://instagram.com/usuario"
-                      required 
-                    />
+                  {/* Row 1: Nombre & Personaje */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }} className="grid-2-col">
+                    <div className="form-group">
+                      <label>Nombre del Cosplayer / Artista</label>
+                      <input 
+                        type="text" className="form-control" 
+                        value={cosplayerForm.name} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, name: e.target.value })} 
+                        placeholder="ej: HaneAme, Danu Cosplay..."
+                        required 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Personaje Destacado</label>
+                      <input 
+                        type="text" className="form-control" 
+                        value={cosplayerForm.character} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, character: e.target.value })} 
+                        placeholder="ej: Frieren, Gojo Satoru..."
+                        required 
+                      />
+                    </div>
                   </div>
+
+                  {/* Row 2: Sección/Tipo & Rol */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }} className="grid-2-col">
+                    <div className="form-group">
+                      <label>Sección / Destino en la Web</label>
+                      <select
+                        className="form-control"
+                        value={cosplayerForm.type || 'guest'}
+                        onChange={(e) => {
+                          const newType = e.target.value;
+                          setCosplayerForm({
+                            ...cosplayerForm,
+                            type: newType,
+                            role: newType === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'
+                          });
+                        }}
+                      >
+                        <option value="guest">⭐ Invitado Especial / Jurado (Sección Invitados)</option>
+                        <option value="community">🎭 Pasarela Cosplay & Comunidad (Pasarela y Filtro por Ciudad)</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Rol o Título (Badge)</label>
+                      <input 
+                        type="text" className="form-control" 
+                        value={cosplayerForm.role || ''} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, role: e.target.value })} 
+                        placeholder="ej: Jurado Pasarela, Invitado VIP, Pasarela Individual..."
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 3: Ciudad & Instagram */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }} className="grid-2-col">
+                    <div className="form-group">
+                      <label>Ciudad de Origen</label>
+                      <input 
+                        type="text" className="form-control" 
+                        value={cosplayerForm.city || ''} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, city: e.target.value })} 
+                        placeholder="ej: Concepción, Chillán, Temuco, Santiago, Viña del Mar..."
+                        required 
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Enlace de Instagram</label>
+                      <input 
+                        type="url" className="form-control" 
+                        value={cosplayerForm.instagram} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, instagram: e.target.value })} 
+                        placeholder="https://instagram.com/usuario"
+                        required 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 4: Foto */}
                   <div className="form-group">
                     <label>Foto de Cosplay</label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
@@ -1805,138 +1881,245 @@ const AdminDashboard = ({
                       </label>
                     </div>
                   </div>
-                </div>
 
-                <div className="form-group">
-                  <label>Biografía Corta (Presentación en web)</label>
-                  <textarea 
-                    className="form-control" rows="3"
-                    value={cosplayerForm.bio} 
-                    onChange={(e) => setCosplayerForm({ ...cosplayerForm, bio: e.target.value })} 
-                    placeholder="Cuéntale un poco de ti o de tus logros a los asistentes..."
-                    required 
-                  />
-                </div>
+                  {/* Row 5: Biografía */}
+                  <div className="form-group">
+                    <label>Biografía Corta (Presentación en web)</label>
+                    <textarea 
+                      className="form-control" rows="3"
+                      value={cosplayerForm.bio} 
+                      onChange={(e) => setCosplayerForm({ ...cosplayerForm, bio: e.target.value })} 
+                      placeholder="Cuéntale un poco de ti o de tus logros a los asistentes..."
+                      required 
+                    />
+                  </div>
 
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
-                    {editingCosplayer ? 'Guardar Ficha' : 'Agregar Cosplayer'}
-                  </button>
-                  {editingCosplayer && (
-                    <button 
-                      type="button" className="btn btn-secondary" 
-                      onClick={() => {
-                        setEditingCosplayer(null);
-                        setCosplayerForm({ name: '', character: '', instagram: '', image: '', bio: '' });
-                      }}
-                      style={{ padding: '10px 20px', fontSize: '0.9rem' }}
-                    >
-                      Cancelar
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+                      {editingCosplayer ? 'Guardar Ficha' : 'Agregar Cosplayer'}
                     </button>
-                  )}
-                </div>
-              </form>
+                    {editingCosplayer && (
+                      <button 
+                        type="button" className="btn btn-secondary" 
+                        onClick={() => {
+                          setEditingCosplayer(null);
+                          setCosplayerForm({ name: '', character: '', instagram: '', image: '', bio: '', type: 'guest', role: 'Invitado Especial', city: 'Concepción' });
+                        }}
+                        style={{ padding: '10px 20px', fontSize: '0.9rem' }}
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+                </form>
 
-              {/* Cosplayers List & Mobile Cards */}
-              <div>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '16px', fontSize: '1.1rem' }}>Invitados Agregados ({cosplayers.length})</h4>
-                
-                {/* Desktop Table */}
-                <div className="admin-table-desktop" style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                    <thead>
-                      <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
-                        <th style={{ padding: '14px 16px' }}>Foto</th>
-                        <th style={{ padding: '14px 16px' }}>Nombre</th>
-                        <th style={{ padding: '14px 16px' }}>Personaje</th>
-                        <th style={{ padding: '14px 16px' }}>Instagram</th>
-                        <th style={{ padding: '14px 16px', textAlign: 'right' }}>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cosplayers.map((cos) => (
-                        <tr key={cos.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }} className="table-row-hover">
-                          <td style={{ padding: '10px 16px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}>
-                              {cos.image ? <img src={cos.image} alt="Cos Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><ImageIcon size={14} style={{color:'var(--text-muted)'}} /></div>}
-                            </div>
-                          </td>
-                          <td style={{ padding: '10px 16px', fontWeight: 600, color: 'var(--text-primary)' }}>{cos.name}</td>
-                          <td style={{ padding: '10px 16px' }}>{cos.character}</td>
-                          <td style={{ padding: '10px 16px', color: 'var(--cyan)' }}>@{cos.instagram.split('/').pop()}</td>
-                          <td style={{ padding: '10px 16px', textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', gap: '8px' }}>
-                              <button 
-                                onClick={() => handleEditCosplayer(cos)} 
-                                style={{ background: 'transparent', color: 'var(--cyan)', cursor: 'pointer', padding: '6px' }}
-                                aria-label="Editar cosplayer"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteCosplayer(cos.id)} 
-                                style={{ background: 'transparent', color: 'var(--secondary)', cursor: 'pointer', padding: '6px' }}
-                                aria-label="Eliminar cosplayer"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="admin-cards-mobile">
-                  {cosplayers.map((cos) => (
-                    <div 
-                      key={cos.id}
-                      style={{
-                        background: 'var(--bg-surface-solid)',
-                        border: '1.5px solid var(--border-color)',
-                        borderRadius: '16px',
-                        padding: '16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '12px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <div style={{ width: '52px', height: '52px', borderRadius: '50%', overflow: 'hidden', border: '1.5px solid var(--border-color)', flexShrink: 0 }}>
-                          {cos.image ? <img src={cos.image} alt="Cos Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><ImageIcon size={18} style={{color:'var(--text-muted)'}} /></div>}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{cos.name}</h5>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Personaje: <strong style={{ color: 'var(--text-primary)' }}>{cos.character}</strong></p>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>@{cos.instagram.split('/').pop()}</span>
-                        </div>
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleEditCosplayer(cos)}
-                          className="btn btn-secondary"
-                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
-                        >
-                          <Edit size={16} /> Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCosplayer(cos.id)}
-                          className="btn btn-secondary"
-                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
-                        >
-                          <Trash2 size={16} /> Eliminar
-                        </button>
-                      </div>
+                {/* Sub-Tabs / Filter Buttons */}
+                <div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                    <h4 style={{ color: 'var(--text-primary)', margin: 0, fontSize: '1.1rem' }}>
+                      Listado de Cosplayers ({displayedCosplayers.length})
+                    </h4>
+                    
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setCosplayerAdminFilter('all')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: cosplayerAdminFilter === 'all' ? 'var(--primary)' : 'rgba(255,255,255,0.04)',
+                          color: cosplayerAdminFilter === 'all' ? '#0F172A' : 'var(--text-secondary)',
+                          border: '1px solid',
+                          borderColor: cosplayerAdminFilter === 'all' ? 'var(--primary)' : 'var(--border-color)',
+                          transition: 'var(--transition-fast)'
+                        }}
+                      >
+                        Todos ({cosplayers.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCosplayerAdminFilter('guest')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: cosplayerAdminFilter === 'guest' ? 'linear-gradient(135deg, #FFE200 0%, #FF3B6C 100%)' : 'rgba(255,255,255,0.04)',
+                          color: cosplayerAdminFilter === 'guest' ? '#0F172A' : 'var(--text-secondary)',
+                          border: '1px solid',
+                          borderColor: cosplayerAdminFilter === 'guest' ? 'transparent' : 'var(--border-color)',
+                          transition: 'var(--transition-fast)'
+                        }}
+                      >
+                        ⭐ Invitados VIP ({guestList.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCosplayerAdminFilter('community')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: cosplayerAdminFilter === 'community' ? 'var(--cyan)' : 'rgba(255,255,255,0.04)',
+                          color: cosplayerAdminFilter === 'community' ? '#0F172A' : 'var(--text-secondary)',
+                          border: '1px solid',
+                          borderColor: cosplayerAdminFilter === 'community' ? 'var(--cyan)' : 'var(--border-color)',
+                          transition: 'var(--transition-fast)'
+                        }}
+                      >
+                        🎭 Pasarela & Comunidad ({communityList.length})
+                      </button>
                     </div>
-                  ))}
+                  </div>
+                  
+                  {/* Desktop Table */}
+                  <div className="admin-table-desktop" style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                      <thead>
+                        <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th style={{ padding: '14px 16px' }}>Foto</th>
+                          <th style={{ padding: '14px 16px' }}>Nombre & Ciudad</th>
+                          <th style={{ padding: '14px 16px' }}>Personaje</th>
+                          <th style={{ padding: '14px 16px' }}>Sección / Rol</th>
+                          <th style={{ padding: '14px 16px' }}>Instagram</th>
+                          <th style={{ padding: '14px 16px', textAlign: 'right' }}>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {displayedCosplayers.map((cos) => (
+                          <tr key={cos.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }} className="table-row-hover">
+                            <td style={{ padding: '10px 16px' }}>
+                              <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)' }}>
+                                {cos.image ? <img src={cos.image} alt="Cos Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><ImageIcon size={14} style={{color:'var(--text-muted)'}} /></div>}
+                              </div>
+                            </td>
+                            <td style={{ padding: '10px 16px' }}>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{cos.name}</div>
+                              {cos.city && (
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                  <MapPin size={11} color="var(--cyan)" /> {cos.city}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '10px 16px' }}>{cos.character}</td>
+                            <td style={{ padding: '10px 16px' }}>
+                              <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{
+                                  fontSize: '0.7rem',
+                                  fontWeight: 800,
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  background: cos.type === 'guest' ? 'rgba(255, 59, 108, 0.15)' : 'rgba(0, 163, 255, 0.15)',
+                                  color: cos.type === 'guest' ? 'var(--secondary)' : 'var(--cyan)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  {cos.type === 'guest' ? <><Star size={10} /> Invitado VIP</> : '🎭 Pasarela'}
+                                </span>
+                                {cos.role && (
+                                  <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{cos.role}</span>
+                                )}
+                              </div>
+                            </td>
+                            <td style={{ padding: '10px 16px', color: 'var(--cyan)' }}>@{cos.instagram ? cos.instagram.split('/').filter(Boolean).pop() : 'instagram'}</td>
+                            <td style={{ padding: '10px 16px', textAlign: 'right' }}>
+                              <div style={{ display: 'inline-flex', gap: '8px' }}>
+                                <button 
+                                  onClick={() => handleEditCosplayer(cos)} 
+                                  style={{ background: 'transparent', color: 'var(--cyan)', cursor: 'pointer', padding: '6px' }}
+                                  aria-label="Editar cosplayer"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteCosplayer(cos.id)} 
+                                  style={{ background: 'transparent', color: 'var(--secondary)', cursor: 'pointer', padding: '6px' }}
+                                  aria-label="Eliminar cosplayer"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="admin-cards-mobile">
+                    {displayedCosplayers.map((cos) => (
+                      <div 
+                        key={cos.id}
+                        style={{
+                          background: 'var(--bg-surface-solid)',
+                          border: '1.5px solid var(--border-color)',
+                          borderRadius: '16px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <div style={{ width: '52px', height: '52px', borderRadius: '50%', overflow: 'hidden', border: '1.5px solid var(--border-color)', flexShrink: 0 }}>
+                            {cos.image ? <img src={cos.image} alt="Cos Thumb" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}><ImageIcon size={18} style={{color:'var(--text-muted)'}} /></div>}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                              <span style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 800,
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: cos.type === 'guest' ? 'rgba(255, 59, 108, 0.15)' : 'rgba(0, 163, 255, 0.15)',
+                                color: cos.type === 'guest' ? 'var(--secondary)' : 'var(--cyan)'
+                              }}>
+                                {cos.type === 'guest' ? '⭐ Invitado VIP' : 'Pasarela'}
+                              </span>
+                              {cos.city && (
+                                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                  <MapPin size={10} color="var(--cyan)" /> {cos.city}
+                                </span>
+                              )}
+                            </div>
+                            <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{cos.name}</h5>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Personaje: <strong style={{ color: 'var(--text-primary)' }}>{cos.character}</strong></p>
+                            <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>@{cos.instagram ? cos.instagram.split('/').filter(Boolean).pop() : 'instagram'}</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleEditCosplayer(cos)}
+                            className="btn btn-secondary"
+                            style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
+                          >
+                            <Edit size={16} /> Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCosplayer(cos.id)}
+                            className="btn btn-secondary"
+                            style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                          >
+                            <Trash2 size={16} /> Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB 5: COMMUNITIES CRUD */}
           {adminTab === 'communities' && (

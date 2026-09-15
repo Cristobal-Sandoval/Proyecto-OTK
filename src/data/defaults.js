@@ -153,10 +153,14 @@ export const defaultNews = [
 ];
 
 export const defaultCosplayers = [
+  // 🌟 INVITADOS ESPECIALES (Cosplay Alley / Jurados)
   {
     id: 1,
     name: "Aki Cosplay",
     character: "Frieren (Sousou no Frieren)",
+    type: "guest",
+    role: "Jurado Oficial & Invitada",
+    city: "Concepción",
     instagram: "https://instagram.com/aki_cosplay_demo",
     image: "/assets/cosplay_aki.jpg",
     bio: "Cosplayer penquista con 5 años de trayectoria. Especialista en confección de trajes de fantasía y estilizado de pelucas detalladas."
@@ -165,17 +169,80 @@ export const defaultCosplayers = [
     id: 2,
     name: "Kaelu Cos",
     character: "Roronoa Zoro (One Piece)",
+    type: "guest",
+    role: "Invitado Especial (Cosmaker)",
+    city: "Santiago",
     instagram: "https://instagram.com/kaelu_zoro_demo",
     image: "/assets/cosplay_kaelu.jpg",
-    bio: "Cosmaker y exponente del cosplay masculino en Concepción. Apasionado por la réplica de armas y armaduras con goma EVA de alta densidad."
+    bio: "Cosmaker y exponente del cosplay masculino. Apasionado por la réplica de armas y armaduras con goma EVA de alta densidad."
   },
   {
     id: 3,
     name: "Nico Kitsune",
     character: "Marin Kitagawa (My Dress-Up Darling)",
+    type: "guest",
+    role: "Invitada Estelar",
+    city: "Viña del Mar",
     instagram: "https://instagram.com/nico_kitsune_demo",
     image: "/assets/cosplay_nico.jpg",
     bio: "Creadora de contenido y cosplayer. Le encanta el anime de romance, el modelaje alternativo y las pasarelas dinámicas con puesta en escena divertida."
+  },
+
+  // 🎭 PASARELA COSPLAY & COMUNIDAD (Locales & Regionales)
+  {
+    id: 4,
+    name: "Dan Dan Cos",
+    character: "Denji (Chainsaw Man)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Concepción",
+    instagram: "https://instagram.com/dandan_cos_demo",
+    image: "/assets/cosplay_kaelu.jpg",
+    bio: "Cosplayer local de Concepción, fanático del Shonen y la caracterización teatral en escenario."
+  },
+  {
+    id: 5,
+    name: "Miku Penquista",
+    character: "Hatsune Miku (Vocaloid)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Talcahuano",
+    instagram: "https://instagram.com/miku_penquista_demo",
+    image: "/assets/cosplay_nico.jpg",
+    bio: "Representante de Talcahuano. Amante de la música Vocaloid y el diseño de vestuarios coloridos."
+  },
+  {
+    id: 6,
+    name: "Kurogane Craft",
+    character: "Guts (Berserk)",
+    type: "community",
+    role: "Armaduras & Cosmaker",
+    city: "Chillán",
+    instagram: "https://instagram.com/kurogane_chillan_demo",
+    image: "/assets/cosplay_kaelu.jpg",
+    bio: "Cosmaker procedente de Chillán, especialista en espadas gigantes y forja de armaduras con acabado metálico."
+  },
+  {
+    id: 7,
+    name: "Valkyrie Biobío",
+    character: "2B (NieR:Automata)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Los Ángeles",
+    instagram: "https://instagram.com/valkyrie_biobio_demo",
+    image: "/assets/cosplay_aki.jpg",
+    bio: "Desde Los Ángeles, apasionada por los videojuegos de rol y acción. Confección artesanal de espadas flotantes."
+  },
+  {
+    id: 8,
+    name: "Sakura Temuco",
+    character: "Sakura Kinomoto (CCS)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Temuco",
+    instagram: "https://instagram.com/sakura_temuco_demo",
+    image: "/assets/cosplay_nico.jpg",
+    bio: "Viajando desde Temuco a Concepción. Más de 3 años participando en eventos del sur de Chile."
   }
 ];
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Menu, X, Calendar, Users, Camera, Newspaper, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Calendar, Users, Camera, Newspaper, LayoutDashboard, Star } from 'lucide-react';
 
 const Header = ({ activeTab, setActiveTab, topOffset }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +30,8 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
   const navItems = [
     { id: 'home', label: 'Inicio', icon: null },
     { id: 'news', label: 'Noticias', icon: Newspaper },
-    { id: 'cosplay', label: 'Cosplayers', icon: Camera },
+    { id: 'invitados', label: 'Invitados', icon: Star },
+    { id: 'cosplay', label: 'Pasarela Cosplay', icon: Camera },
     { id: 'communities', label: 'Comunidades', icon: Users },
     { id: 'schedule', label: 'Cronograma', icon: Calendar },
     ...(activeTab === 'admin' ? [{ id: 'admin', label: 'Admin', icon: LayoutDashboard }] : [])
