@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
   Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield,
-  Cloud, ExternalLink, Loader2, AlertCircle
+  Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers
 } from 'lucide-react';
 import { SEASONAL_THEMES } from '../data/defaults';
 import { 
@@ -526,49 +526,89 @@ const AdminDashboard = ({
       <div className="container">
         
         {/* Dashboard Title Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }} className="admin-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <LayoutDashboard size={24} style={{ color: 'var(--primary)' }} />
-              Panel de <span className="text-neon-pink">Control</span>
-            </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }} className="admin-header">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+              <div style={{ display: 'inline-flex', padding: '8px', borderRadius: '10px', background: 'rgba(0, 136, 255, 0.1)', color: 'var(--primary)', flexShrink: 0 }}>
+                <LayoutDashboard size={22} />
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.25rem, 4.5vw, 1.85rem)', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                Panel de <span className="text-neon-pink">Control</span>
+              </h2>
+            </div>
             <button 
               className="btn btn-secondary" 
               onClick={handleLogout}
-              style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'flex', gap: '6px' }}
+              style={{ padding: '7px 14px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, borderRadius: '10px' }}
             >
-              <LogOut size={16} /> Salir
+              <LogOut size={15} /> Salir
             </button>
           </div>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0, lineHeight: 1.4 }}>
             Gestiona la información de Otakonce 2026. Todas las modificaciones se guardan localmente y se reflejan de inmediato en la web pública.
           </p>
         </div>
 
-        {/* Dashboard Nav Tabs */}
-        <div 
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '10px',
-            alignItems: 'center',
-            marginBottom: '28px',
-            width: '100%'
-          }}
-          className="admin-tabs-list"
-        >
-          {[
-            { id: 'themes', label: 'Modos & Fechas', icon: Sparkles },
-            { id: 'security', label: 'Seguridad & Clave', icon: Shield },
-            { id: 'cloudinary', label: 'Cloudinary CDN', icon: Cloud },
-            { id: 'config', label: 'Evento Principal', icon: Settings },
-            { id: 'hero_banners', label: 'Banners de Inicio', icon: ImageIcon },
-            { id: 'banner', label: 'Alerta Flotante', icon: Megaphone },
-            { id: 'news', label: 'Noticias', icon: Newspaper },
-            { id: 'cosplayers', label: 'Cosplayers', icon: Camera },
-            { id: 'communities', label: 'Comunidades', icon: Users },
-            { id: 'schedule', label: 'Cronograma', icon: Calendar }
-          ].map((tab) => {
+        {/* Dashboard Nav Tabs - Hybrid Mobile Dropdown + Horizontal Pill Strip & Desktop Wrap */}
+        <div className="admin-tabs-wrapper" style={{ marginBottom: '24px' }}>
+          {/* Mobile Selector Dropdown (< 768px): Takes only 1 clean row */}
+          <div className="admin-mobile-tab-dropdown">
+            <label style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+              <Layers size={13} color="var(--primary)" /> Sección del Administrador:
+            </label>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={adminTab}
+                onChange={(e) => setAdminTab(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '11px 40px 11px 14px',
+                  borderRadius: '12px',
+                  background: 'var(--bg-surface-solid)',
+                  border: '2px solid var(--primary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.95rem',
+                  fontWeight: 750,
+                  appearance: 'none',
+                  boxShadow: '0 3px 10px rgba(0,0,0,0.06)',
+                  cursor: 'pointer'
+                }}
+              >
+                {[
+                  { id: 'themes', label: '✨ Modos & Fechas' },
+                  { id: 'security', label: '🛡️ Seguridad & Clave' },
+                  { id: 'cloudinary', label: '☁️ Cloudinary CDN' },
+                  { id: 'config', label: '⚙️ Evento Principal' },
+                  { id: 'hero_banners', label: '🖼️ Banners de Inicio' },
+                  { id: 'banner', label: '📢 Alerta Flotante' },
+                  { id: 'news', label: '📰 Noticias' },
+                  { id: 'cosplayers', label: '🎭 Cosplayers' },
+                  { id: 'communities', label: '👥 Comunidades' },
+                  { id: 'schedule', label: '📅 Cronograma' }
+                ].map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={18} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--primary)' }} />
+            </div>
+          </div>
+
+          {/* Tab Button Pills: Horizontal scroll on mobile, wrap on desktop */}
+          <div className="admin-tabs-list">
+            {[
+              { id: 'themes', label: 'Modos & Fechas', icon: Sparkles },
+              { id: 'security', label: 'Seguridad & Clave', icon: Shield },
+              { id: 'cloudinary', label: 'Cloudinary CDN', icon: Cloud },
+              { id: 'config', label: 'Evento Principal', icon: Settings },
+              { id: 'hero_banners', label: 'Banners de Inicio', icon: ImageIcon },
+              { id: 'banner', label: 'Alerta Flotante', icon: Megaphone },
+              { id: 'news', label: 'Noticias', icon: Newspaper },
+              { id: 'cosplayers', label: 'Cosplayers', icon: Camera },
+              { id: 'communities', label: 'Comunidades', icon: Users },
+              { id: 'schedule', label: 'Cronograma', icon: Calendar }
+            ].map((tab) => {
             const Icon = tab.icon;
             const isActive = adminTab === tab.id;
             return (
@@ -601,6 +641,7 @@ const AdminDashboard = ({
               </button>
             );
           })}
+          </div>
         </div>
 
         {/* TAB CONTENTS */}

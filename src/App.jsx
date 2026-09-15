@@ -200,7 +200,7 @@ function App() {
       }}
     >
       {/* Visual Festive Theme Overlay (Halloween bats/webs, Christmas snowfall/lights, Teletón heart, Fiestas Patrias) */}
-      <SeasonalOverlay theme={eventConfig.themeMode || 'normal'} />
+      <SeasonalOverlay theme={activeTab === 'admin' ? 'normal' : (eventConfig.themeMode || 'normal')} />
 
       {/* Top Floating Announcement Bar */}
       {isAnnouncementVisible && (
