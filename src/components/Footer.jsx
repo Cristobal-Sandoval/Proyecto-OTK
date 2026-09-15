@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Cat } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
   <svg
@@ -167,7 +167,29 @@ const Footer = ({ setActiveTab }) => {
           }}
           className="footer-bottom"
         >
-          <span>&copy; {currentYear} Otakonce Staff. Todos los derechos reservados.</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <span>&copy; {currentYear} Otakonce Staff. Todos los derechos reservados.</span>
+            <span style={{ opacity: 0.35 }}>•</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              hecho por{' '}
+              <a 
+                href="https://cristobalsandoval-portafolio.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{
+                  color: 'var(--text-primary)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  transition: 'color var(--transition-fast)'
+                }}
+                className="hover-glow"
+                title="Portafolio de Cristóbal Sandoval"
+                aria-label="Portafolio de Cristóbal Sandoval"
+              >
+                <Cat size={14} style={{ display: 'inline' }} />
+              </a>
+            </span>
+          </div>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             style={{

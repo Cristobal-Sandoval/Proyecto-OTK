@@ -56,32 +56,19 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
           className="filter-controls-container"
         >
           {/* Categories Tab list */}
-          <div 
-            style={{
-              display: 'flex',
-              gap: '8px',
-              overflowX: 'auto',
-              paddingBottom: '8px',
-              scrollbarWidth: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}
-            className="category-scroll-list"
-          >
+          <div className="category-scroll-list">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
+                className="category-btn"
                 style={{
                   background: selectedCategory === cat ? 'var(--filter-btn-active-bg)' : 'var(--filter-btn-bg)',
                   border: '1px solid',
                   borderColor: selectedCategory === cat ? 'var(--border-pop)' : 'var(--filter-btn-border)',
                   color: selectedCategory === cat ? 'var(--filter-btn-active-text)' : 'var(--filter-btn-text)',
-                  padding: '8px 18px',
-                  borderRadius: '10px',
                   cursor: 'pointer',
                   fontWeight: 700,
-                  fontSize: '0.85rem',
-                  whiteSpace: 'nowrap',
                   transition: 'var(--transition-fast)'
                 }}
               >
@@ -363,8 +350,34 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
           background: var(--secondary) !important;
           border-color: transparent !important;
         }
+        .category-scroll-list {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 6px;
+          width: 100%;
+        }
+        .category-btn {
+          padding: 8px 4px;
+          font-size: clamp(0.72rem, 2.5vw, 0.85rem);
+          text-align: center;
+          border-radius: 10px;
+          white-space: nowrap;
+          width: 100%;
+        }
         .category-scroll-list::-webkit-scrollbar {
           display: none;
+        }
+        @media (min-width: 640px) {
+          .category-scroll-list {
+            display: flex;
+            gap: 8px;
+            width: auto;
+          }
+          .category-btn {
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            width: auto;
+          }
         }
         @media (min-width: 768px) {
           .filter-controls-container {
