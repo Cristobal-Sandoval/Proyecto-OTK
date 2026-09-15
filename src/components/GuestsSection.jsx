@@ -215,30 +215,18 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate }) => {
             HEADER FOR CAROUSEL MODE (Home Page)
             ========================================================================= */}
         {mode === 'carousel' ? (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
-            <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
-              <h2 style={{ textAlign: 'left' }}>Invitados <span className="text-neon-pink">Especiales</span></h2>
-              <p style={{ textAlign: 'left', maxWidth: '600px' }}>Conoce a los cosplayers oficiales, jurados de la pasarela y artistas destacados que nos acompañarán en Otakonce 2026.</p>
-            </div>
-
-            {onNavigate && (
-              <button 
-                onClick={() => onNavigate('invitados')}
-                className="btn btn-secondary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.86rem', padding: '8px 16px' }}
-              >
-                Ver todos en detalle &rarr;
-              </button>
-            )}
+          <div className="section-title">
+            <h2>Invitados <span className="text-neon-pink">Especiales</span></h2>
+            <p>Conoce a los cosplayers oficiales, jurados de la pasarela y artistas destacados que nos acompañarán en Otakonce 2026.</p>
           </div>
         ) : (
           /* =========================================================================
              HEADER FOR DEDICATED GRID MODE (#invitados tab - Like News Section)
              ========================================================================= */
           <div>
-            <div className="section-title" style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div className="section-title">
               <h2>Invitados Especiales & <span className="text-neon-pink">Jurados</span></h2>
-              <p style={{ maxWidth: '680px', margin: '0 auto' }}>
+              <p>
                 Conoce en profundidad a cada uno de nuestros exponentes oficiales: su trayectoria, personajes estelares, roles en la competencia y redes sociales.
               </p>
             </div>
@@ -248,6 +236,7 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate }) => {
               style={{
                 display: 'flex',
                 flexDirection: 'column',
+                alignItems: 'center',
                 gap: '16px',
                 marginBottom: '36px',
                 width: '100%'
@@ -255,7 +244,7 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate }) => {
               className="guest-filter-controls"
             >
               {/* Category Pills */}
-              <div className="guest-category-list">
+              <div className="guest-category-list" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
                 {categories.map((cat) => (
                   <button
                     key={cat}

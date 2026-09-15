@@ -199,26 +199,24 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
   return (
     <section className="section-padding" id="cosplay" style={{ background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
       <div className="container">
-        {/* Section Header */}
-        <div style={{ marginBottom: '24px' }}>
-          <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
-            <h2 style={{ textAlign: 'left' }}>Pasarela <span className="text-neon-pink">Cosplay</span> & Comunidad</h2>
-            <p style={{ textAlign: 'left', maxWidth: '600px' }}>El talento de Concepción y de todo el país reunido en un solo lugar. Conoce a los exponentes, apóyalos en sus redes y comparte sus fichas.</p>
-          </div>
+        {/* Section Header - Centrado y Uniforme */}
+        <div className="section-title">
+          <h2>Pasarela <span className="text-neon-pink">Cosplay</span> & Comunidad</h2>
+          <p>El talento de Concepción y de todo el país reunido en un solo lugar. Conoce a los exponentes, apóyalos en sus redes y comparte sus fichas.</p>
         </div>
 
         {/* Filter Controls: City Tabs & Search Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginBottom: '36px', width: '100%' }}>
           {/* City Selector Pills */}
           <div 
             className="cosplay-city-filters"
             style={{
               display: 'flex',
               gap: '8px',
-              overflowX: 'auto',
-              scrollbarWidth: 'none',
-              paddingBottom: '4px',
-              WebkitOverflowScrolling: 'touch'
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              maxWidth: '100%',
+              paddingBottom: '4px'
             }}
           >
             {cities.map(city => (
