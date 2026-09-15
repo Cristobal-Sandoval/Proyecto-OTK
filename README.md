@@ -9,7 +9,7 @@ Sitio web oficial y panel de administración interactivo para **Otakonce 2026**,
 - **Frontend**: React 19 + Vite 8
 - **Estilos & Diseño**: Sistema Pop-Art / Comic Book UI responsivo, variables CSS dinámicas, transiciones aceleradas por hardware
 - **Iconografía**: Lucide React
-- **Almacenamiento & CDN**: Integración con **Cloudinary CDN** para entrega optimizada de imágenes en formato WebP
+- **Almacenamiento & CDN**: Integración con **Cloudinary CDN** para entrega optimizada de imágenes en formato WebP y fallback local
 - **Optimización de Rendimiento**:
   - Code-splitting con `React.lazy()` y `<Suspense>`
   - Optimización de chunks con Rolldown / Vite
@@ -19,9 +19,9 @@ Sitio web oficial y panel de administración interactivo para **Otakonce 2026**,
   - Limitación de tasa de intentos (Rate-limiting anti-fuerza bruta)
   - Cabeceras HTTP de seguridad (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`)
 - **SEO & Social Sharing**:
-  - Enrutamiento por slugs amigables para noticias individuales
-  - Botones integrados para compartir en WhatsApp, X (Twitter), Facebook y copia de enlace
-  - Títulos de pestaña dinámicos según la sección activa
+  - Enrutamiento por slugs amigables para noticias (`/#noticia/slug`) y fichas de invitados (`/#invitado/slug`)
+  - Botones integrados para compartir en WhatsApp, X (Twitter) y copia de enlace directo
+  - Títulos de pestaña dinámicos según la sección o perfil activo
   - Structured Data JSON-LD, OpenGraph, `sitemap.xml` y `robots.txt`
 - **Despliegue**: Listo para producción en **Vercel** con reglas de reescritura SPA (`vercel.json`)
 
@@ -61,33 +61,52 @@ Sitio web oficial y panel de administración interactivo para **Otakonce 2026**,
 ## ⚙️ Módulos y Funcionalidades
 
 ### 🌟 Experiencia Pública
-- **Hero & Cronómetro de Cuenta Regresiva**: 
-  - Banners widescreen de alto impacto visual con diseño pop-art.
-  - Contador regresivo hacia el evento con encuadre adaptable para móviles y escritorio.
-- **Barra Superior de Anuncios**:
-  - En escritorio: Barra estática, centrada y legible con accesos directos.
-  - En móviles: Ticker de marquesina continua que permite leer comunicados extensos sin recortes.
-- **Noticias & Artículos Dedicados**:
-  - Listado con filtros por categoría y barra de búsqueda.
-  - Vista individual de noticia con URL única basada en slug, formato de lectura optimizado y botones para compartir en redes sociales.
-- **Pasarela Cosplay**:
-  - En escritorio: Cuadrícula simétrica contenida y carrusel guiado por controles de navegación.
-  - En móviles: Deslizador táctil (*swipe*) con avance cinemático suave que se detiene al interactuar con el dedo.
-- **Zonas de Comunidades & Cronograma**:
-  - Directorio de agrupaciones y tiendas aliadas.
-  - Cronograma de actividades por bloques horarios y escenarios.
-- **Ambientación Dinámica (Temas de Temporada)**:
-  - Soporte de personalización visual con paletas temáticas (incluyendo temática patriótica chilena con animaciones tradicionales).
 
-### 🛡️ Panel de Gestión Staff
+1. **Hero & Cronómetro de Cuenta Regresiva**:
+   - Banners widescreen de alto impacto visual con diseño pop-art.
+   - Contador regresivo hacia el evento con encuadre adaptable para móviles y escritorio.
+   - Barra superior de anuncios (fija en escritorio, marquesina continua en móviles).
+
+2. **Invitados Especiales (Cosplay Alley & Jurados)**:
+   - **En el Inicio**: Carrusel infinito de desplazamiento suave continuo con flechas flotantes estilo CardPoint y pausa inteligente al interactuar.
+   - **En la Sección Dedicada (`#invitados`)**: Grilla responsiva con buscador en tiempo real por nombre, personaje, ciudad o rol.
+   - **Página Dedicada por Invitado (`#invitado/slug`)**:
+     - Cabecera con imagen destacada, insignias de rol, personaje y ciudad.
+     - Reseña y trayectoria del artista.
+     - **Mini Galería de Cosplays con Lightbox**: Muestra las presentaciones del invitado con ampliación interactiva a pantalla completa al hacer clic.
+     - **Redes Sociales Oficiales**: Enlaces directos a Instagram, TikTok y Twitter/X.
+     - **Compartir Real**: Botones directos para compartir en WhatsApp, X o copiar enlace con la URL canónica de la ficha.
+
+3. **Noticias y Anuncios**:
+   - Filtros por categoría y barra de búsqueda.
+   - Vista individual de noticia (`#noticia/slug`) con formato de lectura optimizado y botones para compartir.
+
+4. **Pasarela Cosplay & Comunidad (Regional & Local)**:
+   - Carrusel infinito cinemático con controles flotantes y filtros por ciudad (Concepción, Chillán, Temuco, Santiago, etc.).
+   - Fichas interactivas con personajes y enlaces de contacto.
+
+5. **Zonas de Comunidades & Cronograma**:
+   - Directorio de agrupaciones, comunidades de videojuegos, TCG y tiendas aliadas.
+   - Cronograma interactivo de actividades por bloques horarios y escenarios.
+
+6. **Ambientación Dinámica (Temas de Temporada)**:
+   - Soporte de personalización visual con paletas temáticas (Normal, Halloween, Navidad, Teletón, Fiestas Patrias) con animaciones atmosféricas sincronizadas.
+
+### 🛡️ Panel de Gestión Staff (`#stf-portal`)
+
 - **Gestión Integral de Contenidos**:
-  - Modos y fechas del evento.
-  - Configuración de almacenamiento en la nube (Cloudinary).
-  - Banners de portada, noticias, cosplayers invitados, comunidades y cronograma.
+  - Modos, títulos y fechas del evento.
+  - Banners de portada tipo hero con colores, alineación y badges personalizables.
+  - Comunicado flotante superior con interruptor de activación.
+  - Noticias y anuncios con selector de categoría y fecha.
+  - **Cosplayers & Invitados Especiales**: Creación y edición completa de fichas con fotos principales, redes sociales (Instagram, TikTok, Twitter/X) y subida de múltiples fotos para la mini galería lightbox.
+  - Comunidades aliadas y cronograma de horarios.
+- **Configuración de Almacenamiento**:
+  - Vinculación con Cloudinary CDN con test de subida y fallback automático a almacenamiento local.
 - **Seguridad & Credenciales**:
-  - Módulo de administración de contraseñas con encriptación segura.
-  - Protección de acceso con bloqueo temporal ante intentos fallidos consecutivos.
-  - Enrutamiento interno protegido contra indexación de motores de búsqueda.
+  - Módulo para cambio seguro de contraseña de administrador con hash SHA-256.
+  - Bloqueo temporal anti-fuerza bruta ante intentos fallidos consecutivos.
+  - Enrutamiento stealth protegido contra indexación de motores de búsqueda.
 
 ---
 

@@ -21,7 +21,6 @@ const Instagram = ({ size = 20, ...props }) => (
 );
 
 const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGuest }) => {
-  const [selectedFilter, setSelectedFilter] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeModalGuest, setActiveModalGuest] = useState(null);
 
@@ -130,30 +129,20 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
     resumeInteractionAfterDelay(3500);
   };
 
-  // Grid filtering & searching
-  const categories = ['Todos', 'Jurados', 'Invitados VIP', 'Cosmakers'];
-
+  // Grid searching
   const filteredGuests = useMemo(() => {
+    if (!searchQuery.trim()) return guests;
+    const query = searchQuery.toLowerCase();
     return guests.filter((guest) => {
-      const matchesSearch = 
-        (guest.name && guest.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (guest.character && guest.character.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (guest.role && guest.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (guest.city && guest.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (guest.bio && guest.bio.toLowerCase().includes(searchQuery.toLowerCase()));
-
-      let matchesCategory = true;
-      if (selectedFilter === 'Jurados') {
-        matchesCategory = (guest.role || '').toLowerCase().includes('jurado');
-      } else if (selectedFilter === 'Invitados VIP') {
-        matchesCategory = (guest.role || '').toLowerCase().includes('vip') || (guest.role || '').toLowerCase().includes('estelar') || (guest.role || '').toLowerCase().includes('invitada') || (guest.role || '').toLowerCase().includes('invitado');
-      } else if (selectedFilter === 'Cosmakers') {
-        matchesCategory = (guest.role || '').toLowerCase().includes('cosmaker') || (guest.bio || '').toLowerCase().includes('cosmaker') || (guest.bio || '').toLowerCase().includes('confección');
-      }
-
-      return matchesSearch && matchesCategory;
+      return (
+        (guest.name && guest.name.toLowerCase().includes(query)) ||
+        (guest.character && guest.character.toLowerCase().includes(query)) ||
+        (guest.role && guest.role.toLowerCase().includes(query)) ||
+        (guest.city && guest.city.toLowerCase().includes(query)) ||
+        (guest.bio && guest.bio.toLowerCase().includes(query))
+      );
     });
-  }, [guests, searchQuery, selectedFilter]);
+  }, [guests, searchQuery]);
 
   if (guests.length === 0) return null;
 
@@ -180,47 +169,16 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
               </p>
             </div>
 
-            {/* Filter Controls: Role Pills + Search Bar */}
+            {/* Centered Search Bar */}
             <div 
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '16px',
+                justifyContent: 'center',
                 marginBottom: '36px',
                 width: '100%'
               }}
               className="guest-filter-controls"
             >
-              {/* Category Pills */}
-              <div className="guest-category-list" style={{ justifyContent: 'center', flexWrap: 'wrap' }}>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedFilter(cat)}
-                    style={{
-                      background: selectedFilter === cat ? 'linear-gradient(135deg, var(--secondary) 0%, #7C3AED 100%)' : 'var(--bg-surface-solid)',
-                      border: '1.5px solid',
-                      borderColor: selectedFilter === cat ? 'transparent' : 'var(--border-color)',
-                      color: selectedFilter === cat ? '#FFFFFF' : 'var(--text-secondary)',
-                      padding: '7px 16px',
-                      borderRadius: '20px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: selectedFilter === cat ? '0 4px 14px rgba(253, 52, 132, 0.3)' : 'none',
-                      transition: 'all var(--transition-fast)'
-                    }}
-                  >
-                    {cat === 'Todos' ? <Star size={13} fill="currentColor" /> : null}
-                    {cat}
-                  </button>
-                ))}
-              </div>
 
               {/* Search Bar */}
               <div style={{ position: 'relative', width: '100%', maxWidth: '420px' }}>
