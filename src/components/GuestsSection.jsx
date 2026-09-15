@@ -1,5 +1,5 @@
-import React, { useRef, useMemo, useEffect } from 'react';
-import { ExternalLink, ChevronLeft, ChevronRight, Star, MapPin } from 'lucide-react';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Star, MapPin, Search, X, Share2, Check, User } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
   <svg
@@ -20,132 +20,37 @@ const Instagram = ({ size = 20, ...props }) => (
   </svg>
 );
 
-const GuestCard = ({ guest, hasMovedRef }) => (
-  <div className="guest-card glass-card">
-    {/* Background Guest Image */}
-    <div
-      role="img"
-      aria-label={`Foto de invitado ${guest.name} como ${guest.character}`}
-      style={{
-        width: '100%',
-        height: '100%',
-        background: 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)',
-        backgroundImage: guest.image ? `url(${guest.image})` : 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center 20%',
-        position: 'relative'
-      }}
-      className="image-loader-bg"
-    >
-      {/* Top Floating Badges */}
-      <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 2, gap: '8px', flexWrap: 'wrap' }}>
-        {/* Character Tag */}
-        <span 
-          style={{
-            background: 'rgba(8,7,17,0.88)',
-            border: '1.5px solid var(--secondary)',
-            borderRadius: '8px',
-            padding: '4px 10px',
-            fontSize: '0.78rem',
-            fontWeight: 800,
-            color: '#FFFFFF',
-            backdropFilter: 'blur(6px)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-          }}
-        >
-          {guest.character}
-        </span>
-
-        {/* Role Badge */}
-        <span
-          style={{
-            background: 'linear-gradient(135deg, #00A3FF 0%, #7C3AED 100%)',
-            color: '#FFFFFF',
-            borderRadius: '8px',
-            padding: '4px 9px',
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            letterSpacing: '0.03em',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            boxShadow: '0 2px 8px rgba(0, 163, 255, 0.4)'
-          }}
-        >
-          <Star size={11} fill="#FFFFFF" />
-          {guest.role || 'Invitado Especial'}
-        </span>
-      </div>
-
-      {/* Bottom Overlay Details */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          width: '100%',
-          height: '65%',
-          background: 'linear-gradient(to top, rgba(8, 7, 17, 0.96) 0%, rgba(8, 7, 17, 0.72) 45%, transparent 100%)',
-          zIndex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          padding: '22px',
-          gap: '6px'
-        }}
-        className="guest-details"
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <h3 style={{ fontSize: '1.35rem', fontWeight: 850, color: '#FFFFFF', lineHeight: 1.2, margin: 0 }}>
-            {guest.name}
-          </h3>
-          {guest.city && (
-            <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-              <MapPin size={12} color="var(--cyan)" /> {guest.city}
-            </span>
-          )}
-        </div>
-
-        <p style={{ fontSize: '0.84rem', color: '#F1F5F9', lineHeight: 1.4, margin: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {guest.bio}
-        </p>
-
-        <a 
-          href={guest.instagram}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => {
-            if (hasMovedRef && hasMovedRef.current) {
-              e.preventDefault();
-              return;
-            }
-            e.stopPropagation();
-          }}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            color: 'var(--secondary)',
-            fontSize: '0.85rem',
-            fontWeight: 700,
-            alignSelf: 'flex-start',
-            marginTop: '4px',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            background: 'rgba(253, 52, 132, 0.12)'
-          }}
-          className="instagram-link hover-glow"
-        >
-          <Instagram size={14} />
-          @{guest.instagram ? guest.instagram.split('/').filter(Boolean).pop() : 'instagram'}
-          <ExternalLink size={11} style={{ opacity: 0.8 }} />
-        </a>
-      </div>
-    </div>
-  </div>
+const WhatsAppIcon = ({ size = 16, ...props }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    {...props}
+  >
+    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+  </svg>
 );
 
-const GuestsSection = ({ guests = [] }) => {
+const slugify = (text = '') => {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '');
+};
+
+const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate }) => {
+  const [selectedFilter, setSelectedFilter] = useState('Todos');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeModalGuest, setActiveModalGuest] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+
+  // Carousel refs & state
   const sliderRef = useRef(null);
   const isInteracting = useRef(false);
   const resumeTimer = useRef(null);
@@ -154,7 +59,7 @@ const GuestsSection = ({ guests = [] }) => {
   const scrollLeftStart = useRef(0);
   const hasMoved = useRef(false);
 
-  // Repeat items for seamless continuous loop
+  // Repeat items for seamless continuous loop in carousel mode
   const carouselItems = useMemo(() => {
     if (!guests || guests.length === 0) return [];
     if (guests.length <= 2) return [...guests, ...guests, ...guests, ...guests, ...guests, ...guests];
@@ -162,8 +67,9 @@ const GuestsSection = ({ guests = [] }) => {
     return [...guests, ...guests, ...guests];
   }, [guests]);
 
-  // RequestAnimationFrame continuous slow auto-drift
+  // RequestAnimationFrame continuous slow auto-drift (only active in carousel mode)
   useEffect(() => {
+    if (mode !== 'carousel') return;
     let animationFrameId;
     let lastTime = performance.now();
 
@@ -195,7 +101,7 @@ const GuestsSection = ({ guests = [] }) => {
       cancelAnimationFrame(animationFrameId);
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
     };
-  }, [carouselItems.length, guests.length]);
+  }, [mode, carouselItems.length, guests.length]);
 
   const pauseInteraction = () => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
@@ -209,7 +115,7 @@ const GuestsSection = ({ guests = [] }) => {
     }, delayMs);
   };
 
-  // Mouse drag handlers for desktop
+  // Mouse drag handlers for desktop carousel
   const handleMouseDown = (e) => {
     if (!sliderRef.current) return;
     isMouseDown.current = true;
@@ -237,7 +143,7 @@ const GuestsSection = ({ guests = [] }) => {
     }
   };
 
-  // Manual scroll with arrow buttons
+  // Manual scroll with CardPoint floating arrows
   const scrollManual = (direction) => {
     if (!sliderRef.current) return;
     pauseInteraction();
@@ -249,68 +155,742 @@ const GuestsSection = ({ guests = [] }) => {
     resumeInteractionAfterDelay(3500);
   };
 
+  // Share handlers
+  const handleShareGuest = (e, guest) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/#invitados/${slugify(guest.name)}`;
+    const text = `¡Conoce a ${guest.name} (${guest.character}), ${guest.role || 'Invitado Especial'} en Otakonce 2026! ⭐ ${url}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: `${guest.name} | Otakonce 2026`,
+        text: text,
+        url: url
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      setCopiedId(guest.id);
+      setTimeout(() => setCopiedId(null), 2500);
+    }
+  };
+
+  const handleWhatsAppShare = (e, guest) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/#invitados/${slugify(guest.name)}`;
+    const text = encodeURIComponent(`¡Conoce a ${guest.name} (${guest.character}), ${guest.role || 'Invitado Especial'} en Otakonce 2026! ⭐ ${url}`);
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
+  // Grid filtering & searching
+  const categories = ['Todos', 'Jurados', 'Invitados VIP', 'Cosmakers'];
+
+  const filteredGuests = useMemo(() => {
+    return guests.filter((guest) => {
+      const matchesSearch = 
+        (guest.name && guest.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (guest.character && guest.character.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (guest.role && guest.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (guest.city && guest.city.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (guest.bio && guest.bio.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      let matchesCategory = true;
+      if (selectedFilter === 'Jurados') {
+        matchesCategory = (guest.role || '').toLowerCase().includes('jurado');
+      } else if (selectedFilter === 'Invitados VIP') {
+        matchesCategory = (guest.role || '').toLowerCase().includes('vip') || (guest.role || '').toLowerCase().includes('estelar') || (guest.role || '').toLowerCase().includes('invitada') || (guest.role || '').toLowerCase().includes('invitado');
+      } else if (selectedFilter === 'Cosmakers') {
+        matchesCategory = (guest.role || '').toLowerCase().includes('cosmaker') || (guest.bio || '').toLowerCase().includes('cosmaker') || (guest.bio || '').toLowerCase().includes('confección');
+      }
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [guests, searchQuery, selectedFilter]);
+
   if (guests.length === 0) return null;
 
   return (
     <section className="section-padding" id="invitados" style={{ background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
       <div className="container">
-        {/* Section Header */}
-        <div style={{ marginBottom: '28px' }}>
-          <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
-            <h2 style={{ textAlign: 'left' }}>Invitados <span className="text-neon-pink">Especiales</span></h2>
-            <p style={{ textAlign: 'left', maxWidth: '600px' }}>Conoce a los cosplayers oficiales, jurados de la pasarela y artistas destacados que nos acompañarán en Otakonce 2026.</p>
-          </div>
-        </div>
+        {/* =========================================================================
+            HEADER FOR CAROUSEL MODE (Home Page)
+            ========================================================================= */}
+        {mode === 'carousel' ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
+              <h2 style={{ textAlign: 'left' }}>Invitados <span className="text-neon-pink">Especiales</span></h2>
+              <p style={{ textAlign: 'left', maxWidth: '600px' }}>Conoce a los cosplayers oficiales, jurados de la pasarela y artistas destacados que nos acompañarán en Otakonce 2026.</p>
+            </div>
 
-        {/* Carousel Track strictly contained within .container with Floating Lateral Arrows */}
-        <div className="guests-infinite-container group-carousel">
-          {/* Floating Left Arrow (CardPoint style) */}
-          <button
-            onClick={() => scrollManual('left')}
-            aria-label="Invitado anterior"
-            className="carousel-floating-btn carousel-floating-left"
-          >
-            <ChevronLeft size={22} className="stroke-[2.5]" />
-          </button>
-
-          {/* Floating Right Arrow (CardPoint style) */}
-          <button
-            onClick={() => scrollManual('right')}
-            aria-label="Siguiente invitado"
-            className="carousel-floating-btn carousel-floating-right"
-          >
-            <ChevronRight size={22} className="stroke-[2.5]" />
-          </button>
-
-          <div 
-            ref={sliderRef}
-            className="guests-infinite-track"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUpOrLeave}
-            onMouseLeave={() => {
-              handleMouseUpOrLeave();
-              resumeInteractionAfterDelay(1500);
-            }}
-            onTouchStart={() => {
-              pauseInteraction();
-              hasMoved.current = false;
-            }}
-            onTouchEnd={() => resumeInteractionAfterDelay(2200)}
-            onTouchCancel={() => resumeInteractionAfterDelay(2200)}
-          >
-            {carouselItems.map((guest, index) => (
-              <div 
-                key={`${guest.id}-${index}`}
-                className="guest-infinite-item"
+            {onNavigate && (
+              <button 
+                onClick={() => onNavigate('invitados')}
+                className="btn btn-secondary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.86rem', padding: '8px 16px' }}
               >
-                <GuestCard guest={guest} hasMovedRef={hasMoved} />
-              </div>
-            ))}
+                Ver todos en detalle &rarr;
+              </button>
+            )}
           </div>
-        </div>
+        ) : (
+          /* =========================================================================
+             HEADER FOR DEDICATED GRID MODE (#invitados tab - Like News Section)
+             ========================================================================= */
+          <div>
+            <div className="section-title" style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <h2>Invitados Especiales & <span className="text-neon-pink">Jurados</span></h2>
+              <p style={{ maxWidth: '680px', margin: '0 auto' }}>
+                Conoce en profundidad a cada uno de nuestros exponentes oficiales: su trayectoria, personajes estelares, roles en la competencia y redes sociales.
+              </p>
+            </div>
+
+            {/* Filter Controls: Role Pills + Search Bar */}
+            <div 
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                marginBottom: '36px',
+                width: '100%'
+              }}
+              className="guest-filter-controls"
+            >
+              {/* Category Pills */}
+              <div className="guest-category-list">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedFilter(cat)}
+                    style={{
+                      background: selectedFilter === cat ? 'linear-gradient(135deg, var(--secondary) 0%, #7C3AED 100%)' : 'var(--bg-surface-solid)',
+                      border: '1.5px solid',
+                      borderColor: selectedFilter === cat ? 'transparent' : 'var(--border-color)',
+                      color: selectedFilter === cat ? '#FFFFFF' : 'var(--text-secondary)',
+                      padding: '7px 16px',
+                      borderRadius: '20px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: selectedFilter === cat ? '0 4px 14px rgba(253, 52, 132, 0.3)' : 'none',
+                      transition: 'all var(--transition-fast)'
+                    }}
+                  >
+                    {cat === 'Todos' ? <Star size={13} fill="currentColor" /> : null}
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Bar */}
+              <div style={{ position: 'relative', width: '100%', maxWidth: '420px' }}>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, personaje o rol..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '11px 16px 11px 40px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-surface-solid)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                  }}
+                />
+                <Search size={17} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            CAROUSEL VIEW (Used on Home: Infinite drift with CardPoint floating arrows)
+            ========================================================================= */}
+        {mode === 'carousel' ? (
+          <div>
+            <div className="guests-infinite-container group-carousel">
+              {/* CardPoint-style Floating Left Arrow */}
+              <button
+                onClick={() => scrollManual('left')}
+                aria-label="Invitado anterior"
+                className="carousel-floating-btn carousel-floating-left"
+              >
+                <ChevronLeft size={22} className="stroke-[2.5]" />
+              </button>
+
+              {/* CardPoint-style Floating Right Arrow */}
+              <button
+                onClick={() => scrollManual('right')}
+                aria-label="Siguiente invitado"
+                className="carousel-floating-btn carousel-floating-right"
+              >
+                <ChevronRight size={22} className="stroke-[2.5]" />
+              </button>
+
+              <div 
+                ref={sliderRef}
+                className="guests-infinite-track"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpOrLeave}
+                onMouseLeave={() => {
+                  handleMouseUpOrLeave();
+                  resumeInteractionAfterDelay(1500);
+                }}
+                onTouchStart={() => {
+                  pauseInteraction();
+                  hasMoved.current = false;
+                }}
+                onTouchEnd={() => resumeInteractionAfterDelay(2200)}
+                onTouchCancel={() => resumeInteractionAfterDelay(2200)}
+              >
+                {carouselItems.map((guest, index) => (
+                  <div 
+                    key={`${guest.id}-${index}`}
+                    className="guest-infinite-item"
+                    onClick={() => {
+                      if (!hasMoved.current) {
+                        setActiveModalGuest(guest);
+                      }
+                    }}
+                  >
+                    <div className="guest-card glass-card">
+                      {/* Background Guest Image */}
+                      <div
+                        role="img"
+                        aria-label={`Foto de invitado ${guest.name} como ${guest.character}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
+                          backgroundImage: guest.image ? `url(${guest.image})` : 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center 20%',
+                          position: 'relative'
+                        }}
+                        className="image-loader-bg"
+                      >
+                        {/* Top Floating Badges */}
+                        <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 2, gap: '8px', flexWrap: 'wrap' }}>
+                          <span 
+                            style={{
+                              background: 'rgba(8,7,17,0.88)',
+                              border: '1.5px solid var(--secondary)',
+                              borderRadius: '8px',
+                              padding: '4px 10px',
+                              fontSize: '0.78rem',
+                              fontWeight: 800,
+                              color: '#FFFFFF',
+                              backdropFilter: 'blur(6px)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                            }}
+                          >
+                            {guest.character}
+                          </span>
+
+                          <span
+                            style={{
+                              background: 'linear-gradient(135deg, #00A3FF 0%, #7C3AED 100%)',
+                              color: '#FFFFFF',
+                              borderRadius: '8px',
+                              padding: '4px 9px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              letterSpacing: '0.03em',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              boxShadow: '0 2px 8px rgba(0, 163, 255, 0.4)'
+                            }}
+                          >
+                            <Star size={11} fill="#FFFFFF" />
+                            {guest.role || 'Invitado Especial'}
+                          </span>
+                        </div>
+
+                        {/* Bottom Overlay Details */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '65%',
+                            background: 'linear-gradient(to top, rgba(8, 7, 17, 0.96) 0%, rgba(8, 7, 17, 0.72) 45%, transparent 100%)',
+                            zIndex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'flex-end',
+                            padding: '22px',
+                            gap: '6px'
+                          }}
+                          className="guest-details"
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <h3 style={{ fontSize: '1.35rem', fontWeight: 850, color: '#FFFFFF', lineHeight: 1.2, margin: 0 }}>
+                              {guest.name}
+                            </h3>
+                            {guest.city && (
+                              <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                <MapPin size={12} color="var(--cyan)" /> {guest.city}
+                              </span>
+                            )}
+                          </div>
+
+                          <p style={{ fontSize: '0.84rem', color: '#F1F5F9', lineHeight: 1.4, margin: '2px 0', textShadow: '0 1px 2px rgba(0,0,0,0.8)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {guest.bio}
+                          </p>
+
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                            <a 
+                              href={guest.instagram}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => {
+                                if (hasMoved.current) {
+                                  e.preventDefault();
+                                  return;
+                                }
+                                e.stopPropagation();
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                color: 'var(--secondary)',
+                                fontSize: '0.82rem',
+                                fontWeight: 700,
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(253, 52, 132, 0.12)'
+                              }}
+                              className="hover-glow"
+                            >
+                              <Instagram size={14} />
+                              @{guest.instagram ? guest.instagram.split('/').filter(Boolean).pop() : 'instagram'}
+                            </a>
+
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button
+                                onClick={(e) => {
+                                  if (hasMoved.current) {
+                                    e.preventDefault();
+                                    return;
+                                  }
+                                  handleWhatsAppShare(e, guest);
+                                }}
+                                title="Compartir por WhatsApp"
+                                style={{
+                                  background: 'rgba(37, 211, 102, 0.15)',
+                                  color: '#25D366',
+                                  border: '1px solid rgba(37, 211, 102, 0.3)',
+                                  padding: '5px 7px',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                              >
+                                <WhatsAppIcon size={14} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  if (hasMoved.current) {
+                                    e.preventDefault();
+                                    return;
+                                  }
+                                  handleShareGuest(e, guest);
+                                }}
+                                title="Copiar enlace"
+                                style={{
+                                  background: copiedId === guest.id ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.08)',
+                                  color: copiedId === guest.id ? '#10B981' : '#FFFFFF',
+                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  padding: '5px 7px',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                              >
+                                {copiedId === guest.id ? <Check size={13} /> : <Share2 size={13} />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Button linking to detailed grid */}
+            {onNavigate && (
+              <div style={{ textAlign: 'center', marginTop: '28px' }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => onNavigate('invitados')}
+                  style={{ padding: '10px 24px', fontSize: '0.92rem' }}
+                >
+                  Conoce a cada invitado en detalle &rarr;
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* =========================================================================
+             GRID VIEW (Dedicated #invitados page - News format with detailed explanation)
+             ========================================================================= */
+          <div>
+            {filteredGuests.length === 0 ? (
+              <div className="glass-card" style={{ padding: '48px 24px', textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
+                <User size={40} style={{ color: 'var(--text-muted)', marginBottom: '12px', opacity: 0.5 }} />
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No se encontraron invitados</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Intenta cambiar el filtro o limpiar el término de búsqueda.</p>
+              </div>
+            ) : (
+              <div className="grid-responsive">
+                {filteredGuests.map((guest) => (
+                  <article
+                    key={guest.id}
+                    className="glass-card guest-news-card"
+                    onClick={() => setActiveModalGuest(guest)}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      borderRadius: '22px',
+                      border: '1.5px solid var(--border-color)',
+                      transition: 'transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast)',
+                      background: 'var(--bg-surface-solid)'
+                    }}
+                  >
+                    {/* Top Image Banner */}
+                    <div
+                      role="img"
+                      aria-label={`Foto de ${guest.name}`}
+                      style={{
+                        height: '240px',
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
+                        backgroundImage: guest.image ? `url(${guest.image})` : 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center 20%',
+                        position: 'relative'
+                      }}
+                      className="image-loader-bg"
+                    >
+                      {/* Top Badges */}
+                      <div style={{ position: 'absolute', top: '14px', left: '14px', right: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 2, gap: '8px' }}>
+                        <span 
+                          style={{
+                            background: 'linear-gradient(135deg, #00A3FF 0%, #7C3AED 100%)',
+                            color: '#FFFFFF',
+                            borderRadius: '8px',
+                            padding: '4px 10px',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            letterSpacing: '0.03em',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 2px 10px rgba(0, 163, 255, 0.4)'
+                          }}
+                        >
+                          <Star size={11} fill="#FFFFFF" />
+                          {guest.role || 'Invitado Especial'}
+                        </span>
+
+                        {guest.city && (
+                          <span 
+                            style={{
+                              background: 'rgba(8, 7, 17, 0.85)',
+                              color: '#E2E8F0',
+                              borderRadius: '8px',
+                              padding: '4px 8px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              backdropFilter: 'blur(4px)',
+                              border: '1px solid rgba(255,255,255,0.1)'
+                            }}
+                          >
+                            <MapPin size={11} color="var(--cyan)" />
+                            {guest.city}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Character Pill on Bottom of Image */}
+                      <div style={{ position: 'absolute', bottom: '12px', left: '14px', zIndex: 2 }}>
+                        <span 
+                          style={{
+                            background: 'rgba(8, 7, 17, 0.92)',
+                            border: '1.5px solid var(--secondary)',
+                            borderRadius: '8px',
+                            padding: '3px 10px',
+                            fontSize: '0.76rem',
+                            fontWeight: 800,
+                            color: '#FFFFFF',
+                            backdropFilter: 'blur(6px)'
+                          }}
+                        >
+                          {guest.character}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Body - Brief Explanation */}
+                    <div 
+                      style={{
+                        padding: '22px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1,
+                        justifyContent: 'space-between',
+                        gap: '14px'
+                      }}
+                    >
+                      <div>
+                        <h3 style={{ fontSize: '1.35rem', fontWeight: 850, color: 'var(--text-primary)', margin: '0 0 10px', lineHeight: 1.25 }}>
+                          {guest.name}
+                        </h3>
+                        
+                        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
+                          {guest.bio}
+                        </p>
+                      </div>
+
+                      {/* Card Actions */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid var(--border-color)', gap: '8px', flexWrap: 'wrap' }}>
+                        <a
+                          href={guest.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            color: 'var(--secondary)',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            padding: '5px 10px',
+                            borderRadius: '8px',
+                            background: 'rgba(253, 52, 132, 0.12)'
+                          }}
+                          className="hover-glow"
+                        >
+                          <Instagram size={14} />
+                          @{guest.instagram ? guest.instagram.split('/').filter(Boolean).pop() : 'instagram'}
+                        </a>
+
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <button
+                            onClick={(e) => handleWhatsAppShare(e, guest)}
+                            title="Compartir por WhatsApp"
+                            style={{
+                              background: 'rgba(37, 211, 102, 0.15)',
+                              color: '#25D366',
+                              border: '1px solid rgba(37, 211, 102, 0.3)',
+                              padding: '6px 8px',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <WhatsAppIcon size={14} />
+                          </button>
+
+                          <button
+                            onClick={(e) => handleShareGuest(e, guest)}
+                            title="Copiar enlace"
+                            style={{
+                              background: copiedId === guest.id ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-surface-solid)',
+                              color: copiedId === guest.id ? '#10B981' : 'var(--text-primary)',
+                              border: '1px solid var(--border-color)',
+                              padding: '6px 8px',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {copiedId === guest.id ? <Check size={14} /> : <Share2 size={14} />}
+                          </button>
+
+                          <button
+                            onClick={() => setActiveModalGuest(guest)}
+                            className="btn btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '0.78rem', minHeight: 'unset', height: '32px' }}
+                          >
+                            Ver Ficha &rarr;
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* =========================================================================
+          INTERACTIVE MODAL PROFILE (Full bio, image, actions)
+          ========================================================================= */}
+      {activeModalGuest && (
+        <div 
+          onClick={() => setActiveModalGuest(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(5, 5, 10, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          className="animate-fade-in"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-surface-solid)',
+              border: '2px solid var(--border-color)',
+              borderRadius: '24px',
+              maxWidth: '460px',
+              width: '100%',
+              overflow: 'hidden',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              position: 'relative'
+            }}
+          >
+            {/* Modal Header Image */}
+            <div style={{ height: '240px', position: 'relative', background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)' }}>
+              {activeModalGuest.image && (
+                <img 
+                  src={activeModalGuest.image} 
+                  alt={activeModalGuest.name} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              )}
+              
+              <button
+                onClick={() => setActiveModalGuest(null)}
+                aria-label="Cerrar modal"
+                style={{
+                  position: 'absolute',
+                  top: '14px',
+                  right: '14px',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.6)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={18} />
+              </button>
+
+              <div style={{ position: 'absolute', bottom: '16px', left: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ background: 'var(--secondary)', color: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800 }}>
+                  {activeModalGuest.character}
+                </span>
+                {activeModalGuest.city && (
+                  <span style={{ background: 'rgba(0,0,0,0.7)', color: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <MapPin size={12} color="var(--cyan)" /> {activeModalGuest.city}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Star size={12} fill="currentColor" /> {activeModalGuest.role || 'Invitado Especial'}
+                </span>
+                <h2 style={{ fontSize: '1.6rem', fontWeight: 850, margin: '2px 0 8px' }}>
+                  {activeModalGuest.name}
+                </h2>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  {activeModalGuest.bio}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                <a
+                  href={activeModalGuest.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <Instagram size={18} />
+                  Seguir en Instagram ({activeModalGuest.instagram ? `@${activeModalGuest.instagram.split('/').filter(Boolean).pop()}` : '@instagram'})
+                </a>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={(e) => handleWhatsAppShare(e, activeModalGuest)}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#25D366' }}
+                  >
+                    <WhatsAppIcon size={16} />
+                    WhatsApp
+                  </button>
+
+                  <button
+                    onClick={(e) => handleShareGuest(e, activeModalGuest)}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    {copiedId === activeModalGuest.id ? <Check size={16} color="#10B981" /> : <Share2 size={16} />}
+                    {copiedId === activeModalGuest.id ? '¡Copiado!' : 'Compartir'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          STYLES
+          ========================================================================= */}
       <style>{`
         /* Infinite Carousel Contained Inside .container */
         .guests-infinite-container {
@@ -340,13 +920,13 @@ const GuestsSection = ({ guests = [] }) => {
           display: none;
         }
 
-        /* Item Width inside Container */
+        /* Item Width inside Carousel */
         .guest-infinite-item {
           flex: 0 0 350px;
           width: 350px;
         }
 
-        /* Card Styling */
+        /* Card Styling for Carousel */
         .guest-card {
           width: 100%;
           height: 460px;
@@ -360,6 +940,13 @@ const GuestsSection = ({ guests = [] }) => {
           transform: translateY(-6px);
           border-color: var(--secondary) !important;
           box-shadow: 0 16px 36px rgba(253, 52, 132, 0.25) !important;
+        }
+
+        /* Card Styling for Grid Mode (News-like) */
+        .guest-news-card:hover {
+          transform: translateY(-6px);
+          border-color: var(--secondary) !important;
+          box-shadow: 0 16px 36px rgba(253, 52, 132, 0.22) !important;
         }
 
         /* Floating Navigation Buttons like CardPoint */
@@ -398,6 +985,32 @@ const GuestsSection = ({ guests = [] }) => {
         }
         .carousel-floating-btn:active {
           transform: translateY(-50%) scale(0.95);
+        }
+
+        /* Filters list styling */
+        .guest-filter-controls {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .guest-category-list {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          scrollbar-width: none;
+          padding-bottom: 4px;
+          -webkit-overflow-scrolling: touch;
+        }
+        .guest-category-list::-webkit-scrollbar {
+          display: none;
+        }
+
+        @media (min-width: 768px) {
+          .guest-filter-controls {
+            flex-direction: row !important;
+            justify-content: space-between;
+            align-items: center;
+          }
         }
 
         /* Mobile Adjustments */

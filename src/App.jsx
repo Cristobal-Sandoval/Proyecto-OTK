@@ -230,8 +230,8 @@ function App() {
               {/* Quick Public Previews of sub-pages */}
               <div style={{ background: 'rgba(255, 255, 255, 0.005)' }}>
                 
-                {/* 2. Invitados Especiales (VIP & Jurados - Carrusel si > 3) */}
-                <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} onNavigate={handleNavigate} />
+                {/* 2. Invitados Especiales (VIP & Jurados - Carrusel en Home) */}
+                <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} onNavigate={handleNavigate} mode="carousel" />
 
                 {/* 3. Noticias y Anuncios */}
                 <NewsSection newsList={newsList.slice(0, 3)} onSelectArticle={handleSelectArticle} />
@@ -273,7 +273,7 @@ function App() {
           )}
 
           {activeTab === 'invitados' && (
-            <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} />
+            <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} mode="grid" onNavigate={handleNavigate} />
           )}
 
           {activeTab === 'cosplay' && (

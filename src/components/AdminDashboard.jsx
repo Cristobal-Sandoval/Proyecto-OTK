@@ -1882,16 +1882,19 @@ const AdminDashboard = ({
                     </div>
                   </div>
 
-                  {/* Row 5: Biografía */}
+                  {/* Row 5: Biografía / Explicación */}
                   <div className="form-group">
-                    <label>Biografía Corta (Presentación en web)</label>
+                    <label>Explicación / Biografía del Invitado (Presentación en la web)</label>
                     <textarea 
-                      className="form-control" rows="3"
+                      className="form-control" rows="4"
                       value={cosplayerForm.bio} 
                       onChange={(e) => setCosplayerForm({ ...cosplayerForm, bio: e.target.value })} 
-                      placeholder="Cuéntale un poco de ti o de tus logros a los asistentes..."
+                      placeholder="Explica brevemente quién es el invitado, su trayectoria, qué personaje interpretará y su rol en Otakonce 2026..."
                       required 
                     />
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
+                      💡 Esta explicación se muestra destacada en la sección de Invitados (formato tipo noticias) y en el carrusel de inicio.
+                    </small>
                   </div>
 
                   <div style={{ display: 'flex', gap: '12px' }}>
