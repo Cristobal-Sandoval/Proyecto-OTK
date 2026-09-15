@@ -327,19 +327,16 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
             )}
           </div>
         </div>
-      </div>
 
-      {/* Edge-to-Edge Infinite Carousel Track */}
-      {filteredCosplayers.length === 0 ? (
-        <div className="container">
+        {/* Infinite Carousel Track strictly contained within .container */}
+        {filteredCosplayers.length === 0 ? (
           <div className="glass-card" style={{ padding: '48px 24px', textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
             <User size={40} style={{ color: 'var(--text-muted)', marginBottom: '12px', opacity: 0.5 }} />
             <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No se encontraron cosplayers</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Intenta seleccionar otra ciudad o limpiar el término de búsqueda.</p>
           </div>
-        </div>
-      ) : (
-        <div className="cosplay-infinite-container">
+        ) : (
+          <div className="cosplay-infinite-container">
           <div 
             ref={sliderRef}
             className="cosplay-infinite-track"
@@ -543,6 +540,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           </div>
         </div>
       )}
+      </div>
 
       {/* Modal Profile View */}
       {activeModalCosplayer && (
@@ -659,13 +657,12 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
       )}
 
       <style>{`
-        /* Infinite Carousel Container */
+        /* Infinite Carousel Contained Inside .container */
         .cosplay-infinite-container {
           width: 100%;
           position: relative;
           overflow: hidden;
-          mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+          border-radius: 20px;
         }
 
         /* Continuous Smooth Track */
@@ -675,7 +672,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           overflow-x: auto;
           scrollbar-width: none;
           -ms-overflow-style: none;
-          padding: 12px 24px 24px;
+          padding: 8px 4px 16px;
           cursor: grab;
           user-select: none;
           -webkit-user-select: none;
@@ -688,17 +685,17 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           display: none;
         }
 
-        /* Item Width */
+        /* Item Width inside Container */
         .cosplay-infinite-item {
-          flex: 0 0 310px;
-          width: 310px;
+          flex: 0 0 350px;
+          width: 350px;
         }
 
         /* Card Styling */
         .community-cosplay-card {
           width: 100%;
           height: 460px;
-          border-radius: 22px;
+          border-radius: 20px;
           overflow: hidden;
           position: relative;
           box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -712,21 +709,17 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
 
         /* Mobile Adjustments */
         @media (max-width: 767px) {
-          .cosplay-infinite-container {
-            mask-image: none;
-            -webkit-mask-image: none;
-          }
           .cosplay-infinite-track {
             gap: 16px;
-            padding: 8px 16px 20px;
+            padding: 4px 0 16px;
           }
           .cosplay-infinite-item {
             flex: 0 0 280px;
             width: 280px;
           }
           .community-cosplay-card {
-            height: 420px;
-            border-radius: 20px;
+            height: 410px;
+            border-radius: 18px;
           }
         }
       `}</style>

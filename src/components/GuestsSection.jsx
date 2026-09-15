@@ -307,46 +307,45 @@ const GuestsSection = ({ guests = [] }) => {
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Edge-to-Edge Infinite Carousel Track with Soft Borders */}
-      <div className="guests-infinite-container">
-        <div 
-          ref={sliderRef}
-          className="guests-infinite-track"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUpOrLeave}
-          onMouseLeave={() => {
-            handleMouseUpOrLeave();
-            resumeInteractionAfterDelay(1500);
-          }}
-          onTouchStart={() => {
-            pauseInteraction();
-            hasMoved.current = false;
-          }}
-          onTouchEnd={() => resumeInteractionAfterDelay(2200)}
-          onTouchCancel={() => resumeInteractionAfterDelay(2200)}
-        >
-          {carouselItems.map((guest, index) => (
-            <div 
-              key={`${guest.id}-${index}`}
-              className="guest-infinite-item"
-            >
-              <GuestCard guest={guest} hasMovedRef={hasMoved} />
-            </div>
-          ))}
+        {/* Carousel Track strictly contained within .container */}
+        <div className="guests-infinite-container">
+          <div 
+            ref={sliderRef}
+            className="guests-infinite-track"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={() => {
+              handleMouseUpOrLeave();
+              resumeInteractionAfterDelay(1500);
+            }}
+            onTouchStart={() => {
+              pauseInteraction();
+              hasMoved.current = false;
+            }}
+            onTouchEnd={() => resumeInteractionAfterDelay(2200)}
+            onTouchCancel={() => resumeInteractionAfterDelay(2200)}
+          >
+            {carouselItems.map((guest, index) => (
+              <div 
+                key={`${guest.id}-${index}`}
+                className="guest-infinite-item"
+              >
+                <GuestCard guest={guest} hasMovedRef={hasMoved} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       <style>{`
-        /* Infinite Carousel Outer Container with edge masking */
+        /* Infinite Carousel Contained Inside .container */
         .guests-infinite-container {
           width: 100%;
           position: relative;
           overflow: hidden;
-          mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+          border-radius: 20px;
         }
 
         /* Continuous Smooth Track */
@@ -356,7 +355,7 @@ const GuestsSection = ({ guests = [] }) => {
           overflow-x: auto;
           scrollbar-width: none;
           -ms-overflow-style: none;
-          padding: 12px 24px 24px;
+          padding: 8px 4px 16px;
           cursor: grab;
           user-select: none;
           -webkit-user-select: none;
@@ -369,17 +368,17 @@ const GuestsSection = ({ guests = [] }) => {
           display: none;
         }
 
-        /* Item Width */
+        /* Item Width inside Container */
         .guest-infinite-item {
-          flex: 0 0 320px;
-          width: 320px;
+          flex: 0 0 350px;
+          width: 350px;
         }
 
         /* Card Styling */
         .guest-card {
           width: 100%;
-          height: 480px;
-          border-radius: 24px;
+          height: 460px;
+          border-radius: 20px;
           overflow: hidden;
           position: relative;
           box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -393,21 +392,17 @@ const GuestsSection = ({ guests = [] }) => {
 
         /* Mobile Adjustments */
         @media (max-width: 767px) {
-          .guests-infinite-container {
-            mask-image: none;
-            -webkit-mask-image: none;
-          }
           .guests-infinite-track {
             gap: 16px;
-            padding: 8px 16px 20px;
+            padding: 4px 0 16px;
           }
           .guest-infinite-item {
             flex: 0 0 280px;
             width: 280px;
           }
           .guest-card {
-            height: 420px;
-            border-radius: 20px;
+            height: 410px;
+            border-radius: 18px;
           }
         }
       `}</style>
