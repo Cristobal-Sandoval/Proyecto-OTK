@@ -163,12 +163,12 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
   const scrollManual = (direction) => {
     if (!sliderRef.current) return;
     pauseInteraction();
-    const cardWidth = window.innerWidth < 768 ? 296 : 336;
+    const cardWidth = window.innerWidth < 768 ? 296 : 374;
     sliderRef.current.scrollBy({
       left: direction === 'left' ? -cardWidth : cardWidth,
       behavior: 'smooth'
     });
-    resumeInteractionAfterDelay(3000);
+    resumeInteractionAfterDelay(3500);
   };
 
   const handleShareCosplayer = (e, cosplayer) => {
@@ -199,57 +199,11 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
   return (
     <section className="section-padding" id="cosplay" style={{ background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
       <div className="container">
-        {/* Section Header with Arrows */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        {/* Section Header */}
+        <div style={{ marginBottom: '24px' }}>
           <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
             <h2 style={{ textAlign: 'left' }}>Pasarela <span className="text-neon-pink">Cosplay</span> & Comunidad</h2>
             <p style={{ textAlign: 'left', maxWidth: '600px' }}>El talento de Concepción y de todo el país reunido en un solo lugar. Conoce a los exponentes, apóyalos en sus redes y comparte sus fichas.</p>
-          </div>
-
-          {/* Navigation Arrows */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button
-              onClick={() => scrollManual('left')}
-              aria-label="Cosplayers anteriores"
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '50%',
-                background: 'var(--bg-surface-solid)',
-                border: '1.5px solid var(--border-color)',
-                color: 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-              }}
-              className="hover-glow"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => scrollManual('right')}
-              aria-label="Siguientes cosplayers"
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '50%',
-                background: 'var(--bg-surface-solid)',
-                border: '1.5px solid var(--border-color)',
-                color: 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-              }}
-              className="hover-glow"
-            >
-              <ChevronRight size={20} />
-            </button>
           </div>
         </div>
 
@@ -336,10 +290,28 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Intenta seleccionar otra ciudad o limpiar el término de búsqueda.</p>
           </div>
         ) : (
-          <div className="cosplay-infinite-container">
-          <div 
-            ref={sliderRef}
-            className="cosplay-infinite-track"
+          <div className="cosplay-infinite-container group-carousel">
+            {/* Floating Left Arrow (CardPoint style) */}
+            <button
+              onClick={() => scrollManual('left')}
+              aria-label="Cosplayer anterior"
+              className="carousel-floating-btn carousel-floating-left"
+            >
+              <ChevronLeft size={22} className="stroke-[2.5]" />
+            </button>
+
+            {/* Floating Right Arrow (CardPoint style) */}
+            <button
+              onClick={() => scrollManual('right')}
+              aria-label="Siguiente cosplayer"
+              className="carousel-floating-btn carousel-floating-right"
+            >
+              <ChevronRight size={22} className="stroke-[2.5]" />
+            </button>
+
+            <div 
+              ref={sliderRef}
+              className="cosplay-infinite-track"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUpOrLeave}
@@ -707,8 +679,56 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           box-shadow: 0 16px 36px rgba(253, 52, 132, 0.25) !important;
         }
 
+        /* Floating Navigation Buttons like CardPoint */
+        .carousel-floating-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 25;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.95);
+          color: #0F172A;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+          user-select: none;
+        }
+        .carousel-floating-left {
+          left: 14px;
+        }
+        .carousel-floating-right {
+          right: 14px;
+        }
+        .carousel-floating-btn:hover {
+          transform: translateY(-50%) scale(1.12);
+          background: #FFFFFF;
+          color: var(--secondary);
+          box-shadow: 0 10px 28px rgba(253, 52, 132, 0.4), 0 0 14px rgba(0, 136, 255, 0.3);
+        }
+        .carousel-floating-btn:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+
         /* Mobile Adjustments */
         @media (max-width: 767px) {
+          .carousel-floating-btn {
+            width: 40px;
+            height: 40px;
+          }
+          .carousel-floating-left {
+            left: 8px;
+          }
+          .carousel-floating-right {
+            right: 8px;
+          }
           .cosplay-infinite-track {
             gap: 16px;
             padding: 4px 0 16px;
