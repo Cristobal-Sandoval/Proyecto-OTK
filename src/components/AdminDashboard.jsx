@@ -60,6 +60,14 @@ const AdminDashboard = ({
   const [configForm, setConfigForm] = useState({ ...eventConfig });
   const [bannerForm, setBannerForm] = useState({ ...floatingBanner });
 
+  // Change Password States
+  const [currentPass, setCurrentPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [passError, setPassError] = useState('');
+  const [passSuccess, setPassSuccess] = useState('');
+  const [isChangingPass, setIsChangingPass] = useState(false);
+
   const handleCopySecretUrl = () => {
     const secretUrl = `${window.location.origin}/#stf-portal`;
     navigator.clipboard.writeText(secretUrl);
@@ -188,7 +196,8 @@ const AdminDashboard = ({
     e.preventDefault();
     if (lockoutRemaining > 0) return;
 
-    const expectedHash = import.meta.env.VITE_ADMIN_HASH || 'd33d224668fd2090897bb907c3b73e4dd42a1c9aac76b7b6590d329276a235ba';
+    // Use custom admin hash if changed, otherwise fallback to env or factory default
+    const expectedHash = localStorage.getItem('otakonce_admin_hash') || import.meta.env.VITE_ADMIN_HASH || 'd33d224668fd2090897bb907c3b73e4dd42a1c9aac76b7b6590d329276a235ba';
     const computedHash = await hashPassword(password);
     if (computedHash === expectedHash) {
       setIsAuthenticated(true);
@@ -202,14 +211,64 @@ const AdminDashboard = ({
       const nextAttempts = failedAttempts + 1;
       setFailedAttempts(nextAttempts);
       sessionStorage.setItem('otakonce_login_attempts', String(nextAttempts));
-      if (nextAttempts >= 5) {
-        const lockoutTime = Date.now() + 30000; // 30 seconds
+      if (nextAttempts >= 3) {
+        const lockoutTime = Date.now() + 30000; // 30 seconds cooldown
         setLockoutUntil(lockoutTime);
         sessionStorage.setItem('otakonce_login_lockout', String(lockoutTime));
-        setLoginError('Demasiados intentos fallidos. Bloqueado temporalmente por 30 segundos.');
+        setLoginError('Demasiados intentos fallidos (3/3). Acceso bloqueado temporalmente por 30 segundos.');
       } else {
-        setLoginError(`Contraseña incorrecta. (${5 - nextAttempts} intento${5 - nextAttempts === 1 ? '' : 's'} restante${5 - nextAttempts === 1 ? '' : 's'})`);
+        const remaining = 3 - nextAttempts;
+        setLoginError(`Contraseña incorrecta. (${remaining} intento${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'})`);
       }
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPassError('');
+    setPassSuccess('');
+
+    const expectedHash = localStorage.getItem('otakonce_admin_hash') || import.meta.env.VITE_ADMIN_HASH || 'd33d224668fd2090897bb907c3b73e4dd42a1c9aac76b7b6590d329276a235ba';
+    const computedCurrentHash = await hashPassword(currentPass);
+
+    if (computedCurrentHash !== expectedHash) {
+      setPassError('La contraseña actual ingresada es incorrecta.');
+      return;
+    }
+
+    if (newPass.length < 6) {
+      setPassError('La nueva contraseña debe tener un mínimo de 6 caracteres.');
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      setPassError('Las contraseñas nuevas no coinciden.');
+      return;
+    }
+
+    setIsChangingPass(true);
+    try {
+      const newHash = await hashPassword(newPass);
+      localStorage.setItem('otakonce_admin_hash', newHash);
+      setCurrentPass('');
+      setNewPass('');
+      setConfirmPass('');
+      setPassSuccess('¡Contraseña de administrador actualizada con éxito! Recuerda usar tu nueva clave en el próximo inicio de sesión.');
+    } catch {
+      setPassError('Ocurrió un error al procesar el cambio de contraseña.');
+    } finally {
+      setIsChangingPass(false);
+    }
+  };
+
+  const handleResetDefaultPassword = () => {
+    if (window.confirm('¿Seguro que deseas restablecer la contraseña a la clave predeterminada de fábrica?')) {
+      localStorage.removeItem('otakonce_admin_hash');
+      setCurrentPass('');
+      setNewPass('');
+      setConfirmPass('');
+      setPassError('');
+      setPassSuccess('La contraseña ha sido restablecida a la predeterminada de fábrica.');
     }
   };
 
@@ -500,6 +559,7 @@ const AdminDashboard = ({
         >
           {[
             { id: 'themes', label: 'Modos & Fechas', icon: Sparkles },
+            { id: 'security', label: 'Seguridad & Clave', icon: Shield },
             { id: 'cloudinary', label: 'Cloudinary CDN', icon: Cloud },
             { id: 'config', label: 'Evento Principal', icon: Settings },
             { id: 'hero_banners', label: 'Banners de Inicio', icon: ImageIcon },
@@ -731,6 +791,193 @@ const AdminDashboard = ({
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                   💡 <strong>Atajo de teclado invisible:</strong> Presiona <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Ctrl + Shift + A</kbd> (o <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Cmd + Shift + A</kbd> en Mac) en cualquier pantalla para abrir o cerrar el panel.
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: SECURITY & PASSWORD CONFIGURATION */}
+          {adminTab === 'security' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+                <h3 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <Shield size={24} color="var(--primary)" /> Seguridad del Panel & Cambio de Contraseña
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                  Administra las credenciales de acceso del staff organizador de Otakonce. Tu contraseña se procesa con encriptación criptográfica unidireccional SHA-256.
+                </p>
+              </div>
+
+              {/* Status Overview Card */}
+              <div
+                style={{
+                  background: 'rgba(139, 92, 246, 0.08)',
+                  border: '1.5px solid rgba(139, 92, 246, 0.25)',
+                  borderRadius: '16px',
+                  padding: '20px',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '18px'
+                }}
+              >
+                <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Estado de la Contraseña
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: localStorage.getItem('otakonce_admin_hash') ? '#10B981' : '#00A3FF' }} />
+                    <strong style={{ fontSize: '0.95rem' }}>
+                      {localStorage.getItem('otakonce_admin_hash') ? 'Contraseña Personalizada Activa' : 'Contraseña de Fábrica'}
+                    </strong>
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Protección Anti-Fuerza Bruta
+                  </span>
+                  <div style={{ marginTop: '4px' }}>
+                    <strong style={{ fontSize: '0.95rem', color: '#10B981' }}>
+                      Activa (Máximo 3 intentos)
+                    </strong>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                      Bloqueo de 30s al tercer intento fallido
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Atajo Invisible
+                  </span>
+                  <div style={{ marginTop: '4px' }}>
+                    <kbd style={{ background: 'rgba(255,255,255,0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 700 }}>
+                      Ctrl + Shift + A
+                    </kbd>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Change Form */}
+              <div 
+                style={{
+                  background: 'var(--bg-surface-solid)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  maxWidth: '560px'
+                }}
+              >
+                <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Lock size={18} color="var(--primary)" /> Actualizar Contraseña del Administrador
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                  Ingresa tu contraseña actual y define la nueva contraseña para proteger el acceso a este panel.
+                </p>
+
+                {passSuccess && (
+                  <div
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      border: '1px solid #10B981',
+                      color: '#10B981',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      marginBottom: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontWeight: 700,
+                      fontSize: '0.88rem'
+                    }}
+                    className="animate-fade-in"
+                  >
+                    <CheckCircle2 size={18} />
+                    {passSuccess}
+                  </div>
+                )}
+
+                {passError && (
+                  <div
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid #EF4444',
+                      color: '#EF4444',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      marginBottom: '18px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontWeight: 700,
+                      fontSize: '0.88rem'
+                    }}
+                    className="animate-fade-in"
+                  >
+                    <AlertCircle size={18} />
+                    {passError}
+                  </div>
+                )}
+
+                <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.85rem', fontWeight: 700 }}>Contraseña Actual</label>
+                    <input
+                      type="password"
+                      value={currentPass}
+                      onChange={(e) => setCurrentPass(e.target.value)}
+                      placeholder="Ingresa la clave que usaste para entrar"
+                      required
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', background: 'var(--bg-surface)' }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.85rem', fontWeight: 700 }}>Nueva Contraseña</label>
+                    <input
+                      type="password"
+                      value={newPass}
+                      onChange={(e) => setNewPass(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      required
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', background: 'var(--bg-surface)' }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.85rem', fontWeight: 700 }}>Confirmar Nueva Contraseña</label>
+                    <input
+                      type="password"
+                      value={confirmPass}
+                      onChange={(e) => setConfirmPass(e.target.value)}
+                      placeholder="Repite la nueva contraseña"
+                      required
+                      style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', width: '100%', background: 'var(--bg-surface)' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    <button
+                      type="submit"
+                      disabled={isChangingPass}
+                      className="btn btn-primary"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}
+                    >
+                      {isChangingPass ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
+                      Guardar Nueva Contraseña
+                    </button>
+
+                    {localStorage.getItem('otakonce_admin_hash') && (
+                      <button
+                        type="button"
+                        onClick={handleResetDefaultPassword}
+                        className="btn btn-outline"
+                        style={{ padding: '10px 16px', fontSize: '0.85rem' }}
+                      >
+                        Restablecer a Clave de Fábrica
+                      </button>
+                    )}
+                  </div>
+                </form>
               </div>
             </div>
           )}
