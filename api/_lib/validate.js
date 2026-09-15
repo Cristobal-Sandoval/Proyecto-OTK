@@ -67,6 +67,47 @@ export function validateApplication(body) {
   return { app: { name, character, city, contact, instagram, bio, photo } };
 }
 
+export const COMMUNITY_TYPES = [
+  'Danza & Performance',
+  'Videojuegos',
+  'Juegos de Cartas (TCG)',
+  'Anime & Manga',
+  'Música',
+  'Ilustración & Arte',
+  'Otro',
+];
+
+export function validateCommunityApplication(body) {
+  const name = trim(body?.name, 80);
+  const type = trim(body?.type, 60);
+  const description = trim(body?.description, 400); // Presentación breve: máx. 400 caracteres
+  const contact = trim(body?.contact, 160);
+  let instagram = trim(body?.instagram, 200);
+  // Logo único: una sola URL https o un solo data:image (nunca arreglos)
+  const logo = typeof body?.logo === 'string' ? body.logo : '';
+
+  if (!name || !type || !description || !contact) {
+    return { error: 'Nombre, tipo, descripción y email son obligatorios.' };
+  }
+  if (!COMMUNITY_TYPES.includes(type)) return { error: 'Tipo de comunidad inválido.' };
+  if (!isValidEmail(contact)) return { error: 'Ingresa un email de contacto válido.' };
+  if (instagram && !isSafeHttpUrl(instagram)) {
+    if (/^@?[A-Za-z0-9._]{1,60}$/.test(instagram)) {
+      instagram = `https://instagram.com/${instagram.replace(/^@/, '')}`;
+    } else {
+      return { error: 'Instagram inválido.' };
+    }
+  }
+  if (logo) {
+    const isHttps = isSafeHttpUrl(logo);
+    const isDataImg = logo.startsWith('data:image/jpeg;base64,') || logo.startsWith('data:image/png;base64,') || logo.startsWith('data:image/webp;base64,') || logo.startsWith('data:image/gif;base64,');
+    if (!isHttps && !isDataImg) return { error: 'Logo inválido.' };
+    if (!isHttps && logo.length > 950_000) return { error: 'Logo muy pesado: usa una imagen menor a 700KB o una URL https.' };
+    if (isHttps && logo.length > 500) return { error: 'URL de logo muy larga.' };
+  }
+  return { app: { name, type, description, contact, instagram, logo } };
+}
+
 export function readJson(req) {
   return new Promise((resolve) => {
     let raw = '';

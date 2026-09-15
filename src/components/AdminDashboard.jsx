@@ -10,7 +10,8 @@ import {
 } from '../services/cloudinary';
 import { 
   saveGlobalTheme, getCosplayApplications, removeCosplayApplication,
-  approveCosplayApplication, authMe, authLogin, authLogout, authChangePassword
+  approveCosplayApplication, getCommunityApplications, removeCommunityApplication,
+  approveCommunityApplication, authMe, authLogin, authLogout, authChangePassword
 } from '../services/cloudSync';
 import {
   sanitizeNews, sanitizeCosplayer, sanitizeCommunity, sanitizeSchedule, sanitizeBanner,
@@ -98,9 +99,26 @@ const AdminDashboard = ({
     }
   };
 
+  // Community Applications State (Cloud Synchronized)
+  const [communityApplications, setCommunityApplications] = useState([]);
+  const [loadingCommApps, setLoadingCommApps] = useState(false);
+
+  const loadCommunityApplications = async () => {
+    setLoadingCommApps(true);
+    try {
+      const data = await getCommunityApplications();
+      setCommunityApplications(data || []);
+    } catch {
+      // ignore
+    } finally {
+      setLoadingCommApps(false);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       loadApplications();
+      loadCommunityApplications();
     }
   }, [isAuthenticated]);
 
@@ -144,6 +162,39 @@ const AdminDashboard = ({
       try {
         const updated = await removeCosplayApplication(appId);
         setApplications(updated);
+      } catch (err) {
+        alert(err?.message || 'No se pudo descartar en el servidor.');
+      }
+    }
+  };
+
+  // Community: aprobar en el servidor (publica y queda visible en todos los dispositivos)
+  const handleApproveCommunityApplication = async (app) => {
+    try {
+      const { community, applications: updated } = await approveCommunityApplication(app.id);
+      if (community) setCommunities([...communities, community]);
+      setCommunityApplications(updated || []);
+      alert(`¡Postulación de "${app.name}" aprobada! Ya es visible en la sección de comunidades.`);
+    } catch (err) {
+      // Fallback local (sin backend): se agrega solo en este navegador
+      const clean = sanitizeCommunity({
+        name: app.name,
+        type: app.type,
+        description: app.description,
+        logo: app.logo,
+        instagram: app.instagram,
+      });
+      setCommunities([...communities, { id: Date.now(), ...clean }]);
+      setCommunityApplications(communityApplications.filter(a => String(a.id) !== String(app.id)));
+      alert(`Aprobada localmente (sin servidor): "${clean.name}" se ve en este navegador. Conecta el backend para publicarla en todos los dispositivos. Detalle: ${err?.message || ''}`);
+    }
+  };
+
+  const handleRejectCommunityApplication = async (appId) => {
+    if (window.confirm('¿Seguro que deseas descartar esta postulación?')) {
+      try {
+        const updated = await removeCommunityApplication(appId);
+        setCommunityApplications(updated);
       } catch (err) {
         alert(err?.message || 'No se pudo descartar en el servidor.');
       }
@@ -678,6 +729,7 @@ const AdminDashboard = ({
                 {[
                   { id: 'themes', label: '✨ Modos & Fechas' },
                   { id: 'applications', label: `📋 Postulaciones Pasarela (${applications.length})` },
+                  { id: 'community_applications', label: `👥 Postulaciones Comunidades (${communityApplications.length})` },
                   { id: 'security', label: '🛡️ Seguridad & Clave' },
                   { id: 'cloudinary', label: '☁️ Cloudinary CDN' },
                   { id: 'config', label: '⚙️ Evento Principal' },
@@ -702,6 +754,7 @@ const AdminDashboard = ({
             {[
               { id: 'themes', label: 'Modos & Fechas', icon: Sparkles },
               { id: 'applications', label: 'Postulaciones Pasarela', icon: UserCheck, badge: applications.length },
+              { id: 'community_applications', label: 'Postulaciones Comunidades', icon: Users, badge: communityApplications.length },
               { id: 'security', label: 'Seguridad & Clave', icon: Shield },
               { id: 'cloudinary', label: 'Cloudinary CDN', icon: Cloud },
               { id: 'config', label: 'Evento Principal', icon: Settings },
@@ -1067,6 +1120,135 @@ const AdminDashboard = ({
                         <button
                           type="button"
                           onClick={() => handleRejectApplication(app.id)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                        >
+                          <Trash2 size={16} /> Descartar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: COMMUNITY APPLICATIONS */}
+          {adminTab === 'community_applications' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <Users size={24} color="var(--primary)" /> Postulaciones de Comunidades
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Revisa las inscripciones enviadas por las agrupaciones. Al aprobar una postulación, se publicará automáticamente en la sección de Comunidades.
+                  </p>
+                </div>
+                <button
+                  onClick={loadCommunityApplications}
+                  disabled={loadingCommApps}
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', minHeight: '44px', fontSize: '0.85rem' }}
+                >
+                  <RefreshCw size={16} className={loadingCommApps ? 'animate-spin' : ''} />
+                  Actualizar Lista
+                </button>
+              </div>
+
+              {communityApplications.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                  <Users size={48} style={{ color: 'var(--text-muted)', opacity: 0.5, marginBottom: '14px' }} />
+                  <h4 style={{ fontSize: '1.15rem', marginBottom: '6px', color: 'var(--text-primary)' }}>No hay postulaciones pendientes</h4>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '460px', margin: '0 auto' }}>
+                    Cuando las comunidades envíen su inscripción desde el botón de la web, aparecerán aquí para tu aprobación.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '16px' }}>
+                  {communityApplications.map((app) => (
+                    <div
+                      key={app.id}
+                      className="glass-card"
+                      style={{
+                        padding: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '14px',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '16px',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                        {app.logo ? (
+                          <img
+                            src={app.logo}
+                            alt={app.name}
+                            loading="lazy"
+                            style={{
+                              width: '72px',
+                              height: '72px',
+                              objectFit: 'cover',
+                              borderRadius: '14px',
+                              border: '1px solid var(--border-color)',
+                              flexShrink: 0
+                            }}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div style={{ width: '72px', height: '72px', borderRadius: '14px', background: 'linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                            {String(app.name || '?').trim().charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--cyan)', letterSpacing: '0.04em' }}>
+                            {app.type || 'Comunidad'}
+                          </span>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '2px 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {app.name}
+                          </h4>
+                          {app.instagram && (
+                            <a
+                              href={isSafeHttpUrl(app.instagram) ? app.instagram : `https://instagram.com/${String(app.instagram).replace(/^@/, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer nofollow"
+                              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', minHeight: '44px', padding: '6px 0' }}
+                            >
+                              <ExternalLink size={12} /> {String(app.instagram).startsWith('http') ? `@${String(app.instagram).split('/').filter(Boolean).pop()}` : (String(app.instagram).startsWith('@') ? app.instagram : `@${app.instagram}`)}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {app.contact && (
+                        <div style={{ fontSize: '0.82rem', background: 'rgba(0,0,0,0.15)', padding: '8px 12px', borderRadius: '8px', color: 'var(--text-primary)', overflowWrap: 'anywhere' }}>
+                          <strong>Email:</strong> {app.contact}
+                        </div>
+                      )}
+
+                      {app.description && (
+                        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4, background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px' }}>
+                          "{app.description}"
+                        </p>
+                      )}
+
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Fecha de postulación: {app.createdAt || 'Reciente'}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleApproveCommunityApplication(app)}
+                          className="btn btn-primary"
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px' }}
+                        >
+                          <Check size={16} /> Aprobar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectCommunityApplication(app.id)}
                           className="btn btn-secondary"
                           style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
                         >

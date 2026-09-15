@@ -166,6 +166,121 @@ export const approveCosplayApplication = async (applicationId) => {
   return res.json();
 };
 
+// --- Comunidades: postulación pública -> bandeja admin -> publicación ---
+
+/**
+ * Solo admin autenticado puede listar. Visitantes reciben [] sin exponer PII.
+ */
+export const getCommunityApplications = async () => {
+  try {
+    const res = await apiFetch('/api/community-applications', { method: 'GET', headers: { 'Cache-Control': 'no-cache' } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && Array.isArray(json.applications)) return json.applications;
+    }
+    if (res.status === 401) return [];
+  } catch (err) {
+    console.warn('Could not fetch community applications:', err);
+  }
+  return [];
+};
+
+/**
+ * Postulación pública de comunidad. Lanza Error con el mensaje del servidor.
+ */
+export const submitCommunityApplication = async (application) => {
+  let res;
+  try {
+    res = await apiFetch('/api/community-applications', {
+      method: 'POST',
+      body: JSON.stringify(application),
+    });
+  } catch {
+    throw new Error('Sin conexión con el servidor. Intenta nuevamente.');
+  }
+  if (!res.ok) {
+    let msg = 'No se pudo enviar la postulación.';
+    try {
+      const j = await res.json();
+      if (j?.error) msg = j.error;
+    } catch { /* noop */ }
+    if (res.status === 429) msg = 'Límite de postulaciones alcanzado. Intenta más tarde.';
+    throw new Error(msg);
+  }
+  const json = await res.json().catch(() => ({}));
+  return { id: json.id, status: 'pending', ...application };
+};
+
+/**
+ * Solo admin. Retorna la lista actualizada.
+ */
+export const removeCommunityApplication = async (applicationId) => {
+  try {
+    const res = await apiFetch(`/api/community-applications?id=${encodeURIComponent(applicationId)}`, { method: 'DELETE' });
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.applications)) return json.applications;
+    }
+    if (res.status === 401) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  } catch (err) {
+    console.warn('Could not remove community application:', err);
+    throw err;
+  }
+  return [];
+};
+
+/**
+ * Comunidades publicadas por el admin. Públicas y sin PII.
+ */
+export const getPublicCommunities = async () => {
+  try {
+    const res = await fetch('/api/communities', { headers: { 'Cache-Control': 'no-cache' } });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && Array.isArray(json.communities)) return json.communities;
+    }
+  } catch (err) {
+    console.warn('Could not fetch published communities:', err);
+  }
+  return [];
+};
+
+/**
+ * Fusiona la lista local con la publicada en el servidor (dedupe por id).
+ */
+export const mergePublishedCommunities = (localList = [], published = []) => {
+  if (!Array.isArray(published) || published.length === 0) return localList;
+  const ids = new Set(localList.map((c) => String(c.id)));
+  const missing = published.filter((c) => c && !ids.has(String(c.id)));
+  if (missing.length === 0) return localList;
+  return [...localList, ...missing];
+};
+
+/**
+ * Aprueba en el servidor: publica con los datos entregados y saca de la bandeja.
+ */
+export const approveCommunityApplication = async (applicationId) => {
+  let res;
+  try {
+    res = await apiFetch('/api/community-applications-approve', {
+      method: 'POST',
+      body: JSON.stringify({ id: applicationId }),
+    });
+  } catch {
+    throw new Error('Sin conexión con el servidor.');
+  }
+  if (!res.ok) {
+    let msg = 'No se pudo aprobar la postulación.';
+    try {
+      const j = await res.json();
+      if (j?.error) msg = j.error;
+    } catch { /* noop */ }
+    if (res.status === 401) msg = 'Sesión expirada. Vuelve a iniciar sesión.';
+    throw new Error(msg);
+  }
+  return res.json();
+};
+
 export const authMe = async () => {
   try {
     const res = await apiFetch('/api/auth-me', { method: 'GET' });

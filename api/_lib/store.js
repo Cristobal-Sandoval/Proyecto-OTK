@@ -10,13 +10,20 @@ import {
   sbGetState, sbSetState,
   sbListApplications, sbGetApplication, sbInsertApplication, sbDeleteApplication,
   sbListPublished, sbInsertPublished,
+  sbListCommunityApplications, sbGetCommunityApplication,
+  sbInsertCommunityApplication, sbDeleteCommunityApplication,
+  sbListPublishedCommunities, sbInsertPublishedCommunity,
 } from './supabase.js';
 
 export const VALID_THEMES = ['normal', 'halloween', 'navidad', 'teleton', 'fiestas_patrias'];
 
 const g = globalThis;
 if (!g.__OTK_STORE__) {
-  g.__OTK_STORE__ = { themeMode: 'normal', themeUpdatedAt: Date.now(), applications: [], published: [] };
+  g.__OTK_STORE__ = {
+    themeMode: 'normal', themeUpdatedAt: Date.now(),
+    applications: [], published: [],
+    communityApplications: [], publishedCommunities: [],
+  };
 }
 const mem = () => g.__OTK_STORE__;
 
@@ -115,6 +122,78 @@ export async function addPublished(entry) {
       return await sbInsertPublished(entry);
     } catch (err) {
       console.warn('Supabase addPublished failed, kept in memory:', err?.message);
+    }
+  }
+  return entry;
+}
+
+// --- Postulaciones de comunidades (privadas) ---
+export async function listCommunityApps() {
+  if (isSupabaseConfigured()) {
+    try {
+      return await sbListCommunityApplications();
+    } catch (err) {
+      console.warn('Supabase listCommunityApps fallback to memory:', err?.message);
+    }
+  }
+  return [...mem().communityApplications];
+}
+
+export async function getCommunityApp(id) {
+  if (isSupabaseConfigured()) {
+    try {
+      return await sbGetCommunityApplication(id);
+    } catch (err) {
+      console.warn('Supabase getCommunityApp fallback to memory:', err?.message);
+    }
+  }
+  return mem().communityApplications.find((a) => String(a.id) === String(id)) || null;
+}
+
+export async function addCommunityApp(app) {
+  mem().communityApplications = [app, ...mem().communityApplications].slice(0, 500);
+  if (isSupabaseConfigured()) {
+    try {
+      return await sbInsertCommunityApplication(app);
+    } catch (err) {
+      console.warn('Supabase addCommunityApp failed, kept in memory:', err?.message);
+    }
+  }
+  return app;
+}
+
+export async function removeCommunityApp(id) {
+  const before = mem().communityApplications.length;
+  mem().communityApplications = mem().communityApplications.filter((a) => String(a.id) !== String(id));
+  if (isSupabaseConfigured()) {
+    try {
+      await sbDeleteCommunityApplication(id);
+    } catch (err) {
+      console.warn('Supabase removeCommunityApp failed:', err?.message);
+    }
+  }
+  return mem().communityApplications.length !== before;
+}
+
+// --- Comunidades publicadas (públicas) ---
+export async function listPublishedCommunities() {
+  if (isSupabaseConfigured()) {
+    try {
+      return await sbListPublishedCommunities();
+    } catch (err) {
+      console.warn('Supabase listPublishedCommunities fallback to memory:', err?.message);
+    }
+  }
+  return [...mem().publishedCommunities];
+}
+
+export async function addPublishedCommunity(entry) {
+  mem().publishedCommunities = [entry, ...mem().publishedCommunities].slice(0, 500);
+  if (isSupabaseConfigured()) {
+    try {
+      return await sbInsertPublishedCommunity(entry);
+    } catch (err) {
+      console.warn('Supabase addPublishedCommunity failed, kept in memory:', err?.message);
     }
   }
   return entry;

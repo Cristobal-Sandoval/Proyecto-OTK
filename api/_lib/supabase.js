@@ -70,6 +70,43 @@ export async function sbDeleteApplication(id) {
   await sb('cosplay_applications', { method: 'DELETE', query: `?id=eq.${encodeURIComponent(id)}` });
 }
 
+// --- Comunidades: postulaciones (PII, sin acceso público) ---
+export async function sbListCommunityApplications() {
+  return sb('community_applications', { query: '?select=*&order=created_at.desc&limit=500' });
+}
+
+export async function sbGetCommunityApplication(id) {
+  const rows = await sb('community_applications', { query: `?id=eq.${encodeURIComponent(id)}&select=*&limit=1` });
+  return Array.isArray(rows) && rows[0] ? rows[0] : null;
+}
+
+export async function sbInsertCommunityApplication(app) {
+  const rows = await sb('community_applications', {
+    method: 'POST',
+    body: app,
+    prefer: 'return=representation',
+  });
+  return Array.isArray(rows) && rows[0] ? rows[0] : app;
+}
+
+export async function sbDeleteCommunityApplication(id) {
+  await sb('community_applications', { method: 'DELETE', query: `?id=eq.${encodeURIComponent(id)}` });
+}
+
+// --- Comunidades publicadas (lectura pública) ---
+export async function sbListPublishedCommunities() {
+  return sb('communities', { query: '?select=*&order=created_at.desc&limit=500' });
+}
+
+export async function sbInsertPublishedCommunity(entry) {
+  const rows = await sb('communities', {
+    method: 'POST',
+    body: entry,
+    prefer: 'return=representation',
+  });
+  return Array.isArray(rows) && rows[0] ? rows[0] : entry;
+}
+
 // --- Galería publicada ---
 export async function sbListPublished() {
   return sb('cosplayers', { query: '?select=*&order=created_at.desc&limit=500' });

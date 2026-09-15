@@ -281,6 +281,18 @@ export const defaultCosplayers = [
   }
 ];
 
+export const COMMUNITY_TYPES = [
+  'Danza & Performance',
+  'Videojuegos',
+  'Juegos de Cartas (TCG)',
+  'Anime & Manga',
+  'Música',
+  'Ilustración & Arte',
+  'Otro',
+];
+
+export const COMM_DESC_MAX_LENGTH = 400;
+
 export const defaultCommunities = [
   {
     id: 1,

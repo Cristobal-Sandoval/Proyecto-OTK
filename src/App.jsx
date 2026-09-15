@@ -26,7 +26,7 @@ import {
   getSchedule, saveSchedule,
   getBanners, saveBanners
 } from './services/db';
-import { getGlobalTheme, getPublicCosplayers, mergePublishedCosplayers } from './services/cloudSync';
+import { getGlobalTheme, getPublicCosplayers, mergePublishedCosplayers, getPublicCommunities, mergePublishedCommunities } from './services/cloudSync';
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -103,10 +103,14 @@ function App() {
     let isMounted = true;
     (async () => {
       try {
-        const published = await getPublicCosplayers();
-        if (published.length > 0 && isMounted) {
+        const [publishedCos, publishedComm] = await Promise.all([
+          getPublicCosplayers(),
+          getPublicCommunities(),
+        ]);
+        if (!isMounted) return;
+        if (publishedCos.length > 0) {
           setCosplayersState(prev => {
-            const merged = mergePublishedCosplayers(prev, published);
+            const merged = mergePublishedCosplayers(prev, publishedCos);
             if (merged.length !== prev.length) {
               saveCosplayers(merged);
               return merged;
@@ -114,8 +118,18 @@ function App() {
             return prev;
           });
         }
+        if (publishedComm.length > 0) {
+          setCommunitiesState(prev => {
+            const merged = mergePublishedCommunities(prev, publishedComm);
+            if (merged.length !== prev.length) {
+              saveCommunities(merged);
+              return merged;
+            }
+            return prev;
+          });
+        }
       } catch {
-        // Offline / sin backend: se mantiene la lista local
+        // Offline / sin backend: se mantienen las listas locales
       }
     })();
     return () => { isMounted = false; };
