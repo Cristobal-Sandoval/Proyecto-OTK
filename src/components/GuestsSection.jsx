@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { ExternalLink, ChevronLeft, ChevronRight, Star, MapPin } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
@@ -146,20 +146,23 @@ const GuestCard = ({ guest, hasMovedRef }) => (
 );
 
 const GuestsSection = ({ guests = [] }) => {
-  const mobileSliderRef = useRef(null);
-  const desktopSliderRef = useRef(null);
+  const sliderRef = useRef(null);
   const isInteracting = useRef(false);
   const resumeTimer = useRef(null);
+  const isMouseDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftStart = useRef(0);
   const hasMoved = useRef(false);
 
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  // Repeat items for seamless continuous loop
+  const carouselItems = useMemo(() => {
+    if (!guests || guests.length === 0) return [];
+    if (guests.length <= 2) return [...guests, ...guests, ...guests, ...guests, ...guests, ...guests];
+    if (guests.length <= 4) return [...guests, ...guests, ...guests, ...guests];
+    return [...guests, ...guests, ...guests];
+  }, [guests]);
 
-  // Triple items for continuous loop on mobile
-  const mobileCarouselItems = guests.length > 0 
-    ? [...guests, ...guests, ...guests] 
-    : [];
-
+  // RequestAnimationFrame continuous slow auto-drift
   useEffect(() => {
     let animationFrameId;
     let lastTime = performance.now();
@@ -168,15 +171,18 @@ const GuestsSection = ({ guests = [] }) => {
       const delta = time - lastTime;
       lastTime = time;
 
-      if (!isInteracting.current && mobileSliderRef.current && mobileCarouselItems.length > 0) {
-        const speed = 0.045; // pixels/ms
-        mobileSliderRef.current.scrollLeft += speed * delta;
+      if (!isInteracting.current && sliderRef.current && carouselItems.length > 0) {
+        const speed = 0.045; // pixels/ms (~45px per second)
+        sliderRef.current.scrollLeft += speed * delta;
 
-        const { scrollLeft, scrollWidth } = mobileSliderRef.current;
-        const singleSetWidth = scrollWidth / 3;
+        const { scrollLeft, scrollWidth } = sliderRef.current;
+        const repeatCount = carouselItems.length / guests.length;
+        const singleSetWidth = scrollWidth / repeatCount;
 
-        if (singleSetWidth > 0 && scrollLeft >= singleSetWidth * 2) {
-          mobileSliderRef.current.scrollLeft -= singleSetWidth;
+        if (singleSetWidth > 0 && scrollLeft >= singleSetWidth * (repeatCount - 1)) {
+          sliderRef.current.scrollLeft -= singleSetWidth;
+        } else if (singleSetWidth > 0 && scrollLeft <= 0) {
+          sliderRef.current.scrollLeft += singleSetWidth;
         }
       }
 
@@ -189,42 +195,58 @@ const GuestsSection = ({ guests = [] }) => {
       cancelAnimationFrame(animationFrameId);
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
     };
-  }, [mobileCarouselItems.length]);
+  }, [carouselItems.length, guests.length]);
 
   const pauseInteraction = () => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
     isInteracting.current = true;
   };
 
-  const resumeInteractionAfterDelay = (delayMs = 2500) => {
+  const resumeInteractionAfterDelay = (delayMs = 2200) => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
     resumeTimer.current = setTimeout(() => {
       isInteracting.current = false;
     }, delayMs);
   };
 
-  const checkDesktopScrollBounds = () => {
-    if (!desktopSliderRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = desktopSliderRef.current;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  // Mouse drag handlers for desktop
+  const handleMouseDown = (e) => {
+    if (!sliderRef.current) return;
+    isMouseDown.current = true;
+    hasMoved.current = false;
+    startX.current = e.pageX - sliderRef.current.offsetLeft;
+    scrollLeftStart.current = sliderRef.current.scrollLeft;
+    pauseInteraction();
   };
 
-  useEffect(() => {
-    checkDesktopScrollBounds();
-    const handleResize = () => checkDesktopScrollBounds();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [guests.length]);
+  const handleMouseMove = (e) => {
+    if (!isMouseDown.current || !sliderRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.25;
+    if (Math.abs(walk) > 4) {
+      hasMoved.current = true;
+    }
+    sliderRef.current.scrollLeft = scrollLeftStart.current - walk;
+  };
 
-  const scrollDesktop = (direction) => {
-    if (!desktopSliderRef.current) return;
-    const scrollAmount = 364; // card width (340px) + gap (24px)
-    desktopSliderRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
+  const handleMouseUpOrLeave = () => {
+    if (isMouseDown.current) {
+      isMouseDown.current = false;
+      resumeInteractionAfterDelay(2000);
+    }
+  };
+
+  // Manual scroll with arrow buttons
+  const scrollManual = (direction) => {
+    if (!sliderRef.current) return;
+    pauseInteraction();
+    const cardWidth = window.innerWidth < 768 ? 296 : 344;
+    sliderRef.current.scrollBy({
+      left: direction === 'left' ? -cardWidth : cardWidth,
       behavior: 'smooth'
     });
-    setTimeout(checkDesktopScrollBounds, 350);
+    resumeInteractionAfterDelay(3000);
   };
 
   if (guests.length === 0) return null;
@@ -232,104 +254,84 @@ const GuestsSection = ({ guests = [] }) => {
   return (
     <section className="section-padding" id="invitados" style={{ background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
       <div className="container">
-        {/* Section Header */}
+        {/* Section Header with Arrows */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
           <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
             <h2 style={{ textAlign: 'left' }}>Invitados <span className="text-neon-pink">Especiales</span></h2>
             <p style={{ textAlign: 'left', maxWidth: '600px' }}>Conoce a los cosplayers oficiales, jurados de la pasarela y artistas destacados que nos acompañarán en Otakonce 2026.</p>
           </div>
 
-          {/* Desktop Navigation Arrows (Only shown when > 3 guests) */}
-          {guests.length > 3 && (
-            <div className="guests-desktop-nav" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button
-                onClick={() => scrollDesktop('left')}
-                disabled={!canScrollLeft}
-                aria-label="Invitados anteriores"
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '50%',
-                  background: 'var(--bg-surface-solid)',
-                  border: '1.5px solid var(--border-color)',
-                  color: canScrollLeft ? 'var(--text-primary)' : 'var(--text-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: canScrollLeft ? 'pointer' : 'default',
-                  opacity: canScrollLeft ? 1 : 0.4,
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                }}
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                onClick={() => scrollDesktop('right')}
-                disabled={!canScrollRight}
-                aria-label="Siguientes invitados"
-                style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '50%',
-                  background: 'var(--bg-surface-solid)',
-                  border: '1.5px solid var(--border-color)',
-                  color: canScrollRight ? 'var(--text-primary)' : 'var(--text-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: canScrollRight ? 'pointer' : 'default',
-                  opacity: canScrollRight ? 1 : 0.4,
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                }}
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop View (>= 768px): Framed inside container */}
-        <div className="guests-desktop-wrapper">
-          {guests.length <= 3 ? (
-            <div className="guests-desktop-grid">
-              {guests.map((guest) => (
-                <GuestCard key={guest.id} guest={guest} />
-              ))}
-            </div>
-          ) : (
-            <div 
-              ref={desktopSliderRef}
-              className="guests-desktop-slider"
-              onScroll={checkDesktopScrollBounds}
+          {/* Navigation Arrows */}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={() => scrollManual('left')}
+              aria-label="Invitados anteriores"
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'var(--bg-surface-solid)',
+                border: '1.5px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+              className="hover-glow"
             >
-              {guests.map((guest) => (
-                <div key={guest.id} style={{ flex: '0 0 340px' }}>
-                  <GuestCard guest={guest} />
-                </div>
-              ))}
-            </div>
-          )}
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={() => scrollManual('right')}
+              aria-label="Siguientes invitados"
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'var(--bg-surface-solid)',
+                border: '1.5px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+              className="hover-glow"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile View (< 768px): Continuous gentle drift + Touch Swipe */}
-      <div className="guests-mobile-wrapper">
+      {/* Edge-to-Edge Infinite Carousel Track with Soft Borders */}
+      <div className="guests-infinite-container">
         <div 
-          ref={mobileSliderRef}
-          className="guests-mobile-slider"
+          ref={sliderRef}
+          className="guests-infinite-track"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={() => {
+            handleMouseUpOrLeave();
+            resumeInteractionAfterDelay(1500);
+          }}
           onTouchStart={() => {
             pauseInteraction();
             hasMoved.current = false;
           }}
-          onTouchEnd={() => resumeInteractionAfterDelay(2500)}
-          onTouchCancel={() => resumeInteractionAfterDelay(2500)}
+          onTouchEnd={() => resumeInteractionAfterDelay(2200)}
+          onTouchCancel={() => resumeInteractionAfterDelay(2200)}
         >
-          {mobileCarouselItems.map((guest, index) => (
+          {carouselItems.map((guest, index) => (
             <div 
               key={`${guest.id}-${index}`}
-              className="guest-mobile-card-wrapper"
+              className="guest-infinite-item"
             >
               <GuestCard guest={guest} hasMovedRef={hasMoved} />
             </div>
@@ -338,43 +340,42 @@ const GuestsSection = ({ guests = [] }) => {
       </div>
 
       <style>{`
-        @media (min-width: 768px) {
-          .guests-desktop-wrapper {
-            display: block !important;
-          }
-          .guests-mobile-wrapper {
-            display: none !important;
-          }
-        }
-        @media (max-width: 767px) {
-          .guests-desktop-wrapper {
-            display: none !important;
-          }
-          .guests-mobile-wrapper {
-            display: block !important;
-          }
-        }
-
-        .guests-desktop-grid {
-          display: grid;
-          grid-template-columns: repeat(${Math.min(guests.length, 3)}, 1fr);
-          gap: 24px;
+        /* Infinite Carousel Outer Container with edge masking */
+        .guests-infinite-container {
           width: 100%;
+          position: relative;
+          overflow: hidden;
+          mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
         }
 
-        .guests-desktop-slider {
+        /* Continuous Smooth Track */
+        .guests-infinite-track {
           display: flex;
           gap: 24px;
           overflow-x: auto;
           scrollbar-width: none;
           -ms-overflow-style: none;
-          scroll-behavior: smooth;
-          padding: 8px 4px 16px;
+          padding: 12px 24px 24px;
+          cursor: grab;
+          user-select: none;
+          -webkit-user-select: none;
+          touch-action: pan-x pan-y pinch-zoom;
         }
-        .guests-desktop-slider::-webkit-scrollbar {
+        .guests-infinite-track:active {
+          cursor: grabbing;
+        }
+        .guests-infinite-track::-webkit-scrollbar {
           display: none;
         }
 
+        /* Item Width */
+        .guest-infinite-item {
+          flex: 0 0 320px;
+          width: 320px;
+        }
+
+        /* Card Styling */
         .guest-card {
           width: 100%;
           height: 480px;
@@ -383,7 +384,6 @@ const GuestsSection = ({ guests = [] }) => {
           position: relative;
           box-shadow: 0 8px 24px rgba(0,0,0,0.12);
           transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
-          user-select: none;
         }
         .guest-card:hover {
           transform: translateY(-6px);
@@ -391,26 +391,24 @@ const GuestsSection = ({ guests = [] }) => {
           box-shadow: 0 16px 36px rgba(253, 52, 132, 0.25) !important;
         }
 
-        .guests-mobile-slider {
-          display: flex;
-          gap: 16px;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          padding: 8px 20px 20px;
-          width: 100%;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-          touch-action: pan-x pan-y pinch-zoom;
-        }
-        .guests-mobile-slider::-webkit-scrollbar {
-          display: none;
-        }
-        .guest-mobile-card-wrapper {
-          flex: 0 0 280px;
-          width: 280px;
-        }
-        .guest-mobile-card-wrapper .guest-card {
-          height: 420px;
+        /* Mobile Adjustments */
+        @media (max-width: 767px) {
+          .guests-infinite-container {
+            mask-image: none;
+            -webkit-mask-image: none;
+          }
+          .guests-infinite-track {
+            gap: 16px;
+            padding: 8px 16px 20px;
+          }
+          .guest-infinite-item {
+            flex: 0 0 280px;
+            width: 280px;
+          }
+          .guest-card {
+            height: 420px;
+            border-radius: 20px;
+          }
         }
       `}</style>
     </section>

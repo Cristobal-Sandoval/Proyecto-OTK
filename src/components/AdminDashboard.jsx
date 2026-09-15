@@ -601,7 +601,7 @@ const AdminDashboard = ({
                   { id: 'hero_banners', label: '🖼️ Banners de Inicio' },
                   { id: 'banner', label: '📢 Alerta Flotante' },
                   { id: 'news', label: '📰 Noticias' },
-                  { id: 'cosplayers', label: '🎭 Cosplayers' },
+                  { id: 'cosplayers', label: '🎭 Invitados & Pasarela' },
                   { id: 'communities', label: '👥 Comunidades' },
                   { id: 'schedule', label: '📅 Cronograma' }
                 ].map((t) => (
@@ -624,7 +624,7 @@ const AdminDashboard = ({
               { id: 'hero_banners', label: 'Banners de Inicio', icon: ImageIcon },
               { id: 'banner', label: 'Alerta Flotante', icon: Megaphone },
               { id: 'news', label: 'Noticias', icon: Newspaper },
-              { id: 'cosplayers', label: 'Cosplayers', icon: Camera },
+              { id: 'cosplayers', label: 'Invitados & Pasarela', icon: Camera },
               { id: 'communities', label: 'Comunidades', icon: Users },
               { id: 'schedule', label: 'Cronograma', icon: Calendar }
             ].map((tab) => {

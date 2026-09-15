@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Search, MapPin, Share2, Check, X, User } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Search, MapPin, Share2, Check, X, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { slugify } from '../utils/slugify';
 
 const Instagram = ({ size = 18, ...props }) => (
@@ -21,9 +21,16 @@ const Instagram = ({ size = 18, ...props }) => (
   </svg>
 );
 
-const WhatsAppIcon = ({ size = 16 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43-.14-.01-.31-.01-.48-.01-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.45 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.1-.21-.17-.46-.29z"/>
+const WhatsAppIcon = ({ size = 16, ...props }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    {...props}
+  >
+    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
   </svg>
 );
 
@@ -33,10 +40,17 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
   const [activeModalCosplayer, setActiveModalCosplayer] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
+  const sliderRef = useRef(null);
+  const isInteracting = useRef(false);
+  const resumeTimer = useRef(null);
+  const isMouseDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftStart = useRef(0);
+  const hasMoved = useRef(false);
+
   // Filter only community / general cosplayers (non-guest)
   const communityList = useMemo(() => {
     const list = cosplayers.filter(c => c.type !== 'guest');
-    // If no community cosplayers exist yet, fallback to full list
     return list.length > 0 ? list : cosplayers;
   }, [cosplayers]);
 
@@ -49,7 +63,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
     return ['Todas', ...Array.from(set)];
   }, [communityList]);
 
-  // Filtered cosplayers
+  // Filtered cosplayers by city and search query
   const filteredCosplayers = useMemo(() => {
     return communityList.filter(c => {
       const matchesCity = selectedCity === 'Todas' || (c.city && c.city.trim() === selectedCity);
@@ -61,6 +75,101 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
       return matchesCity && matchesQuery;
     });
   }, [communityList, selectedCity, searchQuery]);
+
+  // Infinite carousel items repetition
+  const carouselItems = useMemo(() => {
+    if (!filteredCosplayers || filteredCosplayers.length === 0) return [];
+    if (filteredCosplayers.length === 1) return [...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers];
+    if (filteredCosplayers.length <= 3) return [...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers];
+    return [...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers];
+  }, [filteredCosplayers]);
+
+  // RequestAnimationFrame slow continuous drift
+  useEffect(() => {
+    let animationFrameId;
+    let lastTime = performance.now();
+
+    const animate = (time) => {
+      const delta = time - lastTime;
+      lastTime = time;
+
+      if (!isInteracting.current && sliderRef.current && carouselItems.length > 0) {
+        const speed = 0.042; // pixels/ms (~42px/sec)
+        sliderRef.current.scrollLeft += speed * delta;
+
+        const { scrollLeft, scrollWidth } = sliderRef.current;
+        const repeatCount = carouselItems.length / filteredCosplayers.length;
+        const singleSetWidth = scrollWidth / repeatCount;
+
+        if (singleSetWidth > 0 && scrollLeft >= singleSetWidth * (repeatCount - 1)) {
+          sliderRef.current.scrollLeft -= singleSetWidth;
+        } else if (singleSetWidth > 0 && scrollLeft <= 0) {
+          sliderRef.current.scrollLeft += singleSetWidth;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    };
+  }, [carouselItems.length, filteredCosplayers.length]);
+
+  const pauseInteraction = () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    isInteracting.current = true;
+  };
+
+  const resumeInteractionAfterDelay = (delayMs = 2200) => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    resumeTimer.current = setTimeout(() => {
+      isInteracting.current = false;
+    }, delayMs);
+  };
+
+  // Mouse drag handlers for desktop
+  const handleMouseDown = (e) => {
+    if (!sliderRef.current) return;
+    isMouseDown.current = true;
+    hasMoved.current = false;
+    startX.current = e.pageX - sliderRef.current.offsetLeft;
+    scrollLeftStart.current = sliderRef.current.scrollLeft;
+    pauseInteraction();
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMouseDown.current || !sliderRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.25;
+    if (Math.abs(walk) > 4) {
+      hasMoved.current = true;
+    }
+    sliderRef.current.scrollLeft = scrollLeftStart.current - walk;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    if (isMouseDown.current) {
+      isMouseDown.current = false;
+      resumeInteractionAfterDelay(2000);
+    }
+  };
+
+  // Manual scroll with arrow buttons
+  const scrollManual = (direction) => {
+    if (!sliderRef.current) return;
+    pauseInteraction();
+    const cardWidth = window.innerWidth < 768 ? 296 : 336;
+    sliderRef.current.scrollBy({
+      left: direction === 'left' ? -cardWidth : cardWidth,
+      behavior: 'smooth'
+    });
+    resumeInteractionAfterDelay(3000);
+  };
 
   const handleShareCosplayer = (e, cosplayer) => {
     e.stopPropagation();
@@ -88,16 +197,64 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
   };
 
   return (
-    <section className="section-padding" id="cosplay" style={{ background: 'rgba(255,255,255,0.01)' }}>
+    <section className="section-padding" id="cosplay" style={{ background: 'rgba(255,255,255,0.01)', overflow: 'hidden' }}>
       <div className="container">
-        {/* Section Header */}
-        <div className="section-title">
-          <h2>Pasarela <span className="text-neon-pink">Cosplay</span> & Comunidad</h2>
-          <p>El talento de Concepción y de todo el país reunido en un solo lugar. Conoce a los exponentes, apóyalos en sus redes y comparte sus fichas.</p>
+        {/* Section Header with Arrows */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div className="section-title" style={{ marginBottom: 0, textAlign: 'left' }}>
+            <h2 style={{ textAlign: 'left' }}>Pasarela <span className="text-neon-pink">Cosplay</span> & Comunidad</h2>
+            <p style={{ textAlign: 'left', maxWidth: '600px' }}>El talento de Concepción y de todo el país reunido en un solo lugar. Conoce a los exponentes, apóyalos en sus redes y comparte sus fichas.</p>
+          </div>
+
+          {/* Navigation Arrows */}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              onClick={() => scrollManual('left')}
+              aria-label="Cosplayers anteriores"
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'var(--bg-surface-solid)',
+                border: '1.5px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+              className="hover-glow"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={() => scrollManual('right')}
+              aria-label="Siguientes cosplayers"
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                background: 'var(--bg-surface-solid)',
+                border: '1.5px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+              }}
+              className="hover-glow"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Filter Controls: City Tabs & Search Bar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '36px', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px', width: '100%' }}>
           {/* City Selector Pills */}
           <div 
             className="cosplay-city-filters"
@@ -170,167 +327,213 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Cosplayers Grid */}
-        {filteredCosplayers.length === 0 ? (
+      {/* Edge-to-Edge Infinite Carousel Track */}
+      {filteredCosplayers.length === 0 ? (
+        <div className="container">
           <div className="glass-card" style={{ padding: '48px 24px', textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
             <User size={40} style={{ color: 'var(--text-muted)', marginBottom: '12px', opacity: 0.5 }} />
             <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No se encontraron cosplayers</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Intenta seleccionar otra ciudad o limpiar el término de búsqueda.</p>
           </div>
-        ) : (
-          <div className="community-cosplay-grid">
-            {filteredCosplayers.map((cosplayer) => (
+        </div>
+      ) : (
+        <div className="cosplay-infinite-container">
+          <div 
+            ref={sliderRef}
+            className="cosplay-infinite-track"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUpOrLeave}
+            onMouseLeave={() => {
+              handleMouseUpOrLeave();
+              resumeInteractionAfterDelay(1500);
+            }}
+            onTouchStart={() => {
+              pauseInteraction();
+              hasMoved.current = false;
+            }}
+            onTouchEnd={() => resumeInteractionAfterDelay(2200)}
+            onTouchCancel={() => resumeInteractionAfterDelay(2200)}
+          >
+            {carouselItems.map((cosplayer, index) => (
               <div 
-                key={cosplayer.id}
-                onClick={() => setActiveModalCosplayer(cosplayer)}
-                className="community-cosplay-card glass-card"
+                key={`${cosplayer.id}-${index}`}
+                className="cosplay-infinite-item"
               >
-                {/* Image Container */}
-                <div
-                  role="img"
-                  aria-label={`Foto de ${cosplayer.name}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
-                    backgroundImage: cosplayer.image ? `url(${cosplayer.image})` : 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center 20%',
-                    position: 'relative'
+                <div 
+                  onClick={() => {
+                    if (!hasMoved.current) {
+                      setActiveModalCosplayer(cosplayer);
+                    }
                   }}
-                  className="image-loader-bg"
+                  className="community-cosplay-card glass-card"
                 >
-                  {/* Top Badges */}
-                  <div style={{ position: 'absolute', top: '14px', left: '14px', right: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 2, gap: '6px' }}>
-                    {/* Character Tag */}
-                    <span 
-                      style={{
-                        background: 'rgba(8,7,17,0.85)',
-                        border: '1.5px solid var(--secondary)',
-                        borderRadius: '6px',
-                        padding: '3px 8px',
-                        fontSize: '0.74rem',
-                        fontWeight: 800,
-                        color: '#FFFFFF',
-                        backdropFilter: 'blur(6px)'
-                      }}
-                    >
-                      {cosplayer.character}
-                    </span>
-
-                    {/* City Badge */}
-                    {cosplayer.city && (
-                      <span
+                  {/* Image Container */}
+                  <div
+                    role="img"
+                    aria-label={`Foto de ${cosplayer.name}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
+                      backgroundImage: cosplayer.image ? `url(${cosplayer.image})` : 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center 20%',
+                      position: 'relative'
+                    }}
+                    className="image-loader-bg"
+                  >
+                    {/* Top Badges */}
+                    <div style={{ position: 'absolute', top: '14px', left: '14px', right: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 2, gap: '6px' }}>
+                      {/* Character Tag */}
+                      <span 
                         style={{
                           background: 'rgba(8,7,17,0.85)',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          color: '#E2E8F0',
+                          border: '1.5px solid var(--secondary)',
                           borderRadius: '6px',
-                          padding: '3px 7px',
-                          fontSize: '0.68rem',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '3px'
+                          padding: '3px 8px',
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
+                          color: '#FFFFFF',
+                          backdropFilter: 'blur(6px)'
                         }}
                       >
-                        <MapPin size={10} color="var(--cyan)" />
-                        {cosplayer.city}
+                        {cosplayer.character}
                       </span>
-                    )}
-                  </div>
 
-                  {/* Bottom Content Gradient */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '68%',
-                      background: 'linear-gradient(to top, rgba(8, 7, 17, 0.98) 0%, rgba(8, 7, 17, 0.72) 45%, transparent 100%)',
-                      zIndex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'flex-end',
-                      padding: '18px',
-                      gap: '6px'
-                    }}
-                  >
-                    {cosplayer.role && (
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        {cosplayer.role}
-                      </span>
-                    )}
-
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 850, color: '#FFFFFF', lineHeight: 1.2, margin: 0 }}>
-                      {cosplayer.name}
-                    </h3>
-
-                    <p style={{ fontSize: '0.8rem', color: '#CBD5E1', lineHeight: 1.4, margin: '2px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {cosplayer.bio}
-                    </p>
-
-                    {/* Card Actions: Instagram & Share */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', gap: '8px' }}>
-                      <a 
-                        href={cosplayer.instagram}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          color: 'var(--secondary)',
-                          fontSize: '0.78rem',
-                          fontWeight: 700,
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          background: 'rgba(253, 52, 132, 0.12)'
-                        }}
-                        className="hover-glow"
-                      >
-                        <Instagram size={13} />
-                        @{cosplayer.instagram ? cosplayer.instagram.split('/').filter(Boolean).pop() : 'instagram'}
-                      </a>
-
-                      <div style={{ display: 'flex', gap: '5px' }}>
-                        <button
-                          onClick={(e) => handleWhatsAppShare(e, cosplayer)}
-                          title="Compartir por WhatsApp"
+                      {/* City Badge */}
+                      {cosplayer.city && (
+                        <span
                           style={{
-                            background: 'rgba(37, 211, 102, 0.15)',
-                            color: '#25D366',
-                            border: '1px solid rgba(37, 211, 102, 0.3)',
-                            padding: '5px 7px',
+                            background: 'rgba(8,7,17,0.85)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: '#E2E8F0',
                             borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
+                            padding: '3px 7px',
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            gap: '3px'
                           }}
                         >
-                          <WhatsAppIcon size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => handleShareCosplayer(e, cosplayer)}
-                          title="Copiar enlace a su ficha"
-                          style={{
-                            background: copiedId === cosplayer.id ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.08)',
-                            color: copiedId === cosplayer.id ? '#10B981' : '#FFFFFF',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            padding: '5px 7px',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
+                          <MapPin size={10} color="var(--cyan)" />
+                          {cosplayer.city}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Bottom Content Gradient */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '68%',
+                        background: 'linear-gradient(to top, rgba(8, 7, 17, 0.98) 0%, rgba(8, 7, 17, 0.72) 45%, transparent 100%)',
+                        zIndex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-end',
+                        padding: '18px',
+                        gap: '6px'
+                      }}
+                    >
+                      {cosplayer.role && (
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {cosplayer.role}
+                        </span>
+                      )}
+
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 850, color: '#FFFFFF', lineHeight: 1.2, margin: 0 }}>
+                        {cosplayer.name}
+                      </h3>
+
+                      <p style={{ fontSize: '0.8rem', color: '#CBD5E1', lineHeight: 1.4, margin: '2px 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {cosplayer.bio}
+                      </p>
+
+                      {/* Card Actions: Instagram & Share */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', gap: '8px' }}>
+                        <a 
+                          href={cosplayer.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => {
+                            if (hasMoved.current) {
+                              e.preventDefault();
+                              return;
+                            }
+                            e.stopPropagation();
                           }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            color: 'var(--secondary)',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            background: 'rgba(253, 52, 132, 0.12)'
+                          }}
+                          className="hover-glow"
                         >
-                          {copiedId === cosplayer.id ? <Check size={13} /> : <Share2 size={13} />}
-                        </button>
+                          <Instagram size={13} />
+                          @{cosplayer.instagram ? cosplayer.instagram.split('/').filter(Boolean).pop() : 'instagram'}
+                        </a>
+
+                        <div style={{ display: 'flex', gap: '5px' }}>
+                          <button
+                            onClick={(e) => {
+                              if (hasMoved.current) {
+                                e.preventDefault();
+                                return;
+                              }
+                              handleWhatsAppShare(e, cosplayer);
+                            }}
+                            title="Compartir por WhatsApp"
+                            style={{
+                              background: 'rgba(37, 211, 102, 0.15)',
+                              color: '#25D366',
+                              border: '1px solid rgba(37, 211, 102, 0.3)',
+                              padding: '5px 7px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <WhatsAppIcon size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              if (hasMoved.current) {
+                                e.preventDefault();
+                                return;
+                              }
+                              handleShareCosplayer(e, cosplayer);
+                            }}
+                            title="Copiar enlace a su ficha"
+                            style={{
+                              background: copiedId === cosplayer.id ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.08)',
+                              color: copiedId === cosplayer.id ? '#10B981' : '#FFFFFF',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              padding: '5px 7px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            {copiedId === cosplayer.id ? <Check size={13} /> : <Share2 size={13} />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -338,8 +541,8 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal Profile View */}
       {activeModalCosplayer && (
@@ -348,53 +551,52 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.82)',
-            backdropFilter: 'blur(8px)',
             zIndex: 9999,
+            background: 'rgba(5, 5, 10, 0.85)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '16px'
+            padding: '20px'
           }}
           className="animate-fade-in"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="glass-card"
             style={{
-              width: '100%',
-              maxWidth: '480px',
-              borderRadius: '24px',
-              overflow: 'hidden',
-              position: 'relative',
               background: 'var(--bg-surface-solid)',
               border: '2px solid var(--border-color)',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+              borderRadius: '24px',
+              maxWidth: '460px',
+              width: '100%',
+              overflow: 'hidden',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              position: 'relative'
             }}
           >
-            {/* Modal Image Header */}
-            <div 
-              style={{
-                width: '100%',
-                height: '280px',
-                backgroundImage: activeModalCosplayer.image ? `url(${activeModalCosplayer.image})` : 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center 20%',
-                position: 'relative'
-              }}
-            >
+            {/* Modal Header Image */}
+            <div style={{ height: '240px', position: 'relative', background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)' }}>
+              {activeModalCosplayer.image && (
+                <img 
+                  src={activeModalCosplayer.image} 
+                  alt={activeModalCosplayer.name} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              )}
+              
               <button
                 onClick={() => setActiveModalCosplayer(null)}
+                aria-label="Cerrar modal"
                 style={{
                   position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  background: 'rgba(0,0,0,0.65)',
-                  border: 'none',
-                  color: '#FFFFFF',
+                  top: '14px',
+                  right: '14px',
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.6)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#FFFFFF',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -457,32 +659,75 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
       )}
 
       <style>{`
-        .community-cosplay-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-          gap: 20px;
+        /* Infinite Carousel Container */
+        .cosplay-infinite-container {
           width: 100%;
+          position: relative;
+          overflow: hidden;
+          mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
         }
-        @media (min-width: 768px) {
-          .community-cosplay-grid {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-          }
+
+        /* Continuous Smooth Track */
+        .cosplay-infinite-track {
+          display: flex;
+          gap: 24px;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          padding: 12px 24px 24px;
+          cursor: grab;
+          user-select: none;
+          -webkit-user-select: none;
+          touch-action: pan-x pan-y pinch-zoom;
         }
+        .cosplay-infinite-track:active {
+          cursor: grabbing;
+        }
+        .cosplay-infinite-track::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Item Width */
+        .cosplay-infinite-item {
+          flex: 0 0 310px;
+          width: 310px;
+        }
+
+        /* Card Styling */
         .community-cosplay-card {
           width: 100%;
-          height: 400px;
-          border-radius: 20px;
+          height: 460px;
+          border-radius: 22px;
           overflow: hidden;
           position: relative;
-          cursor: pointer;
-          box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.12);
           transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
         }
         .community-cosplay-card:hover {
-          transform: translateY(-5px);
+          transform: translateY(-6px);
           border-color: var(--secondary) !important;
-          box-shadow: 0 12px 28px rgba(253, 52, 132, 0.2) !important;
+          box-shadow: 0 16px 36px rgba(253, 52, 132, 0.25) !important;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 767px) {
+          .cosplay-infinite-container {
+            mask-image: none;
+            -webkit-mask-image: none;
+          }
+          .cosplay-infinite-track {
+            gap: 16px;
+            padding: 8px 16px 20px;
+          }
+          .cosplay-infinite-item {
+            flex: 0 0 280px;
+            width: 280px;
+          }
+          .community-cosplay-card {
+            height: 420px;
+            border-radius: 20px;
+          }
         }
       `}</style>
     </section>
