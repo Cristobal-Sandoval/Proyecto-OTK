@@ -230,7 +230,10 @@ function App() {
               {/* Quick Public Previews of sub-pages */}
               <div style={{ background: 'rgba(255, 255, 255, 0.005)' }}>
                 
-                {/* News Preview */}
+                {/* 2. Invitados Especiales (VIP & Jurados - Carrusel si > 3) */}
+                <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} onNavigate={handleNavigate} />
+
+                {/* 3. Noticias y Anuncios */}
                 <NewsSection newsList={newsList.slice(0, 3)} onSelectArticle={handleSelectArticle} />
                 <div style={{ textAlign: 'center', marginTop: '-30px', marginBottom: '60px' }}>
                   <button className="btn btn-secondary" onClick={() => handleNavigate('news')}>
@@ -238,13 +241,10 @@ function App() {
                   </button>
                 </div>
 
-                {/* Invitados Especiales (VIP & Jurados) */}
-                <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} />
-
-                {/* Pasarela Cosplay & Comunidad (Regional & Local) */}
+                {/* 4. Pasarela Cosplay & Comunidad (Regional & Local) */}
                 <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} />
                 
-                {/* Communities Preview */}
+                {/* 5. Comunidades Locales */}
                 <CommunityList communities={communities.slice(0, 3)} />
                 {communities.length > 3 && (
                   <div style={{ textAlign: 'center', marginTop: '-30px', marginBottom: '60px' }}>

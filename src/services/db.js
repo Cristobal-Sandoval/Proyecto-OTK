@@ -48,6 +48,15 @@ export const initializeDB = () => {
   }
   if (!localStorage.getItem(KEYS.COSPLAYERS)) {
     localStorage.setItem(KEYS.COSPLAYERS, JSON.stringify(defaultCosplayers));
+  } else {
+    try {
+      const currentCos = JSON.parse(localStorage.getItem(KEYS.COSPLAYERS));
+      if (!Array.isArray(currentCos) || !currentCos.some(c => c.type === 'guest') || currentCos.filter(c => c.type === 'guest').length < 4) {
+        localStorage.setItem(KEYS.COSPLAYERS, JSON.stringify(defaultCosplayers));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
   if (!localStorage.getItem(KEYS.COMMUNITIES)) {
     localStorage.setItem(KEYS.COMMUNITIES, JSON.stringify(defaultCommunities));

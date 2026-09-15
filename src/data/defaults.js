@@ -153,7 +153,7 @@ export const defaultNews = [
 ];
 
 export const defaultCosplayers = [
-  // 🌟 INVITADOS ESPECIALES (Cosplay Alley / Jurados)
+  // 🌟 INVITADOS ESPECIALES (Cosplay Alley / Jurados - 4 Placeholders)
   {
     id: 1,
     name: "Aki Cosplay",
@@ -187,10 +187,21 @@ export const defaultCosplayers = [
     image: "/assets/cosplay_nico.jpg",
     bio: "Creadora de contenido y cosplayer. Le encanta el anime de romance, el modelaje alternativo y las pasarelas dinámicas con puesta en escena divertida."
   },
+  {
+    id: 4,
+    name: "Yuki Cross",
+    character: "Gojo Satoru (Jujutsu Kaisen)",
+    type: "guest",
+    role: "Jurado Pasarela & Performance",
+    city: "Temuco",
+    instagram: "https://instagram.com/yuki_cross_demo",
+    image: "/assets/cosplay_aki.jpg",
+    bio: "Invitado especial desde Temuco. Ganador de múltiples competencias de performance y caracterización escénica en el sur de Chile."
+  },
 
   // 🎭 PASARELA COSPLAY & COMUNIDAD (Locales & Regionales)
   {
-    id: 4,
+    id: 5,
     name: "Dan Dan Cos",
     character: "Denji (Chainsaw Man)",
     type: "community",
@@ -201,7 +212,7 @@ export const defaultCosplayers = [
     bio: "Cosplayer local de Concepción, fanático del Shonen y la caracterización teatral en escenario."
   },
   {
-    id: 5,
+    id: 6,
     name: "Miku Penquista",
     character: "Hatsune Miku (Vocaloid)",
     type: "community",
@@ -212,7 +223,7 @@ export const defaultCosplayers = [
     bio: "Representante de Talcahuano. Amante de la música Vocaloid y el diseño de vestuarios coloridos."
   },
   {
-    id: 6,
+    id: 7,
     name: "Kurogane Craft",
     character: "Guts (Berserk)",
     type: "community",
@@ -223,7 +234,7 @@ export const defaultCosplayers = [
     bio: "Cosmaker procedente de Chillán, especialista en espadas gigantes y forja de armaduras con acabado metálico."
   },
   {
-    id: 7,
+    id: 8,
     name: "Valkyrie Biobío",
     character: "2B (NieR:Automata)",
     type: "community",
@@ -234,7 +245,7 @@ export const defaultCosplayers = [
     bio: "Desde Los Ángeles, apasionada por los videojuegos de rol y acción. Confección artesanal de espadas flotantes."
   },
   {
-    id: 8,
+    id: 9,
     name: "Sakura Temuco",
     character: "Sakura Kinomoto (CCS)",
     type: "community",

@@ -210,9 +210,16 @@ const GuestsSection = ({ guests = [] }) => {
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
   };
 
+  useEffect(() => {
+    checkDesktopScrollBounds();
+    const handleResize = () => checkDesktopScrollBounds();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [guests.length]);
+
   const scrollDesktop = (direction) => {
     if (!desktopSliderRef.current) return;
-    const scrollAmount = 340;
+    const scrollAmount = 364; // card width (340px) + gap (24px)
     desktopSliderRef.current.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
