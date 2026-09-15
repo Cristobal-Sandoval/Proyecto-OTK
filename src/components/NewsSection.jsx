@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Search, Calendar, Clock, X, Newspaper } from 'lucide-react';
+import { slugify } from '../utils/slugify';
+import { cardSrc } from '../services/media';
+import { safeUrlOr } from '../utils/sanitize';
 
 const NewsSection = ({ newsList = [], onSelectArticle }) => {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -8,17 +11,19 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
 
   const categories = ['Todas', 'Anuncio', 'Cosplay', 'Comunidad'];
 
-  // Filter and Search logic
+  // Filter and Search logic (null-safe)
   const filteredNews = newsList.filter(article => {
-    const matchesCategory = selectedCategory === 'Todas' || article.category.toLowerCase() === selectedCategory.toLowerCase();
-    const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          article.summary.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          article.content.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'Todas' || (article.category || '').toLowerCase() === selectedCategory.toLowerCase();
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q ||
+      (article.title || '').toLowerCase().includes(q) || 
+      (article.summary || '').toLowerCase().includes(q) || 
+      (article.content || '').toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
 
   const getCategoryBadgeClass = (category) => {
-    switch (category.toLowerCase()) {
+    switch ((category || '').toLowerCase()) {
       case 'anuncio': return 'badge-announcement';
       case 'cosplay': return 'badge-cosplay';
       case 'comunidad': return 'badge-community';
@@ -27,7 +32,7 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
   };
 
   const getPlaceholderGradient = (category) => {
-    switch (category.toLowerCase()) {
+    switch ((category || '').toLowerCase()) {
       case 'anuncio': return 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)';
       case 'cosplay': return 'linear-gradient(135deg, #EC4899 0%, #D946EF 100%)';
       case 'comunidad': return 'linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)';
@@ -128,6 +133,16 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
                     setSelectedArticle(article);
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (onSelectArticle) onSelectArticle(article);
+                    else setSelectedArticle(article);
+                  }
+                }}
+                tabIndex={0}
+                role="link"
+                aria-label={`Leer noticia: ${article.title}`}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -143,7 +158,7 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
                     height: '200px',
                     width: '100%',
                     background: getPlaceholderGradient(article.category),
-                    backgroundImage: article.image ? `url(${article.image})` : getPlaceholderGradient(article.category),
+                    backgroundImage: safeUrlOr(article.image) ? `url(${cardSrc(article.image)})` : getPlaceholderGradient(article.category),
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     position: 'relative'
@@ -194,9 +209,18 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
                   </p>
 
                   {/* Read More button */}
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--cyan)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '12px' }}>
+                  <a
+                    href={`#noticia/${slugify(article.title)}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (onSelectArticle) onSelectArticle(article);
+                      else setSelectedArticle(article);
+                    }}
+                    style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--cyan)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '12px', minHeight: '44px' }}
+                  >
                     Leer noticia completa &rarr;
-                  </span>
+                  </a>
                 </div>
               </article>
             ))}
@@ -357,7 +381,8 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
           width: 100%;
         }
         .category-btn {
-          padding: 8px 4px;
+          padding: 12px 4px;
+          min-height: 44px;
           font-size: clamp(0.72rem, 2.5vw, 0.85rem);
           text-align: center;
           border-radius: 10px;

@@ -9,8 +9,16 @@ import {
   uploadToCloudinary, isCloudinaryConfigured, getCloudinaryConfig, saveCloudinaryConfig 
 } from '../services/cloudinary';
 import { 
-  saveGlobalTheme, getCosplayApplications, removeCosplayApplication 
+  saveGlobalTheme, getCosplayApplications, removeCosplayApplication,
+  approveCosplayApplication, authMe, authLogin, authLogout, authChangePassword
 } from '../services/cloudSync';
+import {
+  sanitizeNews, sanitizeCosplayer, sanitizeCommunity, sanitizeSchedule, sanitizeBanner,
+  safeUrlOr, isSafeHttpUrl, validateImageFile, trimStr
+} from '../utils/sanitize';
+
+// Auth server-side: la clave NUNCA se compara en el bundle.
+// Sesión httpOnly firmada (HMAC) + rate-limit en /api. Sin secretos VITE_.
 
 const AdminDashboard = ({
   eventConfig, setEventConfig,
@@ -22,37 +30,23 @@ const AdminDashboard = ({
   schedule, setSchedule,
   onNavigate
 }) => {
-  // Always prompt for password whenever the secret portal is accessed
+  // Always prompt for password whenever the secret portal is accessed.
+  // La sesión vive en cookie httpOnly; al montar se valida contra /api/auth-me.
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  
-  // Rate limiting & brute force protection
-  const [failedAttempts, setFailedAttempts] = useState(() => {
-    return parseInt(sessionStorage.getItem('otakonce_login_attempts') || '0', 10);
-  });
-  const [lockoutUntil, setLockoutUntil] = useState(() => {
-    return parseInt(sessionStorage.getItem('otakonce_login_lockout') || '0', 10);
-  });
-  const [lockoutRemaining, setLockoutRemaining] = useState(0);
 
   useEffect(() => {
-    const updateCooldown = () => {
-      const remainingMs = lockoutUntil - Date.now();
-      if (remainingMs > 0) {
-        setLockoutRemaining(Math.ceil(remainingMs / 1000));
-      } else {
-        setLockoutRemaining(0);
-        if (lockoutUntil > 0) {
-          sessionStorage.removeItem('otakonce_login_lockout');
-          setLockoutUntil(0);
-        }
+    let alive = true;
+    authMe().then((ok) => {
+      if (alive) {
+        setIsAuthenticated(ok);
+        setCheckingSession(false);
       }
-    };
-    updateCooldown();
-    const interval = setInterval(updateCooldown, 1000);
-    return () => clearInterval(interval);
-  }, [lockoutUntil]);
+    });
+    return () => { alive = false; };
+  }, []);
   
   // Dashboard Sub-navigation Tabs
   const [adminTab, setAdminTab] = useState('themes'); // themes, config, hero_banners, banner, news, cosplayers, communities, schedule
@@ -110,30 +104,49 @@ const AdminDashboard = ({
     }
   }, [isAuthenticated]);
 
+  // Aprobar en el servidor: publica con los datos entregados y queda visible
+  // en la página para todos los dispositivos (no solo en este navegador).
   const handleApproveApplication = async (app) => {
-    const newCosplayer = {
-      id: Date.now(),
-      name: app.name,
-      character: app.character,
-      city: app.city || 'Concepción',
-      image: app.photo || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80',
-      instagram: app.instagram || '',
-      bio: app.bio || '',
-      role: 'Pasarela Individual',
-      type: 'community',
-      featured: false,
-      presentationTime: '16:00'
-    };
-    setCosplayers([...cosplayers, newCosplayer]);
-    const updated = await removeCosplayApplication(app.id);
-    setApplications(updated || applications.filter(a => a.id !== app.id));
-    alert(`¡Postulación de "${app.name}" aprobada! Ha sido incorporada a la galería de la pasarela.`);
+    try {
+      const { cosplayer, applications: updated } = await approveCosplayApplication(app.id);
+      if (cosplayer) setCosplayers([...cosplayers, { ...cosplayer, presentationTime: '16:00' }]);
+      setApplications(updated || []);
+      alert(`¡Postulación de "${app.name}" aprobada! Ya es visible en la galería de la pasarela.`);
+    } catch (err) {
+      // Fallback local (sin backend): se agrega solo en este navegador
+      const clean = sanitizeCosplayer({
+        name: app.name,
+        character: app.character,
+        city: app.city,
+        image: app.photo,
+        instagram: app.instagram,
+        bio: app.bio,
+        type: 'community',
+        role: 'Pasarela Individual',
+      });
+      setCosplayers([...cosplayers, {
+        id: Date.now(),
+        ...clean,
+        city: clean.city || 'Concepción',
+        image: clean.image || '',
+        role: 'Pasarela Individual',
+        type: 'community',
+        featured: false,
+        presentationTime: '16:00'
+      }]);
+      setApplications(applications.filter(a => String(a.id) !== String(app.id)));
+      alert(`Aprobada localmente (sin servidor): "${clean.name}" se ve en este navegador. Conecta el backend para publicarla en todos los dispositivos. Detalle: ${err?.message || ''}`);
+    }
   };
 
   const handleRejectApplication = async (appId) => {
     if (window.confirm('¿Seguro que deseas descartar esta postulación?')) {
-      const updated = await removeCosplayApplication(appId);
-      setApplications(updated || applications.filter(a => a.id !== appId));
+      try {
+        const updated = await removeCosplayApplication(appId);
+        setApplications(updated);
+      } catch (err) {
+        alert(err?.message || 'No se pudo descartar en el servidor.');
+      }
     }
   };
   
@@ -186,8 +199,10 @@ const AdminDashboard = ({
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('La imagen es demasiado grande. El límite recomendado es de 10MB.');
+    const fileError = validateImageFile(file, 10);
+    if (fileError) {
+      alert(fileError);
+      e.target.value = '';
       return;
     }
 
@@ -241,41 +256,21 @@ const AdminDashboard = ({
     }
   };
 
-  const hashPassword = async (str) => {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(str);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (lockoutRemaining > 0) return;
-
-    // Use custom admin hash if changed, otherwise fallback to env or factory default
-    const expectedHash = localStorage.getItem('otakonce_admin_hash') || import.meta.env.VITE_ADMIN_HASH || 'd33d224668fd2090897bb907c3b73e4dd42a1c9aac76b7b6590d329276a235ba';
-    const computedHash = await hashPassword(password);
-    if (computedHash === expectedHash) {
+    setLoginError('');
+    try {
+      await authLogin(password);
       setIsAuthenticated(true);
-      sessionStorage.removeItem('otakonce_login_attempts');
-      sessionStorage.removeItem('otakonce_login_lockout');
-      setFailedAttempts(0);
-      setLockoutUntil(0);
       setLoginError('');
       setPassword('');
-    } else {
-      const nextAttempts = failedAttempts + 1;
-      setFailedAttempts(nextAttempts);
-      sessionStorage.setItem('otakonce_login_attempts', String(nextAttempts));
-      if (nextAttempts >= 3) {
-        const lockoutTime = Date.now() + 30000; // 30 seconds cooldown
-        setLockoutUntil(lockoutTime);
-        sessionStorage.setItem('otakonce_login_lockout', String(lockoutTime));
-        setLoginError('Demasiados intentos fallidos (3/3). Acceso bloqueado temporalmente por 30 segundos.');
+    } catch (err) {
+      if (err?.status === 429) {
+        setLoginError('Demasiados intentos. El servidor te bloqueó 15 minutos.');
+      } else if (err?.status === 500) {
+        setLoginError('Panel no configurado en el servidor (faltan secretos). Revisa el deploy.');
       } else {
-        const remaining = 3 - nextAttempts;
-        setLoginError(`Contraseña incorrecta. (${remaining} intento${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'})`);
+        setLoginError(err?.message || 'Contraseña incorrecta.');
       }
     }
   };
@@ -285,16 +280,8 @@ const AdminDashboard = ({
     setPassError('');
     setPassSuccess('');
 
-    const expectedHash = localStorage.getItem('otakonce_admin_hash') || import.meta.env.VITE_ADMIN_HASH || 'd33d224668fd2090897bb907c3b73e4dd42a1c9aac76b7b6590d329276a235ba';
-    const computedCurrentHash = await hashPassword(currentPass);
-
-    if (computedCurrentHash !== expectedHash) {
-      setPassError('La contraseña actual ingresada es incorrecta.');
-      return;
-    }
-
-    if (newPass.length < 6) {
-      setPassError('La nueva contraseña debe tener un mínimo de 6 caracteres.');
+    if (newPass.length < 8 || !/[A-Za-z]/.test(newPass) || !/[0-9]/.test(newPass)) {
+      setPassError('La nueva contraseña debe tener mínimo 8 caracteres, con letras y números.');
       return;
     }
 
@@ -305,33 +292,21 @@ const AdminDashboard = ({
 
     setIsChangingPass(true);
     try {
-      const newHash = await hashPassword(newPass);
-      localStorage.setItem('otakonce_admin_hash', newHash);
+      await authChangePassword(currentPass, newPass);
       setCurrentPass('');
       setNewPass('');
       setConfirmPass('');
-      setPassSuccess('¡Contraseña de administrador actualizada con éxito! Recuerda usar tu nueva clave en el próximo inicio de sesión.');
-    } catch {
-      setPassError('Ocurrió un error al procesar el cambio de contraseña.');
+      setPassSuccess('¡Contraseña actualizada en el servidor! Para que persista entre deploys, actualiza ADMIN_PASSWORD_HASH en Vercel.');
+    } catch (err) {
+      setPassError(err?.message || 'Ocurrió un error al cambiar la contraseña.');
     } finally {
       setIsChangingPass(false);
     }
   };
 
-  const handleResetDefaultPassword = () => {
-    if (window.confirm('¿Seguro que deseas restablecer la contraseña a la clave predeterminada de fábrica?')) {
-      localStorage.removeItem('otakonce_admin_hash');
-      setCurrentPass('');
-      setNewPass('');
-      setConfirmPass('');
-      setPassError('');
-      setPassSuccess('La contraseña ha sido restablecida a la predeterminada de fábrica.');
-    }
-  };
-
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authLogout();
     setIsAuthenticated(false);
-    sessionStorage.removeItem('otakonce_admin_auth');
     window.location.hash = '';
     if (typeof onNavigate === 'function') {
       onNavigate('home');
@@ -341,9 +316,17 @@ const AdminDashboard = ({
   // 1. Save general config
   const handleSaveConfig = (e) => {
     e.preventDefault();
-    setEventConfig(configForm);
-    if (configForm.themeMode) {
-      saveGlobalTheme(configForm.themeMode);
+    const cleanConfig = {
+      ...configForm,
+      title: trimStr(configForm.title, 80),
+      subtitle: trimStr(configForm.subtitle, 160),
+      date: trimStr(configForm.date, 60),
+      location: trimStr(configForm.location, 100),
+      bannerImage: safeUrlOr(configForm.bannerImage, '/assets/hero_banner.webp'),
+    };
+    setEventConfig(cleanConfig);
+    if (cleanConfig.themeMode) {
+      saveGlobalTheme(cleanConfig.themeMode);
     }
     alert('¡Configuración guardada correctamente!');
   };
@@ -351,16 +334,26 @@ const AdminDashboard = ({
   // 2. Save floating banner settings
   const handleSaveBanner = (e) => {
     e.preventDefault();
-    setFloatingBanner(bannerForm);
+    const cleanBanner = {
+      text: trimStr(bannerForm.text, 200),
+      link: typeof bannerForm.link === 'string' && (bannerForm.link.startsWith('#') || safeUrlOr(bannerForm.link)) ? bannerForm.link.slice(0, 200) : '#cosplay',
+      active: Boolean(bannerForm.active),
+    };
+    setFloatingBanner(cleanBanner);
     alert('¡Banner flotante actualizado!');
   };
 
-  // 3. News CRUD handlers
+  // 3. News CRUD handlers (sanitizados)
   const handleNewsSubmit = (e) => {
     e.preventDefault();
+    const clean = sanitizeNews(newsForm);
+    if (!clean.title || !clean.summary) {
+      alert('Título y resumen son obligatorios.');
+      return;
+    }
     if (editingNews) {
       // Update
-      const updatedList = newsList.map(n => n.id === editingNews.id ? { ...editingNews, ...newsForm } : n);
+      const updatedList = newsList.map(n => n.id === editingNews.id ? { ...editingNews, ...clean } : n);
       setNewsList(updatedList);
       setEditingNews(null);
       alert('Noticia actualizada.');
@@ -368,8 +361,8 @@ const AdminDashboard = ({
       // Create
       const newArticle = {
         id: Date.now(),
-        ...newsForm,
-        date: newsForm.date || new Date().toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' })
+        ...clean,
+        date: clean.date || new Date().toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' })
       };
       setNewsList([newArticle, ...newsList]);
       alert('Noticia creada.');
@@ -389,16 +382,21 @@ const AdminDashboard = ({
     }
   };
 
-  // 4. Cosplayer CRUD handlers
+  // 4. Cosplayer CRUD handlers (sanitizados + URLs seguras)
   const handleCosplayerSubmit = (e) => {
     e.preventDefault();
     const photosArray = Array.isArray(cosplayerForm.photos) ? cosplayerForm.photos : [];
-    const formData = {
+    const clean = sanitizeCosplayer({
       ...cosplayerForm,
       photos: photosArray,
       tiktok: cosplayerForm.tiktok || '',
       twitter: cosplayerForm.twitter || ''
-    };
+    });
+    if (!clean.name) {
+      alert('El nombre es obligatorio.');
+      return;
+    }
+    const formData = clean;
 
     if (editingCosplayer) {
       const updatedList = cosplayers.map(c => c.id === editingCosplayer.id ? { ...editingCosplayer, ...formData } : c);
@@ -408,13 +406,13 @@ const AdminDashboard = ({
     } else {
       const newCos = { 
         id: Date.now(), 
-        type: cosplayerForm.type || 'guest',
-        role: cosplayerForm.role || (cosplayerForm.type === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'),
-        city: cosplayerForm.city || 'Concepción',
+        type: clean.type || 'guest',
+        role: clean.role || (clean.type === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'),
+        city: clean.city || 'Concepción',
         ...formData 
       };
       setCosplayers([...cosplayers, newCos]);
-      alert(cosplayerForm.type === 'guest' ? 'Invitado Especial agregado.' : 'Cosplayer de Pasarela agregado.');
+      alert(clean.type === 'guest' ? 'Invitado Especial agregado.' : 'Cosplayer de Pasarela agregado.');
     }
     setCosplayerForm({ 
       name: '', character: '', instagram: '', tiktok: '', twitter: '', image: '', photos: [], bio: '', 
@@ -445,16 +443,21 @@ const AdminDashboard = ({
     }
   };
 
-  // 5. Community CRUD handlers
+  // 5. Community CRUD handlers (sanitizados)
   const handleCommunitySubmit = (e) => {
     e.preventDefault();
+    const clean = sanitizeCommunity(communityForm);
+    if (!clean.name) {
+      alert('El nombre de la comunidad es obligatorio.');
+      return;
+    }
     if (editingCommunity) {
-      const updatedList = communities.map(c => c.id === editingCommunity.id ? { ...editingCommunity, ...communityForm } : c);
+      const updatedList = communities.map(c => c.id === editingCommunity.id ? { ...editingCommunity, ...clean } : c);
       setCommunities(updatedList);
       setEditingCommunity(null);
       alert('Comunidad actualizada.');
     } else {
-      const newComm = { id: Date.now(), ...communityForm };
+      const newComm = { id: Date.now(), ...clean };
       setCommunities([...communities, newComm]);
       alert('Comunidad agregada.');
     }
@@ -472,18 +475,23 @@ const AdminDashboard = ({
     }
   };
 
-  // 6. Schedule CRUD handlers
+  // 6. Schedule CRUD handlers (sanitizados)
   const handleScheduleSubmit = (e) => {
     e.preventDefault();
+    const clean = sanitizeSchedule(scheduleForm);
+    if (!clean.title || !clean.time) {
+      alert('Hora y título son obligatorios.');
+      return;
+    }
     if (editingSchedule) {
-      const updatedList = schedule.map(s => s.id === editingSchedule.id ? { ...editingSchedule, ...scheduleForm } : s);
+      const updatedList = schedule.map(s => s.id === editingSchedule.id ? { ...editingSchedule, ...clean } : s);
       // Sort by time
       updatedList.sort((a,b) => a.time.localeCompare(b.time));
       setSchedule(updatedList);
       setEditingSchedule(null);
       alert('Actividad actualizada.');
     } else {
-      const newEvent = { id: Date.now(), ...scheduleForm };
+      const newEvent = { id: Date.now(), ...clean };
       const updatedList = [...schedule, newEvent];
       updatedList.sort((a,b) => a.time.localeCompare(b.time));
       setSchedule(updatedList);
@@ -503,23 +511,24 @@ const AdminDashboard = ({
     }
   };
 
-  // Hero Banners CRUD handlers
+  // Hero Banners CRUD handlers (sanitizados, colores y URLs validadas)
   const handleHeroBannerSubmit = (e) => {
     e.preventDefault();
-    if (!heroBannerForm.image) {
-      alert('Por favor selecciona una imagen para el banner.');
+    const clean = sanitizeBanner(heroBannerForm);
+    if (!clean.image) {
+      alert('Por favor selecciona una imagen válida (https o /assets) para el banner.');
       return;
     }
 
     if (editingHeroBanner) {
-      const updated = banners.map(b => b.id === editingHeroBanner.id ? { ...b, ...heroBannerForm } : b);
+      const updated = banners.map(b => b.id === editingHeroBanner.id ? { ...b, ...clean } : b);
       setBanners(updated);
       setEditingHeroBanner(null);
       alert('Banner de inicio actualizado.');
     } else {
       const newBanner = {
         id: Date.now(),
-        ...heroBannerForm
+        ...clean
       };
       setBanners([...banners, newBanner]);
       alert('Banner de inicio agregado.');
@@ -582,25 +591,28 @@ const AdminDashboard = ({
                   placeholder="Introduce la contraseña..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={lockoutRemaining > 0}
                   required
+                  autoComplete="current-password"
                 />
               </div>
+
+              {checkingSession && (
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Verificando sesión…</div>
+              )}
 
               {loginError && (
                 <div style={{ fontSize: '0.82rem', color: 'var(--secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <AlertCircle size={16} style={{ flexShrink: 0 }} />
-                  <span>{lockoutRemaining > 0 ? `Bloqueo de seguridad: espera ${lockoutRemaining}s para volver a intentar` : loginError}</span>
+                  <span>{loginError}</span>
                 </div>
               )}
 
               <button 
                 type="submit" 
                 className="btn btn-primary" 
-                disabled={lockoutRemaining > 0}
-                style={{ width: '100%', marginTop: '8px', opacity: lockoutRemaining > 0 ? 0.6 : 1 }}
+                style={{ width: '100%', marginTop: '8px' }}
               >
-                {lockoutRemaining > 0 ? `Bloqueado (${lockoutRemaining}s)` : 'Entrar al Panel'}
+                Entrar al Panel
               </button>
             </form>
           </div>
@@ -750,7 +762,7 @@ const AdminDashboard = ({
         </div>
 
         {/* TAB CONTENTS */}
-        <div className="glass-card" style={{ padding: '24px', minHeight: '400px' }}>
+        <div className="glass-card admin-tab-panel" style={{ padding: '24px', minHeight: '400px' }}>
           
           {/* TAB 0: SEASONAL THEMES & CHILEAN FESTIVITIES */}
           {adminTab === 'themes' && (
@@ -789,7 +801,7 @@ const AdminDashboard = ({
               <div 
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
                   gap: '20px'
                 }}
               >
@@ -973,7 +985,7 @@ const AdminDashboard = ({
                   </p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '16px' }}>
                   {applications.map((app) => (
                     <div
                       key={app.id}
@@ -1016,12 +1028,12 @@ const AdminDashboard = ({
                           </p>
                           {app.instagram && (
                             <a
-                              href={`https://instagram.com/${app.instagram.replace('@', '')}`}
+                              href={isSafeHttpUrl(app.instagram) ? app.instagram : `https://instagram.com/${String(app.instagram).replace(/^@/, '')}`}
                               target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                              rel="noopener noreferrer nofollow"
+                              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', minHeight: '44px', padding: '6px 0' }}
                             >
-                              <ExternalLink size={12} /> {app.instagram.startsWith('@') ? app.instagram : `@${app.instagram}`}
+                              <ExternalLink size={12} /> {String(app.instagram).startsWith('http') ? `@${String(app.instagram).split('/').filter(Boolean).pop()}` : (String(app.instagram).startsWith('@') ? app.instagram : `@${app.instagram}`)}
                             </a>
                           )}
                         </div>
@@ -1043,12 +1055,12 @@ const AdminDashboard = ({
                         Fecha de postulación: {app.createdAt || 'Reciente'}
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
                         <button
                           type="button"
                           onClick={() => handleApproveApplication(app)}
                           className="btn btn-primary"
-                          style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px' }}
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px' }}
                         >
                           <Check size={16} /> Aprobar
                         </button>
@@ -1056,7 +1068,7 @@ const AdminDashboard = ({
                           type="button"
                           onClick={() => handleRejectApplication(app.id)}
                           className="btn btn-secondary"
-                          style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                          style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
                         >
                           <Trash2 size={16} /> Descartar
                         </button>
@@ -1094,12 +1106,12 @@ const AdminDashboard = ({
               >
                 <div>
                   <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                    Estado de la Contraseña
+                    Sesión del Servidor
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: localStorage.getItem('otakonce_admin_hash') ? '#10B981' : '#00A3FF' }} />
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10B981' }} />
                     <strong style={{ fontSize: '0.95rem' }}>
-                      {localStorage.getItem('otakonce_admin_hash') ? 'Contraseña Personalizada Activa' : 'Contraseña de Fábrica'}
+                      Sesión httpOnly Activa
                     </strong>
                   </div>
                 </div>
@@ -1110,10 +1122,10 @@ const AdminDashboard = ({
                   </span>
                   <div style={{ marginTop: '4px' }}>
                     <strong style={{ fontSize: '0.95rem', color: '#10B981' }}>
-                      Activa (Máximo 3 intentos)
+                      Activa en servidor (5 intentos / 15 min)
                     </strong>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
-                      Bloqueo de 30s al tercer intento fallido
+                      Scrypt + cookie httpOnly + rate-limit por IP
                     </p>
                   </div>
                 </div>
@@ -1233,22 +1245,14 @@ const AdminDashboard = ({
                       type="submit"
                       disabled={isChangingPass}
                       className="btn btn-primary"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', minHeight: '44px' }}
                     >
                       {isChangingPass ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />}
                       Guardar Nueva Contraseña
                     </button>
-
-                    {localStorage.getItem('otakonce_admin_hash') && (
-                      <button
-                        type="button"
-                        onClick={handleResetDefaultPassword}
-                        className="btn btn-outline"
-                        style={{ padding: '10px 16px', fontSize: '0.85rem' }}
-                      >
-                        Restablecer a Clave de Fábrica
-                      </button>
-                    )}
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', width: '100%', margin: 0 }}>
+                      El cambio aplica en el servidor (memoria de instancia). Para persistencia entre deploys actualiza ADMIN_PASSWORD_HASH en Vercel.
+                    </p>
                   </div>
                 </form>
               </div>
@@ -1950,7 +1954,7 @@ const AdminDashboard = ({
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{article.date}</span>
                         </div>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
                         <button
                           type="button"
                           onClick={() => handleEditNews(article)}
@@ -2393,7 +2397,7 @@ const AdminDashboard = ({
                             <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>@{cos.instagram ? cos.instagram.split('/').filter(Boolean).pop() : 'instagram'}</span>
                           </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
                           <button
                             type="button"
                             onClick={() => handleEditCosplayer(cos)}
@@ -2587,7 +2591,7 @@ const AdminDashboard = ({
                           {comm.instagram && <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>@{comm.instagram.split('/').pop()}</span>}
                         </div>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
                         <button
                           type="button"
                           onClick={() => handleEditCommunity(comm)}
@@ -2764,7 +2768,7 @@ const AdminDashboard = ({
                         <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>{item.title}</h5>
                         {item.description && <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{item.description}</p>}
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
                         <button
                           type="button"
                           onClick={() => handleEditSchedule(item)}

@@ -26,7 +26,7 @@ import {
   getSchedule, saveSchedule,
   getBanners, saveBanners
 } from './services/db';
-import { getGlobalTheme } from './services/cloudSync';
+import { getGlobalTheme, getPublicCosplayers, mergePublishedCosplayers } from './services/cloudSync';
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -98,6 +98,29 @@ function App() {
     saveSchedule(val);
   };
 
+  // Merge published cosplayers (admin-approved) so they appear on every device
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const published = await getPublicCosplayers();
+        if (published.length > 0 && isMounted) {
+          setCosplayersState(prev => {
+            const merged = mergePublishedCosplayers(prev, published);
+            if (merged.length !== prev.length) {
+              saveCosplayers(merged);
+              return merged;
+            }
+            return prev;
+          });
+        }
+      } catch {
+        // Offline / sin backend: se mantiene la lista local
+      }
+    })();
+    return () => { isMounted = false; };
+  }, []);
+
   // Synchronize documentElement data-theme attribute with active seasonal theme
   useEffect(() => {
     const currentTheme = eventConfig.themeMode || 'normal';
@@ -135,27 +158,81 @@ function App() {
     };
   }, []);
 
-  // Synchronize document.title dynamically for SEO and browser history
+  // Synchronize document.title + meta/OG dinámico para SEO y social sharing
   useEffect(() => {
+    const setMeta = (selector, attr, value) => {
+      if (!value) return;
+      let el = document.head.querySelector(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        if (selector.includes('property=')) {
+          el.setAttribute('property', selector.match(/property="([^"]+)"/)[1]);
+        } else {
+          el.setAttribute('name', selector.match(/name="([^"]+)"/)[1]);
+        }
+        document.head.appendChild(el);
+      }
+      el.setAttribute(attr, value);
+    };
+    const setJsonLd = (id, data) => {
+      if (!data) {
+        document.getElementById(id)?.remove();
+        return;
+      }
+      let el = document.getElementById(id);
+      if (!el) {
+        el = document.createElement('script');
+        el.id = id;
+        el.type = 'application/ld+json';
+        document.head.appendChild(el);
+      }
+      el.textContent = JSON.stringify(data);
+    };
+
+    const baseUrl = window.location.origin;
+    let title = 'Otakonce 2026';
+    let desc = 'Ven a Otakonce 2026, el mayor punto de encuentro en el sur de Chile para anime, cosplay, videojuegos y comunidades del Biobío.';
+    let url = `${baseUrl}/`;
+    let image = `${baseUrl}/assets/hero_banner.webp`;
+    let jsonLd = null;
+
     if (activeTab === 'news-detail' && selectedArticle) {
-      document.title = `${selectedArticle.title} | Otakonce 2026`;
-      return;
-    }
-    if (activeTab === 'guest-detail' && selectedGuest) {
-      document.title = `${selectedGuest.name} (${selectedGuest.character}) | Invitados Otakonce 2026`;
-      return;
+      title = `${selectedArticle.title} | Otakonce 2026`;
+      desc = selectedArticle.summary || desc;
+      url = `${baseUrl}/#noticia/${slugify(selectedArticle.title)}`;
+      image = selectedArticle.image?.startsWith('http') ? selectedArticle.image : `${baseUrl}${selectedArticle.image || '/assets/hero_banner.webp'}`;
+      jsonLd = { '@context': 'https://schema.org', '@type': 'NewsArticle', headline: selectedArticle.title, description: desc, image: [image], datePublished: selectedArticle.date || '2026-01-01', author: { '@type': 'Organization', name: 'Otakonce Staff' } };
+    } else if (activeTab === 'guest-detail' && selectedGuest) {
+      title = `${selectedGuest.name} (${selectedGuest.character}) | Invitados Otakonce 2026`;
+      desc = selectedGuest.bio?.slice(0, 160) || `Conoce a ${selectedGuest.name} cosplayando ${selectedGuest.character} en Otakonce 2026.`;
+      url = `${baseUrl}/#invitado/${slugify(selectedGuest.name)}`;
+      image = selectedGuest.image?.startsWith('http') ? selectedGuest.image : `${baseUrl}${selectedGuest.image || '/assets/hero_banner.webp'}`;
+      jsonLd = { '@context': 'https://schema.org', '@type': 'Person', name: selectedGuest.name, description: desc, image };
+    } else {
+      const titles = {
+        home: 'Otakonce 2026 | El Evento de Anime y Cultura Geek de Concepción',
+        news: 'Noticias y Comunicados | Otakonce 2026',
+        invitados: 'Invitados Especiales | Otakonce 2026',
+        cosplay: 'Pasarela Cosplay & Comunidad | Otakonce 2026',
+        communities: 'Comunidades y Agrupaciones | Otakonce 2026',
+        schedule: 'Cronograma de Actividades | Otakonce 2026',
+        admin: 'Acceso Administrativo | Otakonce Staff'
+      };
+      title = titles[activeTab] || 'Otakonce 2026';
+      const hashMap = { news: '#news', invitados: '#invitados', cosplay: '#cosplay', communities: '#communities', schedule: '#schedule' };
+      if (hashMap[activeTab]) url = `${baseUrl}/${hashMap[activeTab]}`;
     }
 
-    const titles = {
-      home: 'Otakonce 2026 | El Evento de Anime y Cultura Geek de Concepción',
-      news: 'Noticias y Comunicados | Otakonce 2026',
-      invitados: 'Invitados Especiales | Otakonce 2026',
-      cosplay: 'Pasarela Cosplay & Comunidad | Otakonce 2026',
-      communities: 'Comunidades y Agrupaciones | Otakonce 2026',
-      schedule: 'Cronograma de Actividades | Otakonce 2026',
-      admin: 'Acceso Administrativo | Otakonce Staff'
-    };
-    document.title = titles[activeTab] || 'Otakonce 2026';
+    document.title = title;
+    setMeta('meta[name="description"]', 'content', desc);
+    setMeta('meta[property="og:title"]', 'content', title);
+    setMeta('meta[property="og:description"]', 'content', desc);
+    setMeta('meta[property="og:url"]', 'content', url);
+    setMeta('meta[property="og:image"]', 'content', image);
+    setMeta('meta[name="twitter:title"]', 'content', title);
+    setMeta('meta[name="twitter:description"]', 'content', desc);
+    setMeta('meta[name="twitter:image"]', 'content', image);
+    setJsonLd('seo-dynamic-jsonld', jsonLd);
 
     if (activeTab === 'home') {
       if (window.location.hash && window.location.hash !== '#home') {
@@ -286,9 +363,9 @@ function App() {
         flexDirection: 'column', 
         minHeight: '100vh', 
         position: 'relative',
-        paddingTop: isAnnouncementVisible ? '32px' : '0px',
+        paddingTop: isAnnouncementVisible ? '44px' : '0px',
         transition: 'padding var(--transition-smooth)',
-        '--announcement-height': isAnnouncementVisible ? '32px' : '0px'
+        '--announcement-height': isAnnouncementVisible ? '44px' : '0px'
       }}
     >
       {/* Visual Festive Theme Overlay (Halloween bats/webs, Christmas snowfall/lights, Teletón heart, Fiestas Patrias) */}
@@ -300,7 +377,7 @@ function App() {
       )}
       
       {/* Navigation Header */}
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} topOffset={isAnnouncementVisible ? '32px' : '0px'} />
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} topOffset={isAnnouncementVisible ? '44px' : '0px'} />
 
       {/* Main Content Area */}
       <main id="main-content" key={activeTab} style={{ flex: 1 }} className="animate-fade-in">

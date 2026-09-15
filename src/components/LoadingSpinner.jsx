@@ -2,6 +2,7 @@ import React from 'react';
 
 const SkeletonCard = () => (
   <div 
+    aria-hidden="true"
     style={{
       background: 'rgba(255, 255, 255, 0.7)',
       border: '2px solid rgba(15, 23, 42, 0.1)',
@@ -25,8 +26,9 @@ const LoadingSpinner = () => {
   return (
     <div className="section-padding" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center' }}>
       <div className="container">
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }} role="status" aria-live="polite" aria-label="Cargando contenido">
           <div 
+            aria-hidden="true"
             style={{
               display: 'inline-block',
               width: '40px',

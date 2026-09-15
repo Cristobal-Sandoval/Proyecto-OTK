@@ -42,16 +42,31 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
   }, [guests]);
 
   // RequestAnimationFrame continuous slow auto-drift (only active in carousel mode)
+  // Pausa si reduced-motion, pestaña oculta o carrusel fuera de viewport
   useEffect(() => {
     if (mode !== 'carousel') return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     let animationFrameId;
     let lastTime = performance.now();
+    let isVisible = true;
+    let inViewport = true;
+
+    const onVisibility = () => { isVisible = !document.hidden; lastTime = performance.now(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    let observer;
+    if (typeof IntersectionObserver !== 'undefined' && sliderRef.current) {
+      observer = new IntersectionObserver(([entry]) => {
+        inViewport = entry.isIntersecting;
+        lastTime = performance.now();
+      }, { threshold: 0.05 });
+      observer.observe(sliderRef.current);
+    }
 
     const animate = (time) => {
       const delta = time - lastTime;
       lastTime = time;
 
-      if (!isInteracting.current && sliderRef.current && carouselItems.length > 0) {
+      if (!isInteracting.current && isVisible && inViewport && sliderRef.current && carouselItems.length > 0) {
         const speed = 0.045; // pixels/ms (~45px per second)
         sliderRef.current.scrollLeft += speed * delta;
 
@@ -73,6 +88,8 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      document.removeEventListener('visibilitychange', onVisibility);
+      observer?.disconnect();
     };
   }, [mode, carouselItems, guests.length]);
 
@@ -117,13 +134,13 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
     }
   };
 
-  // Manual scroll with CardPoint floating arrows
+  // Manual scroll with CardPoint floating arrows (avanza ~80% del viewport visible)
   const scrollManual = (direction) => {
     if (!sliderRef.current) return;
     pauseInteraction();
-    const cardWidth = window.innerWidth < 768 ? 296 : 374;
+    const step = Math.max(240, sliderRef.current.clientWidth * 0.8);
     sliderRef.current.scrollBy({
-      left: direction === 'left' ? -cardWidth : cardWidth,
+      left: direction === 'left' ? -step : step,
       behavior: 'smooth'
     });
     resumeInteractionAfterDelay(3500);
@@ -865,22 +882,22 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
         /* Mobile Adjustments */
         @media (max-width: 767px) {
           .carousel-floating-btn {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
           }
           .carousel-floating-left {
-            left: 8px;
+            left: 6px;
           }
           .carousel-floating-right {
-            right: 8px;
+            right: 6px;
           }
           .guests-infinite-track {
-            gap: 16px;
-            padding: 4px 0 16px;
+            gap: 14px;
+            padding: 4px 2px 16px;
           }
           .guest-infinite-item {
-            flex: 0 0 280px;
-            width: 280px;
+            flex: 0 0 min(280px, 78vw);
+            width: min(280px, 78vw);
           }
           .guest-card {
             height: 410px;

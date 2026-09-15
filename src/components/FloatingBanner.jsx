@@ -18,18 +18,20 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
 
   return (
     <div
+      role="region"
+      aria-label="Anuncio destacado"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        height: '34px',
+        minHeight: '44px',
         zIndex: 200,
-        padding: '0 12px 0 16px',
+        padding: '5px 8px 5px 16px',
         display: 'flex',
         alignItems: 'center',
         background: '#E0F2FE', // Soft light sky blue
-        color: '#0369A1', // Deep sky blue
+        color: '#075985', // Darkened for 4.5:1 contrast
         borderBottom: '1px solid rgba(3, 105, 161, 0.2)',
         boxShadow: '0 2px 8px rgba(0, 163, 255, 0.05)',
         fontFamily: 'var(--font-display)',
@@ -40,9 +42,11 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
       {/* ========================================================
           DESKTOP VIEW (>= 768px): Clean, Static & Perfectly Centered
           ======================================================== */}
-      <div 
-        className="banner-desktop-wrapper"
+      <a
+        href={config.link || '#'}
         onClick={handleActionClick}
+        aria-label={config.link ? `Ver anuncio: ${config.text}` : undefined}
+        className="banner-desktop-wrapper"
         style={{
           flex: 1,
           alignItems: 'center',
@@ -51,17 +55,20 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
           cursor: config.link ? 'pointer' : 'default',
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: '0 16px',
-          overflow: 'hidden'
+          padding: '6px 16px',
+          overflow: 'hidden',
+          textDecoration: 'none',
+          color: 'inherit',
+          minHeight: '44px'
         }}
       >
         <span 
           style={{ 
-            background: '#00A3FF', 
+            background: '#0369A1', 
             color: '#FFFFFF', 
-            padding: '2px 8px', 
+            padding: '3px 8px', 
             borderRadius: '4px',
-            fontSize: '0.65rem',
+            fontSize: '0.7rem',
             fontWeight: 800,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
@@ -77,7 +84,7 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
             fontSize: '0.82rem', 
             fontWeight: 700, 
             letterSpacing: '-0.01em',
-            color: '#0369A1',
+            color: '#075985',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis'
@@ -87,9 +94,9 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
         </span>
 
         {config.link && (
-          <ArrowRight size={14} style={{ flexShrink: 0, color: '#00A3FF' }} />
+          <ArrowRight size={14} aria-hidden="true" style={{ flexShrink: 0, color: '#0369A1' }} />
         )}
-      </div>
+      </a>
 
       {/* ========================================================
           MOBILE VIEW (< 768px): Smooth Endless Ticker/Marquee
@@ -98,11 +105,11 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
         {/* Fixed Badge on Left */}
         <span 
           style={{ 
-            background: '#00A3FF', 
+            background: '#0369A1', 
             color: '#FFFFFF', 
-            padding: '2px 6px', 
+            padding: '3px 6px', 
             borderRadius: '4px',
-            fontSize: '0.62rem',
+            fontSize: '0.65rem',
             fontWeight: 800,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
@@ -113,8 +120,10 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
         </span>
 
         {/* Ticker in Center */}
-        <div 
+        <a
+          href={config.link || '#'}
           onClick={handleActionClick}
+          aria-label={config.link ? `Ver anuncio: ${config.text}` : undefined}
           className="banner-mobile-ticker-container"
           style={{ 
             flex: 1,
@@ -122,27 +131,30 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
             cursor: config.link ? 'pointer' : 'default',
             position: 'relative',
             height: '100%',
+            minHeight: '44px',
             display: 'flex',
-            alignItems: 'center'
+            alignItems: 'center',
+            textDecoration: 'none',
+            color: 'inherit'
           }}
         >
-          <div className="banner-mobile-track">
+          <div className="banner-mobile-track" aria-hidden="true">
             <div className="banner-mobile-item">
               <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>
                 {config.text}
               </span>
-              {config.link && <ArrowRight size={13} style={{ color: 'var(--cyan)' }} />}
-              <span className="banner-separator">•</span>
+              {config.link && <ArrowRight size={13} aria-hidden="true" style={{ color: 'var(--cyan)' }} />}
+              <span className="banner-separator" aria-hidden="true">•</span>
             </div>
-            <div className="banner-mobile-item">
+            <div className="banner-mobile-item" aria-hidden="true">
               <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>
                 {config.text}
               </span>
-              {config.link && <ArrowRight size={13} style={{ color: 'var(--cyan)' }} />}
-              <span className="banner-separator">•</span>
+              {config.link && <ArrowRight size={13} aria-hidden="true" style={{ color: 'var(--cyan)' }} />}
+              <span className="banner-separator" aria-hidden="true">•</span>
             </div>
           </div>
-        </div>
+        </a>
       </div>
 
       {/* Fixed Close Button on the Right */}
@@ -151,21 +163,23 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
         style={{
           background: 'transparent',
           border: 'none',
-          color: '#0369A1',
+          color: '#075985',
           cursor: 'pointer',
-          padding: '4px',
-          borderRadius: '4px',
+          padding: '10px',
+          minHeight: '44px',
+          minWidth: '44px',
+          borderRadius: '8px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
           transition: 'var(--transition-fast)',
-          opacity: 0.85
+          opacity: 0.9
         }}
         className="close-hover-btn"
         aria-label="Cerrar anuncio"
       >
-        <X size={15} />
+        <X size={18} aria-hidden="true" />
       </button>
 
       <style>{`
@@ -199,7 +213,9 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
           will-change: transform;
         }
         .banner-mobile-ticker-container:hover .banner-mobile-track,
-        .banner-mobile-ticker-container:active .banner-mobile-track {
+        .banner-mobile-ticker-container:active .banner-mobile-track,
+        .banner-mobile-ticker-container:focus-visible .banner-mobile-track,
+        .banner-mobile-ticker-container:focus-within .banner-mobile-track {
           animation-play-state: paused;
         }
         .banner-mobile-item {
@@ -219,6 +235,15 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
         .top-announcement-bar .close-hover-btn:hover {
           background: rgba(3, 105, 161, 0.12);
           opacity: 1;
+        }
+        .banner-desktop-wrapper:focus-visible,
+        .banner-mobile-ticker-container:focus-visible {
+          outline: 2px solid var(--cyan);
+          outline-offset: 2px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .banner-mobile-track { animation: none !important; }
+          .top-announcement-bar { animation: none !important; }
         }
         @keyframes bannerScroll {
           0% {

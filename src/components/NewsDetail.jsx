@@ -3,6 +3,8 @@ import {
   ArrowLeft, Calendar, Clock, Share2, Copy, Check 
 } from 'lucide-react';
 import { slugify } from '../utils/slugify';
+import { heroSrc, cardSrc } from '../services/media';
+import { safeUrlOr } from '../utils/sanitize';
 
 // SVG Icons for social platforms
 const WhatsAppIcon = ({ size = 18 }) => (
@@ -33,10 +35,22 @@ const NewsDetail = ({ article, newsList = [], onBack, onSelectArticle }) => {
     ? `${window.location.origin}/#noticia/${slugify(article.title)}`
     : `https://laotakonce.cl/#noticia/${slugify(article.title)}`;
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(currentUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // Fallback para navegadores sin clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = currentUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* noop */ }
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    }
   };
 
   const shareText = encodeURIComponent(`${article.title} - Otakonce 2026`);
@@ -92,11 +106,13 @@ const NewsDetail = ({ article, newsList = [], onBack, onSelectArticle }) => {
           }}
         >
           {/* Article Header Banner */}
-          {article.image ? (
+          {safeUrlOr(article.image) ? (
             <div style={{ width: '100%', height: 'clamp(220px, 40vw, 420px)', position: 'relative', overflow: 'hidden' }}>
               <img 
-                src={article.image} 
-                alt={article.title} 
+                src={heroSrc(article.image)} 
+                alt={article.title}
+                fetchpriority="high"
+                decoding="async"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               />
               <div 
@@ -337,7 +353,7 @@ const NewsDetail = ({ article, newsList = [], onBack, onSelectArticle }) => {
                 >
                   {rel.image && (
                     <div style={{ width: '100%', height: '120px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                      <img src={rel.image} alt={rel.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={cardSrc(rel.image)} alt={rel.title} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   )}
                   <span className={`badge ${getCategoryBadgeClass(rel.category)}`} style={{ alignSelf: 'flex-start', fontSize: '0.7rem' }}>

@@ -51,6 +51,13 @@ const Footer = ({ setActiveTab }) => {
     handleNavClick('home');
   };
 
+  const handleBrandKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleBrandClick();
+    }
+  };
+
   const handleNavClick = (tabId) => {
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -80,13 +87,17 @@ const Footer = ({ setActiveTab }) => {
         {/* Branding & Logo with secret stealth admin access (5-second hold) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <h2 
+            role="button"
+            tabIndex={0}
             onClick={handleBrandClick}
+            onKeyDown={handleBrandKeyDown}
             onTouchStart={handleStartPress}
             onTouchEnd={handleEndPress}
             onTouchCancel={handleEndPress}
             onMouseDown={handleStartPress}
             onMouseUp={handleEndPress}
             onMouseLeave={handleEndPress}
+            aria-label="Otakonce 2026 — ir al inicio"
             style={{
               fontSize: '1.8rem',
               fontWeight: 900,
@@ -107,6 +118,7 @@ const Footer = ({ setActiveTab }) => {
 
         {/* Navigation links */}
         <nav 
+          aria-label="Navegación secundaria"
           style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -135,6 +147,7 @@ const Footer = ({ setActiveTab }) => {
             href="https://www.instagram.com/laotakonce/" 
             target="_blank" 
             rel="noopener noreferrer"
+            aria-label="Instagram oficial de Otakonce"
             style={{
               width: '44px',
               height: '44px',
@@ -149,7 +162,7 @@ const Footer = ({ setActiveTab }) => {
             }}
             className="social-btn"
           >
-            <Instagram size={20} />
+            <Instagram size={20} aria-hidden="true" />
           </a>
         </div>
 
@@ -181,36 +194,41 @@ const Footer = ({ setActiveTab }) => {
                   color: 'var(--text-primary)',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '44px',
+                  minWidth: '44px',
                   transition: 'color var(--transition-fast)'
                 }}
                 className="hover-glow"
                 title="Portafolio de Cristóbal Sandoval"
                 aria-label="Portafolio de Cristóbal Sandoval"
               >
-                <Cat size={14} style={{ display: 'inline' }} />
+                <Cat size={16} aria-hidden="true" style={{ display: 'inline' }} />
               </a>
             </span>
           </div>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label="Volver arriba"
             style={{
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid var(--border-color)',
               color: 'var(--text-secondary)',
-              padding: '6px 12px',
-              borderRadius: '8px',
+              padding: '10px 16px',
+              minHeight: '44px',
+              borderRadius: '10px',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              fontSize: '0.75rem',
+              fontSize: '0.8rem',
               fontWeight: 600,
               transition: 'var(--transition-fast)'
             }}
             className="top-btn"
           >
             Volver Arriba
-            <ArrowUp size={12} />
+            <ArrowUp size={14} aria-hidden="true" />
           </button>
         </div>
       </div>

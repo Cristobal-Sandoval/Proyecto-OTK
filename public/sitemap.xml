@@ -30,4 +30,13 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://laotakonce.cl/#invitados</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <!-- Nota: las fichas #noticia/slug, #invitado/slug y #cosplay/slug son fragmentos
+       hash de una SPA y no son indexables como URLs separadas. Para SEO por ficha
+       migrar a rutas History (/noticia/slug) con prerender. -->
 </urlset>

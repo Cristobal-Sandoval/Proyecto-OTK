@@ -3,6 +3,8 @@ import {
   ArrowLeft, Star, MapPin, Share2, Copy, Check, ExternalLink, Image as ImageIcon, Sparkles, Heart
 } from 'lucide-react';
 import { slugify } from '../utils/slugify';
+import { heroSrc } from '../services/media';
+import { safeUrlOr, isSafeHttpUrl } from '../utils/sanitize';
 
 // SVG Icons
 const InstagramIcon = ({ size = 18 }) => (
@@ -42,8 +44,17 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
     ? `${window.location.origin}/#invitado/${slugify(guest.name)}`
     : `https://laotakonce.cl/#invitado/${slugify(guest.name)}`;
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(currentUrl);
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = currentUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* noop */ }
+      document.body.removeChild(ta);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
   };
@@ -109,10 +120,12 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
               background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)' 
             }}
           >
-            {guest.image && (
+            {safeUrlOr(guest.image) && (
               <img 
-                src={guest.image} 
-                alt={guest.name} 
+                src={heroSrc(guest.image)} 
+                alt={`${guest.name} — ${guest.character || 'invitado Otakonce'}`}
+                fetchpriority="high"
+                decoding="async"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }} 
               />
             )}
@@ -219,11 +232,20 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
                   <ImageIcon size={18} color="var(--primary)" /> Galería de Cosplays & Presentaciones
                 </h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: '12px' }}>
                   {photos.map((imgUrl, idx) => (
                     <div
                       key={idx}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Ampliar foto ${idx + 1} de ${guest.name}`}
                       onClick={() => setActiveLightboxImg(imgUrl)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setActiveLightboxImg(imgUrl);
+                        }
+                      }}
                       style={{
                         height: '240px',
                         borderRadius: '16px',
@@ -271,13 +293,13 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
               </h3>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                {guest.instagram && (
+                {isSafeHttpUrl(guest.instagram) && (
                   <a
                     href={guest.instagram}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopener noreferrer nofollow"
                     className="btn btn-primary"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '0.9rem' }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 20px', minHeight: '44px', fontSize: '0.9rem' }}
                   >
                     <InstagramIcon size={18} />
                     Instagram ({guest.instagram.split('/').filter(Boolean).pop() ? `@${guest.instagram.split('/').filter(Boolean).pop()}` : 'Instagram'})
@@ -285,13 +307,13 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
                   </a>
                 )}
 
-                {guest.tiktok && (
+                {isSafeHttpUrl(guest.tiktok) && (
                   <a
                     href={guest.tiktok}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopener noreferrer nofollow"
                     className="btn btn-secondary"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontSize: '0.9rem' }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', minHeight: '44px', fontSize: '0.9rem' }}
                   >
                     <TikTokIcon size={17} />
                     TikTok
@@ -299,13 +321,13 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
                   </a>
                 )}
 
-                {guest.twitter && (
+                {isSafeHttpUrl(guest.twitter) && (
                   <a
                     href={guest.twitter}
                     target="_blank"
-                    rel="noopener noreferrer"
+                    rel="noopener noreferrer nofollow"
                     className="btn btn-secondary"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontSize: '0.9rem' }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 18px', minHeight: '44px', fontSize: '0.9rem' }}
                   >
                     <XTwitterIcon size={16} />
                     Twitter / X

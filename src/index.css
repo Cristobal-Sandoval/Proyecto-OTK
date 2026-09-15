@@ -426,6 +426,26 @@ button {
 }
 
 /* ==========================================
+   MOBILE SAFETY NET (teléfonos < 768px)
+   ========================================== */
+img {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  /* Panel admin: recupera ~16px de ancho útil en pantallas angostas */
+  .admin-tab-panel {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+  /* Títulos de sección admin sin desborde */
+  .admin-tab-panel h3 {
+    font-size: 1.1rem !important;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ==========================================
    RESPONSIVE GRID UTILITIES
    ========================================== */
 .grid-responsive {

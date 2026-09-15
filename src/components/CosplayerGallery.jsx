@@ -1,10 +1,16 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Search, MapPin, Share2, Check, X, User, ChevronLeft, ChevronRight, 
-  Sparkles, AlertCircle, CheckCircle2, Loader2 
+  Sparkles, AlertCircle, CheckCircle2, Loader2, Upload
 } from 'lucide-react';
 import { slugify } from '../utils/slugify';
 import { submitCosplayApplication } from '../services/cloudSync';
+import { cardSrc, dataUrlToFile } from '../services/media';
+import { uploadToCloudinary, isCloudinaryConfigured } from '../services/cloudinary';
+import { trimStr, isValidEmail, validateImageFile, isSafeHttpUrl } from '../utils/sanitize';
+
+export const BIO_MAX_LENGTH = 280;
 
 const Instagram = ({ size = 18, ...props }) => (
   <svg
@@ -58,14 +64,38 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
     photo: '',
     bio: ''
   });
+  const [photoName, setPhotoName] = useState('');
+  const dialogRef = useRef(null);
+  const closeBtnRef = useRef(null);
+
+  // Lock body scroll + Escape to close + focus management
+  useEffect(() => {
+    if (!isRegisterModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !registerLoading) setIsRegisterModalOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    // Focus the dialog for screen readers / keyboard users
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 60);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+      clearTimeout(t);
+    };
+  }, [isRegisterModalOpen, registerLoading]);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      alert('La imagen no debe superar los 8MB');
+    const err = validateImageFile(file, 8);
+    if (err) {
+      alert(err);
+      e.target.value = '';
       return;
     }
+    setPhotoName(file.name);
     const reader = new FileReader();
     reader.onloadend = () => {
       setRegisterForm(prev => ({ ...prev, photo: reader.result }));
@@ -73,17 +103,73 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
     reader.readAsDataURL(file);
   };
 
+  const clearPhoto = () => {
+    setRegisterForm(prev => ({ ...prev, photo: '' }));
+    setPhotoName('');
+  };
+
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    if (!registerForm.name.trim() || !registerForm.character.trim() || !registerForm.contact.trim()) {
+    const name = trimStr(registerForm.name, 80);
+    const character = trimStr(registerForm.character, 120);
+    const contact = trimStr(registerForm.contact, 160);
+    const instagram = trimStr(registerForm.instagram, 200);
+    const bio = trimStr(registerForm.bio, BIO_MAX_LENGTH);
+    if (!name || !character || !contact) {
       setRegisterError('Por favor completa todos los campos requeridos (*).');
+      return;
+    }
+    if (!isValidEmail(contact)) {
+      setRegisterError('Ingresa un email válido para que el staff pueda contactarte.');
+      return;
+    }
+    if (instagram && !isSafeHttpUrl(instagram) && !/^@?[A-Za-z0-9._]{1,60}$/.test(instagram.trim())) {
+      setRegisterError('El Instagram debe ser una URL https válida o un @usuario.');
+      return;
+    }
+    // Normaliza @usuario a URL https para evitar href inseguros
+    const normInstagram = instagram && !isSafeHttpUrl(instagram)
+      ? `https://instagram.com/${instagram.trim().replace(/^@/, '')}`
+      : instagram;
+    // Evita fotos data: gigantes (>2MB aprox en base64) — pide URL o imagen menor
+    if (registerForm.photo && registerForm.photo.startsWith('data:') && registerForm.photo.length > 2_800_000) {
+      setRegisterError('La foto es muy pesada para el registro local. Sube una imagen menor a 2MB o usa una URL https.');
       return;
     }
     setRegisterLoading(true);
     setRegisterError('');
     try {
-      await submitCosplayApplication(registerForm);
+      // Foto única: si es archivo local y Cloudinary está configurado, súbela al CDN
+      // y envía la URL (así la postulación queda liviana y la imagen optimizada).
+      let photoToSend = typeof registerForm.photo === 'string' && (isSafeHttpUrl(registerForm.photo) || registerForm.photo.startsWith('data:image/')) ? registerForm.photo : '';
+      if (photoToSend.startsWith('data:')) {
+        if (isCloudinaryConfigured()) {
+          try {
+            const file = dataUrlToFile(photoToSend, `pasarela-${Date.now()}.jpg`);
+            const uploaded = await uploadToCloudinary(file);
+            photoToSend = uploaded.url;
+          } catch (uploadErr) {
+            setRegisterError(`No se pudo subir la foto al CDN: ${uploadErr?.message || 'error de subida'}. Prueba con una imagen más liviana o una URL https.`);
+            setRegisterLoading(false);
+            return;
+          }
+        } else if (photoToSend.length > 900_000) {
+          setRegisterError('La foto es muy pesada y el CDN aún no está configurado. Usa una imagen menor a 700KB o una URL https.');
+          setRegisterLoading(false);
+          return;
+        }
+      }
+      await submitCosplayApplication({
+        name,
+        character,
+        city: trimStr(registerForm.city, 60) || 'Concepción',
+        instagram: normInstagram,
+        contact,
+        photo: photoToSend,
+        bio,
+      });
       setRegisterSubmitted(true);
+      setPhotoName('');
       setRegisterForm({
         name: '',
         character: '',
@@ -148,16 +234,29 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
     return [...filteredCosplayers, ...filteredCosplayers, ...filteredCosplayers];
   }, [filteredCosplayers]);
 
-  // RequestAnimationFrame slow continuous drift
+  // RequestAnimationFrame slow continuous drift (pausa fuera de viewport / pestaña oculta / reduced-motion)
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     let animationFrameId;
     let lastTime = performance.now();
+    let isVisible = true;
+    let inViewport = true;
+    const onVisibility = () => { isVisible = !document.hidden; lastTime = performance.now(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    let observer;
+    if (typeof IntersectionObserver !== 'undefined' && sliderRef.current) {
+      observer = new IntersectionObserver(([entry]) => {
+        inViewport = entry.isIntersecting;
+        lastTime = performance.now();
+      }, { threshold: 0.05 });
+      observer.observe(sliderRef.current);
+    }
 
     const animate = (time) => {
       const delta = time - lastTime;
       lastTime = time;
 
-      if (!isInteracting.current && sliderRef.current && carouselItems.length > 0) {
+      if (!isInteracting.current && isVisible && inViewport && sliderRef.current && carouselItems.length > 0) {
         const speed = 0.042; // pixels/ms (~42px/sec)
         sliderRef.current.scrollLeft += speed * delta;
 
@@ -179,6 +278,8 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      document.removeEventListener('visibilitychange', onVisibility);
+      observer?.disconnect();
       if (resumeTimer.current) clearTimeout(resumeTimer.current);
     };
   }, [carouselItems.length, filteredCosplayers.length]);
@@ -223,13 +324,13 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
     }
   };
 
-  // Manual scroll with arrow buttons
+  // Manual scroll with arrow buttons (avanza ~80% del viewport visible)
   const scrollManual = (direction) => {
     if (!sliderRef.current) return;
     pauseInteraction();
-    const cardWidth = window.innerWidth < 768 ? 296 : 374;
+    const step = Math.max(240, sliderRef.current.clientWidth * 0.8);
     sliderRef.current.scrollBy({
-      left: direction === 'left' ? -cardWidth : cardWidth,
+      left: direction === 'left' ? -step : step,
       behavior: 'smooth'
     });
     resumeInteractionAfterDelay(3500);
@@ -458,7 +559,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                       width: '100%',
                       height: '100%',
                       background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
-                      backgroundImage: cosplayer.image ? `url(${cosplayer.image})` : 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
+                      backgroundImage: isSafeHttpUrl(cosplayer.image) ? `url(${cardSrc(cosplayer.image)})` : 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)',
                       backgroundSize: 'cover',
                       backgroundPosition: 'center 20%',
                       position: 'relative'
@@ -538,10 +639,12 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
 
                       {/* Card Actions: Instagram & Share */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', gap: '8px' }}>
+                        {isSafeHttpUrl(cosplayer.instagram) && (
                         <a 
                           href={cosplayer.instagram}
                           target="_blank"
-                          rel="noopener noreferrer"
+                          rel="noopener noreferrer nofollow"
+                          aria-label={`Instagram de ${cosplayer.name}`}
                           onClick={(e) => {
                             if (hasMoved.current) {
                               e.preventDefault();
@@ -556,15 +659,17 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                             color: 'var(--secondary)',
                             fontSize: '0.78rem',
                             fontWeight: 700,
-                            padding: '4px 8px',
+                            padding: '8px 10px',
+                            minHeight: '44px',
                             borderRadius: '6px',
                             background: 'rgba(253, 52, 132, 0.12)'
                           }}
                           className="hover-glow"
                         >
-                          <Instagram size={13} />
-                          @{cosplayer.instagram ? cosplayer.instagram.split('/').filter(Boolean).pop() : 'instagram'}
+                          <Instagram size={13} aria-hidden="true" />
+                          @{cosplayer.instagram.split('/').filter(Boolean).pop()}
                         </a>
+                        )}
 
                         <div style={{ display: 'flex', gap: '5px' }}>
                           <button
@@ -657,10 +762,12 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
           >
             {/* Modal Header Image */}
             <div style={{ height: '240px', position: 'relative', background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)' }}>
-              {activeModalCosplayer.image && (
+              {isSafeHttpUrl(activeModalCosplayer.image) && (
                 <img 
-                  src={activeModalCosplayer.image} 
-                  alt={activeModalCosplayer.name} 
+                  src={cardSrc(activeModalCosplayer.image)} 
+                  alt={`Foto de ${activeModalCosplayer.name} como ${activeModalCosplayer.character || 'cosplay'}`} 
+                  loading="lazy"
+                  decoding="async"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
               )}
@@ -739,51 +846,59 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
         </div>
       )}
 
-      {/* Registration Modal for Pasarela Cosplay */}
-      {isRegisterModalOpen && (
+      {/* Registration Modal for Pasarela Cosplay (portal: evita stacking-context de la sección) */}
+      {isRegisterModalOpen && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => !registerLoading && setIsRegisterModalOpen(false)}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 9999,
+            zIndex: 10000,
             background: 'rgba(5, 5, 10, 0.85)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
-            padding: '20px'
+            padding: '12px',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
           }}
           className="animate-fade-in"
         >
           <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pasarela-register-title"
             onClick={(e) => e.stopPropagation()}
             style={{
               background: 'var(--bg-surface-solid)',
               border: '2px solid var(--border-color)',
-              borderRadius: '24px',
-              maxWidth: '520px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              borderRadius: '20px',
+              width: 'min(560px, 100%)',
+              margin: 'auto',
               boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
               position: 'relative',
-              padding: '28px 24px'
+              padding: 'clamp(20px, 4vw, 32px)',
+              boxSizing: 'border-box'
             }}
           >
             {/* Close Button */}
             <button
+              ref={closeBtnRef}
               onClick={() => setIsRegisterModalOpen(false)}
               disabled={registerLoading}
-              aria-label="Cerrar modal"
+              aria-label="Cerrar formulario de inscripción"
               style={{
                 position: 'absolute',
-                top: '18px',
-                right: '18px',
-                width: '36px',
-                height: '36px',
+                top: '12px',
+                right: '12px',
+                width: '44px',
+                height: '44px',
+                minHeight: '44px',
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)',
+                background: 'rgba(127, 127, 150, 0.12)',
                 border: '1px solid var(--border-color)',
                 color: 'var(--text-primary)',
                 cursor: 'pointer',
@@ -792,7 +907,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                 justifyContent: 'center'
               }}
             >
-              <X size={18} />
+              <X size={20} aria-hidden="true" />
             </button>
 
             {registerSubmitted ? (
@@ -810,21 +925,21 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                   type="button"
                   onClick={() => setIsRegisterModalOpen(false)}
                   className="btn btn-primary"
-                  style={{ marginTop: '12px', padding: '9px 24px' }}
+                  style={{ marginTop: '12px', minHeight: '48px', padding: '12px 32px' }}
                 >
                   Entendido
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--secondary)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>
-                    <Sparkles size={15} /> Otakonce 2026
+              <form onSubmit={handleRegisterSubmit} noValidate={false} className="register-form" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ paddingRight: '48px' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--secondary)', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+                    <Sparkles size={15} aria-hidden="true" /> Otakonce 2026
                   </div>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 850, margin: '0 0 6px' }}>
+                  <h3 id="pasarela-register-title" style={{ fontSize: 'clamp(1.2rem, 4vw, 1.5rem)', fontWeight: 850, margin: '0 0 6px', lineHeight: 1.25 }}>
                     Inscripción a la Pasarela Cosplay
                   </h3>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                     Comparte tu talento con toda la comunidad. Llena los datos a continuación para postular.
                   </p>
                 </div>
@@ -843,7 +958,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                   <input
                     type="text"
                     required
-                    placeholder="Ej: Sakura Moon / Cris Cosplay"
+                    placeholder="Tu nick, tal como te conoce la comunidad"
                     value={registerForm.name}
                     onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
                     className="form-control"
@@ -866,7 +981,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
                   <div className="form-group">
                     <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
                       Ciudad de Origen <span style={{ color: 'var(--secondary)' }}>*</span>
@@ -874,7 +989,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                     <input
                       type="text"
                       required
-                      placeholder="Ej: Concepción"
+                      placeholder="La ciudad desde donde vienes"
                       value={registerForm.city}
                       onChange={(e) => setRegisterForm({ ...registerForm, city: e.target.value })}
                       className="form-control"
@@ -897,82 +1012,112 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
-                    Teléfono / WhatsApp o Email de Contacto <span style={{ color: 'var(--secondary)' }}>*</span>
+                <div className="form-group register-contact-group" style={{ marginBottom: 0 }}>
+                  <label htmlFor="register-email" style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                    Email de Contacto <span style={{ color: 'var(--secondary)' }}>*</span>
                   </label>
                   <input
-                    type="text"
+                    id="register-email"
+                    type="email"
                     required
-                    placeholder="+56 9 1234 5678 o tu@correo.com"
+                    placeholder="tu@correo.com"
                     value={registerForm.contact}
                     onChange={(e) => setRegisterForm({ ...registerForm, contact: e.target.value })}
                     className="form-control"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px' }}
                   />
                   <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-                    Solo visible para el staff organizador con el fin de coordinar tu participación.
+                    Solo lo verá el staff organizador para coordinar tu participación.
                   </small>
                 </div>
 
-                <div className="form-group">
-                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
-                    Foto de tu Cosplay o Traje
-                  </label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      style={{ fontSize: '0.82rem' }}
-                    />
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <span id="register-photo-label" style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
+                    Foto de tu Cosplay o Traje <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>(máx. 1 foto)</span>
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <label
+                        htmlFor="register-photo-input"
+                        className="btn btn-secondary"
+                        style={{ minHeight: '44px', padding: '10px 18px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}
+                      >
+                        <Upload size={16} aria-hidden="true" />
+                        {registerForm.photo && registerForm.photo.startsWith('data:') ? 'Cambiar foto' : 'Subir foto'}
+                      </label>
+                      <input
+                        id="register-photo-input"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handlePhotoUpload}
+                        aria-labelledby="register-photo-label"
+                        style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}
+                      />
+                      <span style={{ fontSize: '0.8rem', color: photoName ? 'var(--text-primary)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>
+                        {photoName || 'JPG, PNG, WEBP o GIF · máx 8MB'}
+                      </span>
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>O URL:</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', flexShrink: 0 }}>O URL:</span>
                       <input
                         type="url"
+                        inputMode="url"
                         placeholder="https://ejemplo.com/mifoto.jpg"
                         value={registerForm.photo && !registerForm.photo.startsWith('data:') ? registerForm.photo : ''}
-                        onChange={(e) => setRegisterForm({ ...registerForm, photo: e.target.value })}
+                        onChange={(e) => { setRegisterForm({ ...registerForm, photo: e.target.value }); setPhotoName(''); }}
                         className="form-control"
-                        style={{ flex: 1, padding: '7px 10px', fontSize: '0.82rem', borderRadius: '8px' }}
+                        style={{ flex: 1, minWidth: 0, padding: '10px 12px', fontSize: '0.85rem', borderRadius: '10px' }}
                       />
                     </div>
                   </div>
                   {registerForm.photo && (
-                    <div style={{ marginTop: '10px', position: 'relative', width: '90px', height: '110px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                      <img src={registerForm.photo} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ position: 'relative', width: '90px', height: '110px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)', flexShrink: 0 }}>
+                        <img src={registerForm.photo} alt="Vista previa de tu foto de cosplay" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setRegisterForm({ ...registerForm, photo: '' })}
-                        style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onClick={clearPhoto}
+                        aria-label="Quitar foto seleccionada"
+                        className="btn btn-secondary"
+                        style={{ minHeight: '44px', padding: '8px 14px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       >
-                        <X size={12} />
+                        <X size={14} aria-hidden="true" />
+                        Quitar
                       </button>
                     </div>
                   )}
                 </div>
 
-                <div className="form-group">
-                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
-                    Breve Presentación o Propuesta en Escenario
+                <div className="form-group register-bio-group" style={{ marginBottom: 0 }}>
+                  <label htmlFor="register-bio" style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
+                    <span>Breve Presentación o Propuesta en Escenario</span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: (registerForm.bio?.length || 0) >= BIO_MAX_LENGTH ? 'var(--secondary)' : 'var(--text-muted)' }} aria-live="polite">
+                      {registerForm.bio?.length || 0}/{BIO_MAX_LENGTH}
+                    </span>
                   </label>
                   <textarea
+                    id="register-bio"
                     rows={3}
-                    placeholder="Cuéntanos un poco sobre tu traje, confección o tu dinámica para la pasarela..."
+                    maxLength={BIO_MAX_LENGTH}
+                    placeholder="Una breve presentación de tu traje o tu show. Por tu seguridad, no incluyas datos sensibles como teléfono, dirección o RUT."
                     value={registerForm.bio}
                     onChange={(e) => setRegisterForm({ ...registerForm, bio: e.target.value })}
                     className="form-control"
                     style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', resize: 'vertical' }}
                   />
+                  <small style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                    Máximo {BIO_MAX_LENGTH} caracteres: breve y al grano.
+                  </small>
                 </div>
 
-                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '10px', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     disabled={registerLoading}
                     onClick={() => setIsRegisterModalOpen(false)}
                     className="btn btn-secondary"
-                    style={{ flex: 1, padding: '11px' }}
+                    style={{ flex: '1 1 140px', minHeight: '48px', padding: '12px' }}
                   >
                     Cancelar
                   </button>
@@ -980,17 +1125,22 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                     type="submit"
                     disabled={registerLoading}
                     className="btn btn-primary"
-                    style={{ flex: 2, padding: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    style={{ flex: '2 1 200px', minHeight: '48px', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                   >
-                    {registerLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                    {registerLoading ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : <Sparkles size={18} aria-hidden="true" />}
                     {registerLoading ? 'Enviando...' : 'Enviar Postulación'}
                   </button>
                 </div>
               </form>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+      <style>{`
+        .register-form .form-group { margin-bottom: 0; }
+        .register-form .form-control { width: 100%; box-sizing: border-box; }
+      `}</style>
 
       <style>{`
         /* Infinite Carousel Contained Inside .container */
@@ -1084,22 +1234,22 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
         /* Mobile Adjustments */
         @media (max-width: 767px) {
           .carousel-floating-btn {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
           }
           .carousel-floating-left {
-            left: 8px;
+            left: 6px;
           }
           .carousel-floating-right {
-            right: 8px;
+            right: 6px;
           }
           .cosplay-infinite-track {
-            gap: 16px;
-            padding: 4px 0 16px;
+            gap: 14px;
+            padding: 4px 2px 16px;
           }
           .cosplay-infinite-item {
-            flex: 0 0 280px;
-            width: 280px;
+            flex: 0 0 min(280px, 78vw);
+            width: min(280px, 78vw);
           }
           .community-cosplay-card {
             height: 410px;

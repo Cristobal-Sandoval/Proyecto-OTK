@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, ChevronRight } from 'lucide-react';
+import { heroSrc } from '../services/media';
 const OtakonceLogo = ({ size = '260px' }) => (
   <div 
     style={{
@@ -20,13 +21,29 @@ const OtakonceLogo = ({ size = '260px' }) => (
     <img 
       src="/otakonce-logo.svg" 
       alt="Otakonce 2026 Logo Oficial" 
+      width="260"
+      height="120"
+      fetchpriority="high"
+      decoding="async"
       style={{ width: '100%', height: 'auto', display: 'block' }} 
     />
   </div>
 );
 
-const Hero = ({ config, onNavigate, banners }) => {
-  const [timeLeft, setTimeLeft] = useState({
+/**
+ * Texto legible sobre cualquier color de badge: oscuro sobre fondos claros,
+ * blanco sobre fondos oscuros (ej. amarillo #FFE200 => texto oscuro).
+ */
+const getBadgeTextColor = (bg) => {
+  if (!bg || !/^#[0-9a-fA-F]{6}$/.test(bg)) return '#FFFFFF';
+  const r = parseInt(bg.slice(1, 3), 16);
+  const g = parseInt(bg.slice(3, 5), 16);
+  const b = parseInt(bg.slice(5, 7), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? '#0F172A' : '#FFFFFF';
+};
+
+const Hero = ({ config, onNavigate, banners }) => {  const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
     minutes: 0,
@@ -35,6 +52,19 @@ const Hero = ({ config, onNavigate, banners }) => {
   });
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  // Sin botón de pausa: la rotación es continua, salvo reduced-motion (accesibilidad)
+  const prefersReducedMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  // Precarga todas las imágenes para que el crossfade nunca muestre blanco
+  useEffect(() => {
+    if (!banners || banners.length === 0) return;
+    banners.forEach((b) => {
+      if (!b?.image) return;
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = heroSrc(b.image);
+    });
+  }, [banners]);
 
   useEffect(() => {
     const targetDate = new Date(config.countdownDate).getTime();
@@ -62,21 +92,22 @@ const Hero = ({ config, onNavigate, banners }) => {
     return () => clearInterval(interval);
   }, [config.countdownDate]);
 
-  // Auto-rotate banners
+  // Auto-rotate banners (siempre activo, salvo reduced-motion)
   useEffect(() => {
-    if (!banners || banners.length <= 1) return;
+    if (!banners || banners.length <= 1 || prefersReducedMotion) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % banners.length);
     }, 6000); // 6 seconds slide duration
     return () => clearInterval(interval);
-  }, [banners]);
+  }, [banners, prefersReducedMotion]);
 
   const activeBanner = banners && banners.length > 0 && banners[currentSlide]
     ? banners[currentSlide]
-    : { title: config.title, subtitle: config.subtitle, image: config.bannerImage || '/assets/hero_banner.png' };
+    : { title: config.title, subtitle: config.subtitle, image: config.bannerImage || '/assets/hero_banner.webp' };
 
   return (
     <section 
+      aria-label="Portada Otakonce 2026"
       style={{
         position: 'relative',
         minHeight: 'calc(100vh - var(--header-height) - var(--announcement-height, 0px))',
@@ -90,30 +121,33 @@ const Hero = ({ config, onNavigate, banners }) => {
       className="hero-section"
     >
       {/* Widescreen Background Slider (cross-fade transition) with dynamic alignment gradient mask */}
-      {(banners && banners.length > 0 ? banners : [{ id: 'default', image: config.bannerImage || '/assets/hero_banner.png', alignmentX: 'left' }]).map((banner, idx) => {
+      {(banners && banners.length > 0 ? banners : [{ id: 'default', image: config.bannerImage || '/assets/hero_banner.webp', alignmentX: 'left' }]).map((banner, idx) => {
         const isActive = (banners && banners.length > 0 ? idx === currentSlide : true);
         
-        // Define overlay gradient based on text alignment
-        let overlayGradient = 'linear-gradient(to right, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.45) 50%, transparent 100%)';
+        // Define overlay gradient based on text alignment (legibilidad reforzada)
+        let overlayGradient = 'linear-gradient(to right, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.6) 55%, rgba(15, 23, 42, 0.15) 100%)';
         if (banner.alignmentX === 'right') {
-          overlayGradient = 'linear-gradient(to left, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.45) 50%, transparent 100%)';
+          overlayGradient = 'linear-gradient(to left, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.6) 55%, rgba(15, 23, 42, 0.15) 100%)';
         } else if (banner.alignmentX === 'center') {
-          overlayGradient = 'radial-gradient(circle, rgba(15, 23, 42, 0.75) 0%, rgba(15, 23, 42, 0.55) 50%, rgba(15, 23, 42, 0.25) 100%)';
+          overlayGradient = 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.62) 55%, rgba(15, 23, 42, 0.3) 100%)';
         }
 
         return (
           <div
             key={banner.id || idx}
+            aria-hidden={!isActive}
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
               width: '100%',
               height: '100%',
+              // Solo opacidad (sin visibility): el navegador mantiene las imágenes
+              // cargadas y el fundido es continuo, sin flash blanco entre banners
               opacity: isActive ? 1 : 0,
-              transition: 'opacity 1.2s ease-in-out',
+              transition: 'opacity 1.6s ease-in-out',
               willChange: 'opacity',
-              zIndex: 1,
+              zIndex: isActive ? 2 : 1,
               pointerEvents: 'none'
             }}
           >
@@ -125,7 +159,7 @@ const Hero = ({ config, onNavigate, banners }) => {
                 left: 0,
                 width: '100%',
                 height: '100%',
-                backgroundImage: `url(${banner.image})`,
+                backgroundImage: `url(${heroSrc(banner.image)})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 zIndex: 1
@@ -148,8 +182,8 @@ const Hero = ({ config, onNavigate, banners }) => {
       })}
 
       {/* Decorative Glowing Orbs */}
-      <div style={{ position: 'absolute', top: '15%', left: '15%', width: '120px', height: '120px', background: 'var(--primary)', filter: 'blur(80px)', opacity: 0.15, pointerEvents: 'none', zIndex: 2 }} />
-      <div style={{ position: 'absolute', bottom: '15%', right: '15%', width: '150px', height: '150px', background: 'var(--cyan)', filter: 'blur(90px)', opacity: 0.1, pointerEvents: 'none', zIndex: 2 }} />
+      <div aria-hidden="true" style={{ position: 'absolute', top: '15%', left: '15%', width: '120px', height: '120px', background: 'var(--primary)', filter: 'blur(80px)', opacity: 0.15, pointerEvents: 'none', zIndex: 2 }} />
+      <div aria-hidden="true" style={{ position: 'absolute', bottom: '15%', right: '15%', width: '150px', height: '150px', background: 'var(--cyan)', filter: 'blur(90px)', opacity: 0.1, pointerEvents: 'none', zIndex: 2 }} />
 
       <div 
         className="container"
@@ -175,6 +209,10 @@ const Hero = ({ config, onNavigate, banners }) => {
           style={{
             width: '100%',
             maxWidth: '1200px',
+            // Altura mínima fija: el bloque ocupa siempre lo mismo y la barra
+            // inferior (fecha + contador) no se mueve entre banners
+            minHeight: 'clamp(230px, 32vh, 320px)',
+            justifyContent: 'center',
             textAlign: activeBanner.alignmentX === 'right' ? 'right' : activeBanner.alignmentX === 'center' ? 'center' : 'left',
             display: 'flex',
             flexDirection: 'column',
@@ -191,10 +229,10 @@ const Hero = ({ config, onNavigate, banners }) => {
             <span 
               style={{
                 background: activeBanner.badgeBgColor || 'var(--cyan)',
-                color: '#FFFFFF',
-                padding: '4px 12px',
+                color: getBadgeTextColor(activeBanner.badgeBgColor),
+                padding: '6px 14px',
                 borderRadius: '9999px',
-                fontSize: '0.72rem',
+                fontSize: '0.75rem',
                 fontWeight: 900,
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
@@ -253,7 +291,8 @@ const Hero = ({ config, onNavigate, banners }) => {
               style={{
                 background: 'var(--primary)',
                 color: '#0F172A',
-                padding: '10px 22px',
+                padding: '12px 22px',
+                minHeight: '44px',
                 borderRadius: '12px',
                 fontWeight: 800,
                 fontSize: '0.85rem',
@@ -268,35 +307,46 @@ const Hero = ({ config, onNavigate, banners }) => {
               className="banner-cta-btn"
             >
               {activeBanner.linkLabel || 'Saber Más'}
-              <ChevronRight size={16} />
+              <ChevronRight size={16} aria-hidden="true" />
             </a>
           )}
         </div>
 
         {/* Carousel Indicators (Dots) */}
         {banners && banners.length > 1 && (
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '4px 0', zIndex: 12, alignItems: 'center' }}>
+          <div role="group" aria-label="Selector de banner" style={{ display: 'flex', gap: '4px', justifyContent: 'center', margin: '4px 0', zIndex: 12, alignItems: 'center' }}>
             {banners.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 style={{
-                  width: idx === currentSlide ? '16px' : '6px',
-                  height: '6px',
-                  borderRadius: '3px',
-                  background: idx === currentSlide ? 'var(--secondary)' : 'rgba(255, 255, 255, 0.4)',
-                  border: idx === currentSlide ? '1.5px solid #0F172A' : 'none',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  border: 'none',
                   cursor: 'pointer',
                   padding: 0,
-                  flexShrink: 0,
-                  alignSelf: 'center',
-                  minWidth: 0,
-                  minHeight: 0,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  flexShrink: 0
                 }}
-                aria-label={`Ir al banner ${idx + 1} de ${banners.length}`}
+                aria-label={idx === currentSlide ? `Banner ${idx + 1} de ${banners.length} (actual)` : `Ir al banner ${idx + 1} de ${banners.length}`}
                 aria-current={idx === currentSlide ? 'true' : undefined}
-              />
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: 'block',
+                    width: idx === currentSlide ? '20px' : '8px',
+                    height: '8px',
+                    borderRadius: '4px',
+                    background: idx === currentSlide ? 'var(--secondary)' : 'rgba(255, 255, 255, 0.5)',
+                    border: idx === currentSlide ? '1px solid #0F172A' : 'none',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                />
+              </button>
             ))}
           </div>
         )}
@@ -335,14 +385,14 @@ const Hero = ({ config, onNavigate, banners }) => {
 
           {/* Countdown column */}
           {!timeLeft.expired ? (
-            <div className="hero-countdown-container hero-bottom-col">
+            <div className="hero-countdown-container hero-bottom-col" role="timer" aria-live="off" aria-label={`Faltan ${timeLeft.days} días, ${timeLeft.hours} horas, ${timeLeft.minutes} minutos`}>
               <span style={{ fontSize: '0.8rem', fontWeight: 950, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>Faltan:</span>
               <div className="hero-countdown-grid">
                 {[
-                  { val: timeLeft.days, unit: 'd' },
-                  { val: timeLeft.hours, unit: 'h' },
-                  { val: timeLeft.minutes, unit: 'm' },
-                  { val: timeLeft.seconds, unit: 's' }
+                  { val: timeLeft.days, unit: 'días' },
+                  { val: timeLeft.hours, unit: 'hrs' },
+                  { val: timeLeft.minutes, unit: 'min' },
+                  { val: timeLeft.seconds, unit: 'seg' }
                 ].map((item, idx) => (
                   <div 
                     key={idx} 
@@ -358,7 +408,7 @@ const Hero = ({ config, onNavigate, banners }) => {
                       boxShadow: '2px 2px 0px var(--shadow-pop, rgba(15, 23, 42, 0.05))'
                     }}
                   >
-                    <span style={{ fontWeight: 950, fontSize: 'clamp(1.05rem, 2.5vw, 1.35rem)', fontFamily: 'var(--font-display)', color: 'var(--countdown-num-color, var(--text-primary))', lineHeight: 1 }}>{String(item.val).padStart(2, '0')}</span>
+                    <span style={{ fontWeight: 950, fontSize: 'clamp(1.05rem, 2.5vw, 1.35rem)', fontFamily: 'var(--font-display)', fontVariantNumeric: 'tabular-nums', color: 'var(--countdown-num-color, var(--text-primary))', lineHeight: 1 }}>{String(item.val).padStart(2, '0')}</span>
                     <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--countdown-unit-color, var(--text-secondary))', textTransform: 'uppercase' }}>{item.unit}</span>
                   </div>
                 ))}

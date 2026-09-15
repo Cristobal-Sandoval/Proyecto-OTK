@@ -78,9 +78,9 @@ export const uploadToCloudinary = async (file, _options = {}) => {
     throw new Error('La imagen excede el límite máximo de 10 MB permitido.');
   }
 
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   if (!allowedTypes.includes(file.type)) {
-    throw new Error('Formato no soportado. Por favor sube una imagen JPG, PNG, WEBP, GIF o SVG.');
+    throw new Error('Formato no soportado. Por favor sube una imagen JPG, PNG, WEBP o GIF (SVG no permitido por seguridad).');
   }
 
   const endpoint = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;

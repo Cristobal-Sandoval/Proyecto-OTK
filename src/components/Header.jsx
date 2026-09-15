@@ -21,10 +21,18 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Lock body scroll when mobile drawer is open
+  // Cierre con Escape + retorno de foco accesible
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (!isOpen) return () => { document.body.style.overflow = ''; };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
   }, [isOpen]);
 
   const navItems = [
@@ -85,7 +93,11 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
         >
           <img 
             src="/otakonce-logo.svg" 
-            alt="Otakonce" 
+            alt="Otakonce 2026 — inicio" 
+            width="120"
+            height="38"
+            fetchpriority="low"
+            decoding="async"
             style={{ 
               height: '38px', 
               width: 'auto', 
@@ -94,7 +106,7 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
             }} 
           />
           <span style={{ 
-            fontSize: '0.68rem', 
+            fontSize: '0.72rem', 
             fontWeight: 900, 
             border: '2px solid var(--border-pop, #0F172A)', 
             padding: '2px 6px', 
@@ -110,6 +122,7 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
 
         {/* Desktop Navigation */}
         <nav 
+          aria-label="Navegación principal"
           style={{
             display: 'none',
             alignItems: 'center',
@@ -124,12 +137,14 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
+                aria-current={isActive ? 'page' : undefined}
                 style={{
                   background: isActive ? 'rgba(0, 163, 255, 0.1)' : 'transparent',
                   border: '1px solid',
                   borderColor: isActive ? 'var(--border-color)' : 'transparent',
                   color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  padding: '8px 16px',
+                  padding: '10px 16px',
+                  minHeight: '44px',
                   borderRadius: '10px',
                   cursor: 'pointer',
                   fontWeight: 600,
@@ -153,19 +168,24 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
           aria-expanded={isOpen}
+          aria-controls="mobile-nav-drawer"
           style={{
             display: 'flex',
             background: 'rgba(0, 163, 255, 0.08)',
             border: '1px solid var(--border-color)',
             color: 'var(--text-primary)',
-            padding: '8px',
+            padding: '10px',
+            minHeight: '44px',
+            minWidth: '44px',
+            alignItems: 'center',
+            justifyContent: 'center',
             borderRadius: '10px',
             cursor: 'pointer',
             zIndex: 110
           }}
           className="mobile-menu-btn"
         >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          {isOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
         </button>
       </div>
 
@@ -173,8 +193,9 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
       {typeof document !== 'undefined' && createPortal(
         <>
           {isOpen && (
-            <div
+            <button
               onClick={() => setIsOpen(false)}
+              aria-label="Cerrar menú de navegación"
               style={{
                 position: 'fixed',
                 top: 0,
@@ -183,12 +204,19 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
                 height: '100vh',
                 background: 'rgba(0,0,0,0.65)',
                 zIndex: 9998,
-                animation: 'fadeIn var(--transition-fast)'
+                animation: 'fadeIn var(--transition-fast)',
+                border: 'none',
+                cursor: 'pointer'
               }}
             />
           )}
 
           <div
+            id="mobile-nav-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú de navegación"
+            aria-hidden={!isOpen}
             style={{
               position: 'fixed',
               top: 0,
@@ -223,17 +251,17 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
                   background: 'rgba(0, 163, 255, 0.08)',
                   border: '1px solid var(--border-color)',
                   color: 'var(--text-primary)',
-                  padding: '6px',
+                  padding: '10px',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  minHeight: '36px',
-                  minWidth: '36px'
+                  minHeight: '44px',
+                  minWidth: '44px'
                 }}
               >
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
 

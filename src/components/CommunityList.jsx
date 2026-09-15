@@ -77,12 +77,16 @@ const CommunityList = ({ communities = [] }) => {
                     src={comm.logo} 
                     alt={`Logo oficial de la agrupación: ${comm.name}`}
                     loading="lazy"
+                    decoding="async"
+                    width="60"
+                    height="60"
                     style={{
                       width: '60px',
                       height: '60px',
                       borderRadius: '16px',
                       objectFit: 'cover',
-                      border: '1px solid var(--border-color)'
+                      border: '1px solid var(--border-color)',
+                      flexShrink: 0
                     }}
                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                   />
@@ -118,10 +122,12 @@ const CommunityList = ({ communities = [] }) => {
               </p>
 
               {/* Link */}
+              {comm.instagram ? (
               <a 
                 href={comm.instagram}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer nofollow"
+                aria-label={`Instagram de ${comm.name}`}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -130,14 +136,17 @@ const CommunityList = ({ communities = [] }) => {
                   fontSize: '0.85rem',
                   fontWeight: 600,
                   alignSelf: 'flex-start',
-                  marginTop: '8px'
+                  marginTop: '8px',
+                  minHeight: '44px',
+                  padding: '6px 4px'
                 }}
                 className="community-link"
               >
-                <Instagram size={14} />
+                <Instagram size={14} aria-hidden="true" />
                 Ver Instagram
-                <ExternalLink size={10} style={{ opacity: 0.7 }} />
+                <ExternalLink size={10} style={{ opacity: 0.7 }} aria-hidden="true" />
               </a>
+              ) : null}
             </div>
           ))}
         </div>
