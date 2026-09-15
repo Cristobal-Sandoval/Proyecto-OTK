@@ -9,6 +9,7 @@ import SeasonalOverlay from './components/SeasonalOverlay';
 // Code-split non-critical and heavy components
 const NewsSection = lazy(() => import('./components/NewsSection'));
 const NewsDetail = lazy(() => import('./components/NewsDetail'));
+const GuestDetail = lazy(() => import('./components/GuestDetail'));
 const GuestsSection = lazy(() => import('./components/GuestsSection'));
 const CosplayerGallery = lazy(() => import('./components/CosplayerGallery'));
 const CommunityList = lazy(() => import('./components/CommunityList'));
@@ -36,6 +37,9 @@ function App() {
       if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
         return 'news-detail';
       }
+      if (hash.startsWith('#invitado/') || hash.startsWith('#guest/')) {
+        return 'guest-detail';
+      }
       if (hash === '#invitados' || hash === '#guests') {
         return 'invitados';
       }
@@ -52,6 +56,7 @@ function App() {
   const [floatingBanner, setFloatingBannerState] = useState(() => getFloatingBanner());
   const [newsList, setNewsListState] = useState(() => getNews());
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [selectedGuest, setSelectedGuest] = useState(null);
   const [cosplayers, setCosplayersState] = useState(() => getCosplayers());
   const [communities, setCommunitiesState] = useState(() => getCommunities());
   const [schedule, setScheduleState] = useState(() => getSchedule());
@@ -101,6 +106,10 @@ function App() {
       document.title = `${selectedArticle.title} | Otakonce 2026`;
       return;
     }
+    if (activeTab === 'guest-detail' && selectedGuest) {
+      document.title = `${selectedGuest.name} (${selectedGuest.character}) | Invitados Otakonce 2026`;
+      return;
+    }
 
     const titles = {
       home: 'Otakonce 2026 | El Evento de Anime y Cultura Geek de Concepción',
@@ -117,12 +126,12 @@ function App() {
       if (window.location.hash && window.location.hash !== '#home') {
         history.replaceState(null, '', window.location.pathname);
       }
-    } else if (activeTab !== 'admin' && activeTab !== 'news-detail') {
+    } else if (activeTab !== 'admin' && activeTab !== 'news-detail' && activeTab !== 'guest-detail') {
       if (window.location.hash !== `#${activeTab}`) {
         history.replaceState(null, '', `#${activeTab}`);
       }
     }
-  }, [activeTab, selectedArticle]);
+  }, [activeTab, selectedArticle, selectedGuest]);
 
   // Handle article resolution from hash (e.g. #noticia/slug-de-la-noticia)
   useEffect(() => {
@@ -139,6 +148,22 @@ function App() {
     };
     resolveHashArticle();
   }, [newsList]);
+
+  // Handle guest resolution from hash (e.g. #invitado/slug-del-invitado)
+  useEffect(() => {
+    const resolveHashGuest = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#invitado/') || hash.startsWith('#guest/')) {
+        const slug = hash.replace(/^#(invitado|guest)\//, '').toLowerCase();
+        const found = cosplayers.find(c => slugify(c.name) === slug || String(c.id) === slug);
+        if (found) {
+          setSelectedGuest(found);
+          setActiveTab('guest-detail');
+        }
+      }
+    };
+    resolveHashGuest();
+  }, [cosplayers]);
 
   // Listen for stealth admin shortcut (Ctrl+Shift+A or Cmd+Shift+A) or stealth hash (#stf-portal / #staff-access)
   useEffect(() => {
@@ -157,6 +182,13 @@ function App() {
           setSelectedArticle(found);
           setActiveTab('news-detail');
         }
+      } else if (hash.startsWith('#invitado/') || hash.startsWith('#guest/')) {
+        const slug = hash.replace(/^#(invitado|guest)\//, '').toLowerCase();
+        const found = cosplayers.find(c => slugify(c.name) === slug || String(c.id) === slug);
+        if (found) {
+          setSelectedGuest(found);
+          setActiveTab('guest-detail');
+        }
       }
     };
     checkHash();
@@ -174,12 +206,15 @@ function App() {
       window.removeEventListener('hashchange', checkHash);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [newsList]);
+  }, [newsList, cosplayers]);
 
   // Nav helper for components
   const handleNavigate = (tabId) => {
     if (tabId !== 'news-detail') {
       setSelectedArticle(null);
+    }
+    if (tabId !== 'guest-detail') {
+      setSelectedGuest(null);
     }
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -191,6 +226,15 @@ function App() {
     setActiveTab('news-detail');
     const slug = slugify(article.title);
     window.location.hash = `noticia/${slug}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Select guest and navigate to dedicated guest profile view with slug URL
+  const handleSelectGuest = (guest) => {
+    setSelectedGuest(guest);
+    setActiveTab('guest-detail');
+    const slug = slugify(guest.name);
+    window.location.hash = `invitado/${slug}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -231,7 +275,12 @@ function App() {
               <div style={{ background: 'rgba(255, 255, 255, 0.005)' }}>
                 
                 {/* 2. Invitados Especiales (VIP & Jurados - Carrusel en Home) */}
-                <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} onNavigate={handleNavigate} mode="carousel" />
+                <GuestsSection 
+                  guests={cosplayers.filter(c => c.type === 'guest')} 
+                  onNavigate={handleNavigate} 
+                  onSelectGuest={handleSelectGuest}
+                  mode="carousel" 
+                />
 
                 {/* 3. Noticias y Anuncios */}
                 <NewsSection newsList={newsList.slice(0, 3)} onSelectArticle={handleSelectArticle} />
@@ -272,8 +321,23 @@ function App() {
             />
           )}
 
+          {/* Dedicated Individual Guest Profile Page */}
+          {activeTab === 'guest-detail' && selectedGuest && (
+            <GuestDetail 
+              guest={selectedGuest} 
+              guestsList={cosplayers.filter(c => c.type === 'guest')} 
+              onBack={() => handleNavigate('invitados')} 
+              onSelectGuest={handleSelectGuest} 
+            />
+          )}
+
           {activeTab === 'invitados' && (
-            <GuestsSection guests={cosplayers.filter(c => c.type === 'guest')} mode="grid" onNavigate={handleNavigate} />
+            <GuestsSection 
+              guests={cosplayers.filter(c => c.type === 'guest')} 
+              mode="grid" 
+              onNavigate={handleNavigate} 
+              onSelectGuest={handleSelectGuest}
+            />
           )}
 
           {activeTab === 'cosplay' && (

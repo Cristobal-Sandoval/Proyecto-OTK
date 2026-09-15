@@ -101,7 +101,7 @@ const AdminDashboard = ({
   const [editingCosplayer, setEditingCosplayer] = useState(null);
   const [cosplayerAdminFilter, setCosplayerAdminFilter] = useState('all'); // 'all' | 'guest' | 'community'
   const [cosplayerForm, setCosplayerForm] = useState({
-    name: '', character: '', instagram: '', image: '', bio: '',
+    name: '', character: '', instagram: '', tiktok: '', twitter: '', image: '', photos: [], bio: '',
     type: 'guest',
     role: 'Invitado Especial',
     city: 'Concepción'
@@ -336,8 +336,16 @@ const AdminDashboard = ({
   // 4. Cosplayer CRUD handlers
   const handleCosplayerSubmit = (e) => {
     e.preventDefault();
+    const photosArray = Array.isArray(cosplayerForm.photos) ? cosplayerForm.photos : [];
+    const formData = {
+      ...cosplayerForm,
+      photos: photosArray,
+      tiktok: cosplayerForm.tiktok || '',
+      twitter: cosplayerForm.twitter || ''
+    };
+
     if (editingCosplayer) {
-      const updatedList = cosplayers.map(c => c.id === editingCosplayer.id ? { ...editingCosplayer, ...cosplayerForm } : c);
+      const updatedList = cosplayers.map(c => c.id === editingCosplayer.id ? { ...editingCosplayer, ...formData } : c);
       setCosplayers(updatedList);
       setEditingCosplayer(null);
       alert('Ficha de cosplayer actualizada.');
@@ -347,12 +355,15 @@ const AdminDashboard = ({
         type: cosplayerForm.type || 'guest',
         role: cosplayerForm.role || (cosplayerForm.type === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'),
         city: cosplayerForm.city || 'Concepción',
-        ...cosplayerForm 
+        ...formData 
       };
       setCosplayers([...cosplayers, newCos]);
       alert(cosplayerForm.type === 'guest' ? 'Invitado Especial agregado.' : 'Cosplayer de Pasarela agregado.');
     }
-    setCosplayerForm({ name: '', character: '', instagram: '', image: '', bio: '', type: 'guest', role: 'Invitado Especial', city: 'Concepción' });
+    setCosplayerForm({ 
+      name: '', character: '', instagram: '', tiktok: '', twitter: '', image: '', photos: [], bio: '', 
+      type: 'guest', role: 'Invitado Especial', city: 'Concepción' 
+    });
   };
 
   const handleEditCosplayer = (cos) => {
@@ -361,7 +372,10 @@ const AdminDashboard = ({
       name: cos.name || '',
       character: cos.character || '',
       instagram: cos.instagram || '',
+      tiktok: cos.tiktok || '',
+      twitter: cos.twitter || '',
       image: cos.image || '',
+      photos: Array.isArray(cos.photos) ? cos.photos : (cos.image ? [cos.image] : []),
       bio: cos.bio || '',
       type: cos.type || 'community',
       role: cos.role || (cos.type === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'),
@@ -1860,9 +1874,31 @@ const AdminDashboard = ({
                     </div>
                   </div>
 
-                  {/* Row 4: Foto */}
+                  {/* Row 3b: Redes Opcionales (TikTok & Twitter/X) */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }} className="grid-2-col">
+                    <div className="form-group">
+                      <label>Enlace de TikTok (Opcional)</label>
+                      <input 
+                        type="url" className="form-control" 
+                        value={cosplayerForm.tiktok || ''} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, tiktok: e.target.value })} 
+                        placeholder="https://tiktok.com/@usuario"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Enlace de X / Twitter (Opcional)</label>
+                      <input 
+                        type="url" className="form-control" 
+                        value={cosplayerForm.twitter || ''} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, twitter: e.target.value })} 
+                        placeholder="https://twitter.com/usuario"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 4: Foto Principal */}
                   <div className="form-group">
-                    <label>Foto de Cosplay</label>
+                    <label>Foto Principal de Cosplay</label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
                       {cosplayerForm.image && (
                         <div style={{ width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
@@ -1873,13 +1909,70 @@ const AdminDashboard = ({
                         className="btn btn-secondary" 
                         style={{ cursor: 'pointer', padding: '10px 16px', fontSize: '0.85rem', display: 'flex', gap: '6px' }}
                       >
-                        <Upload size={16} /> Subir Imagen
+                        <Upload size={16} /> Subir Imagen Principal
                         <input 
                           type="file" accept="image/*" style={{ display: 'none' }}
                           onChange={(e) => handleSmartImageUpload(e, (url) => setCosplayerForm({ ...cosplayerForm, image: url }))} 
                         />
                       </label>
                     </div>
+                  </div>
+
+                  {/* Row 4b: Mini Galería de Fotos Adicionales (para la ficha del invitado) */}
+                  <div className="form-group">
+                    <label>
+                      Mini Galería de Fotos de la Ficha ({Array.isArray(cosplayerForm.photos) ? cosplayerForm.photos.length : 0} fotos)
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+                      {Array.isArray(cosplayerForm.photos) && cosplayerForm.photos.map((url, idx) => (
+                        <div key={idx} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                          <img src={url} alt={`Foto ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = cosplayerForm.photos.filter((_, i) => i !== idx);
+                              setCosplayerForm({ ...cosplayerForm, photos: updated });
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: '2px',
+                              right: '2px',
+                              background: 'rgba(0,0,0,0.75)',
+                              color: '#FF3B6C',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '20px',
+                              height: '20px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              fontWeight: 900
+                            }}
+                            title="Quitar foto"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <label 
+                        className="btn btn-secondary" 
+                        style={{ cursor: 'pointer', padding: '8px 14px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        <Upload size={14} /> + Agregar Foto a la Galería
+                        <input 
+                          type="file" accept="image/*" style={{ display: 'none' }}
+                          onChange={(e) => handleSmartImageUpload(e, (url) => {
+                            const prev = Array.isArray(cosplayerForm.photos) ? cosplayerForm.photos : [];
+                            setCosplayerForm({ ...cosplayerForm, photos: [...prev, url] });
+                          })} 
+                        />
+                      </label>
+                    </div>
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem', display: 'block' }}>
+                      💡 Estas fotos se muestran en la galería individual del invitado y pueden ampliarse a pantalla completa al hacer clic.
+                    </small>
                   </div>
 
                   {/* Row 5: Biografía / Explicación */}
@@ -1893,7 +1986,7 @@ const AdminDashboard = ({
                       required 
                     />
                     <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
-                      💡 Esta explicación se muestra destacada en la sección de Invitados (formato tipo noticias) y en el carrusel de inicio.
+                      💡 Esta explicación se muestra destacada en la sección de Invitados (formato tipo noticias), en la ficha individual y en el carrusel de inicio.
                     </small>
                   </div>
 
@@ -1906,7 +1999,10 @@ const AdminDashboard = ({
                         type="button" className="btn btn-secondary" 
                         onClick={() => {
                           setEditingCosplayer(null);
-                          setCosplayerForm({ name: '', character: '', instagram: '', image: '', bio: '', type: 'guest', role: 'Invitado Especial', city: 'Concepción' });
+                          setCosplayerForm({ 
+                            name: '', character: '', instagram: '', tiktok: '', twitter: '', image: '', photos: [], bio: '', 
+                            type: 'guest', role: 'Invitado Especial', city: 'Concepción' 
+                          });
                         }}
                         style={{ padding: '10px 20px', fontSize: '0.9rem' }}
                       >

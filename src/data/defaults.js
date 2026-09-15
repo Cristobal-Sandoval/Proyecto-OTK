@@ -162,8 +162,15 @@ export const defaultCosplayers = [
     role: "Jurado Oficial & Invitada",
     city: "Concepción",
     instagram: "https://instagram.com/aki_cosplay_demo",
+    tiktok: "https://tiktok.com/@aki_cosplay_demo",
+    twitter: "https://twitter.com/aki_cosplay_demo",
     image: "/assets/cosplay_aki.jpg",
-    bio: "Cosplayer penquista con 5 años de trayectoria. Especialista en confección de trajes de fantasía y estilizado de pelucas detalladas."
+    photos: [
+      "/assets/cosplay_aki.jpg",
+      "/assets/cosplay_nico.jpg",
+      "/assets/cosplay_kaelu.jpg"
+    ],
+    bio: "Cosplayer penquista con 5 años de trayectoria. Especialista en confección de trajes de fantasía y estilizado de pelucas detalladas. Ha sido galardonada en diversos eventos del sur de Chile por su fidelidad en los acabados y caracterizaciones escénicas."
   },
   {
     id: 2,
@@ -173,8 +180,14 @@ export const defaultCosplayers = [
     role: "Invitado Especial (Cosmaker)",
     city: "Santiago",
     instagram: "https://instagram.com/kaelu_zoro_demo",
+    tiktok: "https://tiktok.com/@kaelu_zoro_demo",
+    twitter: "https://twitter.com/kaelu_zoro_demo",
     image: "/assets/cosplay_kaelu.jpg",
-    bio: "Cosmaker y exponente del cosplay masculino. Apasionado por la réplica de armas y armaduras con goma EVA de alta densidad."
+    photos: [
+      "/assets/cosplay_kaelu.jpg",
+      "/assets/cosplay_aki.jpg"
+    ],
+    bio: "Cosmaker y exponente del cosplay masculino. Apasionado por la réplica de armas y armaduras con goma EVA de alta densidad. Dictará un taller exclusivo de props y acabados realistas durante el evento."
   },
   {
     id: 3,
@@ -184,8 +197,14 @@ export const defaultCosplayers = [
     role: "Invitada Estelar",
     city: "Viña del Mar",
     instagram: "https://instagram.com/nico_kitsune_demo",
+    tiktok: "https://tiktok.com/@nico_kitsune_demo",
     image: "/assets/cosplay_nico.jpg",
-    bio: "Creadora de contenido y cosplayer. Le encanta el anime de romance, el modelaje alternativo y las pasarelas dinámicas con puesta en escena divertida."
+    photos: [
+      "/assets/cosplay_nico.jpg",
+      "/assets/cosplay_aki.jpg",
+      "/assets/cosplay_kaelu.jpg"
+    ],
+    bio: "Creadora de contenido y cosplayer. Le encanta el anime de romance, el modelaje alternativo y las pasarelas dinámicas con puesta en escena divertida. Estará compartiendo en el Callejón Cosplay con meet & greet."
   },
   {
     id: 4,
@@ -195,8 +214,13 @@ export const defaultCosplayers = [
     role: "Jurado Pasarela & Performance",
     city: "Temuco",
     instagram: "https://instagram.com/yuki_cross_demo",
+    twitter: "https://twitter.com/yuki_cross_demo",
     image: "/assets/cosplay_aki.jpg",
-    bio: "Invitado especial desde Temuco. Ganador de múltiples competencias de performance y caracterización escénica en el sur de Chile."
+    photos: [
+      "/assets/cosplay_aki.jpg",
+      "/assets/cosplay_kaelu.jpg"
+    ],
+    bio: "Invitado especial desde Temuco. Ganador de múltiples competencias de performance y caracterización escénica en el sur de Chile. Evaluará el impacto escénico y desenvolvimiento de los participantes de la pasarela."
   },
 
   // 🎭 PASARELA COSPLAY & COMUNIDAD (Locales & Regionales)
