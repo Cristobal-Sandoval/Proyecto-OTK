@@ -83,19 +83,22 @@ Sitio web oficial y panel de administración interactivo para **Otakonce 2026**,
 
 4. **Pasarela Cosplay & Comunidad (Regional & Local)**:
    - Carrusel infinito cinemático con controles flotantes y filtros por ciudad (Concepción, Chillán, Temuco, Santiago, etc.).
-   - Fichas interactivas con personajes y enlaces de contacto.
+   - Fichas interactivas con personajes y enlaces de contacto con URL directa (`#cosplay/slug`).
+   - **Sistema de Inscripciones Abiertas**: Botón destacado *"Inscríbete a la Pasarela Cosplay"* que despliega un formulario interactivo para registrar nombre, personaje, ciudad, redes, contacto, fotos y propuesta en escenario.
 
 5. **Zonas de Comunidades & Cronograma**:
    - Directorio de agrupaciones, comunidades de videojuegos, TCG y tiendas aliadas.
-   - Cronograma interactivo de actividades por bloques horarios y escenarios.
+   - Cronograma limpio y uniforme de actividades por bloques horarios y escenarios.
 
-6. **Ambientación Dinámica (Temas de Temporada)**:
+6. **Ambientación Dinámica y Sincronización Global en Tiempo Real**:
    - Soporte de personalización visual con paletas temáticas (Normal, Halloween, Navidad, Teletón, Fiestas Patrias) con animaciones atmosféricas sincronizadas.
+   - **Sincronización Multi-Dispositivo**: Cada vez que el staff cambia el tema desde el panel de administración, el cambio se transmite vía API en la nube y se refleja automáticamente en todos los visitantes y dispositivos sin requerir recarga manual.
 
 ### 🛡️ Panel de Gestión Staff (`#stf-portal`)
 
 - **Gestión Integral de Contenidos**:
-  - Modos, títulos y fechas del evento.
+  - Modos de temporada con sincronización multi-dispositivo en la nube.
+  - **Bandeja de Postulaciones Pasarela**: Pestaña dedicada con contador en tiempo real para revisar solicitudes de inscripción de cosplayers, con opción de previsualizar sus fotos y detalles, aprobarlos en 1 clic para integrarlos a la galería oficial o descartarlos.
   - Banners de portada tipo hero con colores, alineación y badges personalizables.
   - Comunicado flotante superior con interruptor de activación.
   - Noticias y anuncios con selector de categoría y fecha.

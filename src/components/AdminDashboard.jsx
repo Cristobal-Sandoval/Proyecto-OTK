@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
   Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield,
-  Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers, Star, MapPin
+  Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers, Star, MapPin, UserCheck, RefreshCw
 } from 'lucide-react';
 import { SEASONAL_THEMES } from '../data/defaults';
 import { 
   uploadToCloudinary, isCloudinaryConfigured, getCloudinaryConfig, saveCloudinaryConfig 
 } from '../services/cloudinary';
+import { 
+  saveGlobalTheme, getCosplayApplications, removeCosplayApplication 
+} from '../services/cloudSync';
 
 const AdminDashboard = ({
   eventConfig, setEventConfig,
@@ -79,9 +82,59 @@ const AdminDashboard = ({
     const updated = { ...configForm, themeMode: themeId };
     setConfigForm(updated);
     setEventConfig(updated);
+    saveGlobalTheme(themeId);
     const themeName = SEASONAL_THEMES.find(t => t.id === themeId)?.name || themeId;
-    setThemeSuccessMsg(`¡${themeName} activado exitosamente!`);
+    setThemeSuccessMsg(`¡${themeName} activado y sincronizado globalmente!`);
     setTimeout(() => setThemeSuccessMsg(''), 4000);
+  };
+
+  // Cosplay Applications State (Cloud Synchronized)
+  const [applications, setApplications] = useState([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+
+  const loadApplications = async () => {
+    setLoadingApps(true);
+    try {
+      const data = await getCosplayApplications();
+      setApplications(data || []);
+    } catch {
+      // ignore
+    } finally {
+      setLoadingApps(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadApplications();
+    }
+  }, [isAuthenticated]);
+
+  const handleApproveApplication = async (app) => {
+    const newCosplayer = {
+      id: Date.now(),
+      name: app.name,
+      character: app.character,
+      city: app.city || 'Concepción',
+      image: app.photo || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80',
+      instagram: app.instagram || '',
+      bio: app.bio || '',
+      role: 'Pasarela Individual',
+      type: 'community',
+      featured: false,
+      presentationTime: '16:00'
+    };
+    setCosplayers([...cosplayers, newCosplayer]);
+    const updated = await removeCosplayApplication(app.id);
+    setApplications(updated || applications.filter(a => a.id !== app.id));
+    alert(`¡Postulación de "${app.name}" aprobada! Ha sido incorporada a la galería de la pasarela.`);
+  };
+
+  const handleRejectApplication = async (appId) => {
+    if (window.confirm('¿Seguro que deseas descartar esta postulación?')) {
+      const updated = await removeCosplayApplication(appId);
+      setApplications(updated || applications.filter(a => a.id !== appId));
+    }
   };
   
   // Hero Banners CRUD state
@@ -289,6 +342,9 @@ const AdminDashboard = ({
   const handleSaveConfig = (e) => {
     e.preventDefault();
     setEventConfig(configForm);
+    if (configForm.themeMode) {
+      saveGlobalTheme(configForm.themeMode);
+    }
     alert('¡Configuración guardada correctamente!');
   };
 
@@ -609,6 +665,7 @@ const AdminDashboard = ({
               >
                 {[
                   { id: 'themes', label: '✨ Modos & Fechas' },
+                  { id: 'applications', label: `📋 Postulaciones Pasarela (${applications.length})` },
                   { id: 'security', label: '🛡️ Seguridad & Clave' },
                   { id: 'cloudinary', label: '☁️ Cloudinary CDN' },
                   { id: 'config', label: '⚙️ Evento Principal' },
@@ -632,6 +689,7 @@ const AdminDashboard = ({
           <div className="admin-tabs-list">
             {[
               { id: 'themes', label: 'Modos & Fechas', icon: Sparkles },
+              { id: 'applications', label: 'Postulaciones Pasarela', icon: UserCheck, badge: applications.length },
               { id: 'security', label: 'Seguridad & Clave', icon: Shield },
               { id: 'cloudinary', label: 'Cloudinary CDN', icon: Cloud },
               { id: 'config', label: 'Evento Principal', icon: Settings },
@@ -671,6 +729,20 @@ const AdminDashboard = ({
               >
                 <Icon size={17} />
                 {tab.label}
+                {typeof tab.badge === 'number' && tab.badge > 0 && (
+                  <span style={{
+                    background: isActive ? '#FFFFFF' : 'var(--secondary)',
+                    color: isActive ? 'var(--secondary)' : '#FFFFFF',
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    padding: '2px 7px',
+                    borderRadius: '10px',
+                    marginLeft: '2px',
+                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)'
+                  }}>
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -866,6 +938,133 @@ const AdminDashboard = ({
                   💡 <strong>Atajo de teclado invisible:</strong> Presiona <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Ctrl + Shift + A</kbd> (o <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Cmd + Shift + A</kbd> en Mac) en cualquier pantalla para abrir o cerrar el panel.
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB: COSPLAY PASARELA APPLICATIONS */}
+          {adminTab === 'applications' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', borderBottom: '1px solid var(--border-color)', paddingBottom: '14px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <UserCheck size={24} color="var(--primary)" /> Postulaciones a la Pasarela Cosplay
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Revisa las inscripciones enviadas por la comunidad. Al aprobar una postulación, se integrará automáticamente a la galería oficial de la Pasarela Cosplay.
+                  </p>
+                </div>
+                <button
+                  onClick={loadApplications}
+                  disabled={loadingApps}
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '0.85rem' }}
+                >
+                  <RefreshCw size={16} className={loadingApps ? 'animate-spin' : ''} />
+                  Actualizar Lista
+                </button>
+              </div>
+
+              {applications.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+                  <UserCheck size={48} style={{ color: 'var(--text-muted)', opacity: 0.5, marginBottom: '14px' }} />
+                  <h4 style={{ fontSize: '1.15rem', marginBottom: '6px', color: 'var(--text-primary)' }}>No hay postulaciones pendientes</h4>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '460px', margin: '0 auto' }}>
+                    Cuando los cosplayers envíen su inscripción desde el botón de la web, aparecerán aquí para tu aprobación.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                  {applications.map((app) => (
+                    <div
+                      key={app.id}
+                      className="glass-card"
+                      style={{
+                        padding: '20px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '14px',
+                        border: '1.5px solid var(--border-color)',
+                        borderRadius: '16px',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                        <img
+                          src={app.photo || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80'}
+                          alt={app.name}
+                          style={{
+                            width: '80px',
+                            height: '95px',
+                            objectFit: 'cover',
+                            borderRadius: '12px',
+                            border: '1px solid var(--border-color)',
+                            flexShrink: 0
+                          }}
+                          onError={(e) => {
+                            e.target.src = 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80';
+                          }}
+                        />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--secondary)', letterSpacing: '0.04em' }}>
+                            {app.city || 'Concepción'}
+                          </span>
+                          <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '2px 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {app.name}
+                          </h4>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700, margin: '0 0 6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {app.character}
+                          </p>
+                          {app.instagram && (
+                            <a
+                              href={`https://instagram.com/${app.instagram.replace('@', '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                            >
+                              <ExternalLink size={12} /> {app.instagram.startsWith('@') ? app.instagram : `@${app.instagram}`}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {app.contact && (
+                        <div style={{ fontSize: '0.82rem', background: 'rgba(0,0,0,0.15)', padding: '8px 12px', borderRadius: '8px', color: 'var(--text-primary)' }}>
+                          <strong>Contacto:</strong> {app.contact}
+                        </div>
+                      )}
+
+                      {app.bio && (
+                        <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4, background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '8px' }}>
+                          "{app.bio}"
+                        </p>
+                      )}
+
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Fecha de postulación: {app.createdAt || 'Reciente'}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--border-color)' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleApproveApplication(app)}
+                          className="btn btn-primary"
+                          style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px' }}
+                        >
+                          <Check size={16} /> Aprobar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRejectApplication(app.id)}
+                          className="btn btn-secondary"
+                          style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.84rem', padding: '8px 12px', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                        >
+                          <Trash2 size={16} /> Descartar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

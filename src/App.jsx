@@ -26,6 +26,7 @@ import {
   getSchedule, saveSchedule,
   getBanners, saveBanners
 } from './services/db';
+import { getGlobalTheme } from './services/cloudSync';
 
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
@@ -43,7 +44,10 @@ function App() {
       if (hash === '#invitados' || hash === '#guests') {
         return 'invitados';
       }
-      if (['#news', '#cosplay', '#communities', '#schedule'].includes(hash)) {
+      if (hash.startsWith('#cosplay/') || hash === '#cosplay') {
+        return 'cosplay';
+      }
+      if (['#news', '#communities', '#schedule'].includes(hash)) {
         return hash.replace('#', '');
       }
     }
@@ -100,6 +104,37 @@ function App() {
     document.documentElement.setAttribute('data-theme', currentTheme);
   }, [eventConfig.themeMode]);
 
+  // Synchronize global theme from cloud across devices on mount, focus, and interval
+  useEffect(() => {
+    let isMounted = true;
+    const syncTheme = async () => {
+      try {
+        const remoteTheme = await getGlobalTheme();
+        if (remoteTheme && isMounted) {
+          setEventConfigState(prev => {
+            if (prev.themeMode !== remoteTheme) {
+              const updated = { ...prev, themeMode: remoteTheme };
+              saveEventConfig(updated);
+              return updated;
+            }
+            return prev;
+          });
+        }
+      } catch {
+        // Fallback silently if offline
+      }
+    };
+
+    syncTheme();
+    const interval = setInterval(syncTheme, 15000);
+    window.addEventListener('focus', syncTheme);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('focus', syncTheme);
+    };
+  }, []);
+
   // Synchronize document.title dynamically for SEO and browser history
   useEffect(() => {
     if (activeTab === 'news-detail' && selectedArticle) {
@@ -127,7 +162,9 @@ function App() {
         history.replaceState(null, '', window.location.pathname);
       }
     } else if (activeTab !== 'admin' && activeTab !== 'news-detail' && activeTab !== 'guest-detail') {
-      if (window.location.hash !== `#${activeTab}`) {
+      if (activeTab === 'cosplay' && window.location.hash.startsWith('#cosplay/')) {
+        // Preserve specific cosplayer modal slug in URL
+      } else if (window.location.hash !== `#${activeTab}`) {
         history.replaceState(null, '', `#${activeTab}`);
       }
     }
@@ -173,7 +210,9 @@ function App() {
         setActiveTab('admin');
       } else if (hash === '#invitados' || hash === '#guests') {
         setActiveTab('invitados');
-      } else if (['#news', '#cosplay', '#communities', '#schedule'].includes(hash)) {
+      } else if (hash.startsWith('#cosplay/') || hash === '#cosplay') {
+        setActiveTab('cosplay');
+      } else if (['#news', '#communities', '#schedule'].includes(hash)) {
         setActiveTab(hash.replace('#', ''));
       } else if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
         const slug = hash.replace(/^#(noticia|news)\//, '').toLowerCase();

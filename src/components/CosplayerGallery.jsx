@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, MapPin, Share2, Check, X, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  Search, MapPin, Share2, Check, X, User, ChevronLeft, ChevronRight, 
+  Sparkles, AlertCircle, CheckCircle2, Loader2 
+} from 'lucide-react';
 import { slugify } from '../utils/slugify';
+import { submitCosplayApplication } from '../services/cloudSync';
 
 const Instagram = ({ size = 18, ...props }) => (
   <svg
@@ -39,6 +43,66 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeModalCosplayer, setActiveModalCosplayer] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+
+  // Registration Form State
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [registerSubmitted, setRegisterSubmitted] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [registerError, setRegisterError] = useState('');
+  const [registerForm, setRegisterForm] = useState({
+    name: '',
+    character: '',
+    city: 'Concepción',
+    instagram: '',
+    contact: '',
+    photo: '',
+    bio: ''
+  });
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      alert('La imagen no debe superar los 8MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setRegisterForm(prev => ({ ...prev, photo: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    if (!registerForm.name.trim() || !registerForm.character.trim() || !registerForm.contact.trim()) {
+      setRegisterError('Por favor completa todos los campos requeridos (*).');
+      return;
+    }
+    setRegisterLoading(true);
+    setRegisterError('');
+    try {
+      await submitCosplayApplication(registerForm);
+      setRegisterSubmitted(true);
+      setRegisterForm({
+        name: '',
+        character: '',
+        city: 'Concepción',
+        instagram: '',
+        contact: '',
+        photo: '',
+        bio: ''
+      });
+      setTimeout(() => {
+        setRegisterSubmitted(false);
+        setIsRegisterModalOpen(false);
+      }, 3500);
+    } catch {
+      setRegisterError('Hubo un problema al enviar la postulación. Intenta nuevamente.');
+    } finally {
+      setRegisterLoading(false);
+    }
+  };
 
   const sliderRef = useRef(null);
   const isInteracting = useRef(false);
@@ -171,6 +235,37 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
     resumeInteractionAfterDelay(3500);
   };
 
+  // Open / Close modal with URL hash synchronization
+  const handleOpenCosplayer = (cosplayer) => {
+    setActiveModalCosplayer(cosplayer);
+    const slug = slugify(cosplayer.name);
+    window.location.hash = `cosplay/${slug}`;
+  };
+
+  const handleCloseCosplayer = () => {
+    setActiveModalCosplayer(null);
+    if (window.location.hash.startsWith('#cosplay/')) {
+      history.replaceState(null, '', '#cosplay');
+    }
+  };
+
+  // Sync modal state from URL hash (#cosplay/:slug) on load & hashchange
+  useEffect(() => {
+    const checkCosplayHash = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#cosplay/')) {
+        const slug = hash.replace('#cosplay/', '').toLowerCase();
+        const found = cosplayers.find(c => slugify(c.name) === slug || String(c.id) === slug);
+        if (found) {
+          setActiveModalCosplayer(found);
+        }
+      }
+    };
+    checkCosplayHash();
+    window.addEventListener('hashchange', checkCosplayHash);
+    return () => window.removeEventListener('hashchange', checkCosplayHash);
+  }, [cosplayers]);
+
   const handleShareCosplayer = (e, cosplayer) => {
     e.stopPropagation();
     const url = `${window.location.origin}/#cosplay/${slugify(cosplayer.name)}`;
@@ -203,6 +298,24 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
         <div className="section-title">
           <h2>Pasarela <span className="text-neon-pink">Cosplay</span> & Comunidad</h2>
           <p>El talento de Concepción y de todo el país reunido en un solo lugar. Conoce a los exponentes, apóyalos en sus redes y comparte sus fichas.</p>
+          <div style={{ marginTop: '18px', display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => setIsRegisterModalOpen(true)}
+              className="btn btn-primary"
+              style={{
+                padding: '10px 24px',
+                fontSize: '0.92rem',
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderRadius: '30px',
+                boxShadow: '0 4px 18px rgba(0, 136, 255, 0.35)'
+              }}
+            >
+              <Sparkles size={18} /> Inscríbete a la Pasarela Cosplay
+            </button>
+          </div>
         </div>
 
         {/* Filter Controls: City Tabs & Search Bar */}
@@ -332,7 +445,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                 <div 
                   onClick={() => {
                     if (!hasMoved.current) {
-                      setActiveModalCosplayer(cosplayer);
+                      handleOpenCosplayer(cosplayer);
                     }
                   }}
                   className="community-cosplay-card glass-card"
@@ -515,7 +628,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
       {/* Modal Profile View */}
       {activeModalCosplayer && (
         <div 
-          onClick={() => setActiveModalCosplayer(null)}
+          onClick={handleCloseCosplayer}
           style={{
             position: 'fixed',
             inset: 0,
@@ -553,7 +666,7 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
               )}
               
               <button
-                onClick={() => setActiveModalCosplayer(null)}
+                onClick={handleCloseCosplayer}
                 aria-label="Cerrar modal"
                 style={{
                   position: 'absolute',
@@ -622,6 +735,259 @@ const CosplayerGallery = ({ cosplayers = [] }) => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Registration Modal for Pasarela Cosplay */}
+      {isRegisterModalOpen && (
+        <div
+          onClick={() => !registerLoading && setIsRegisterModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(5, 5, 10, 0.85)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          className="animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-surface-solid)',
+              border: '2px solid var(--border-color)',
+              borderRadius: '24px',
+              maxWidth: '520px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              position: 'relative',
+              padding: '28px 24px'
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsRegisterModalOpen(false)}
+              disabled={registerLoading}
+              aria-label="Cerrar modal"
+              style={{
+                position: 'absolute',
+                top: '18px',
+                right: '18px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            {registerSubmitted ? (
+              <div style={{ textAlign: 'center', padding: '30px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CheckCircle2 size={36} />
+                </div>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 850, margin: 0 }}>
+                  ¡Postulación Enviada con Éxito!
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5, maxWidth: '380px', margin: 0 }}>
+                  Hemos recibido tu inscripción para la <strong>Pasarela Cosplay Otakonce 2026</strong>. El equipo organizador la evaluará y pronto te verás en la galería oficial.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterModalOpen(false)}
+                  className="btn btn-primary"
+                  style={{ marginTop: '12px', padding: '9px 24px' }}
+                >
+                  Entendido
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--secondary)', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '4px' }}>
+                    <Sparkles size={15} /> Otakonce 2026
+                  </div>
+                  <h3 style={{ fontSize: '1.4rem', fontWeight: 850, margin: '0 0 6px' }}>
+                    Inscripción a la Pasarela Cosplay
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                    Comparte tu talento con toda la comunidad. Llena los datos a continuación para postular.
+                  </p>
+                </div>
+
+                {registerError && (
+                  <div style={{ background: 'rgba(255, 59, 108, 0.12)', border: '1px solid rgba(255, 59, 108, 0.3)', color: 'var(--secondary)', padding: '10px 14px', borderRadius: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                    <span>{registerError}</span>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                    Nombre o Apodo Cosplay <span style={{ color: 'var(--secondary)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Sakura Moon / Cris Cosplay"
+                    value={registerForm.name}
+                    onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                    className="form-control"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                    Personaje y Serie / Videojuego <span style={{ color: 'var(--secondary)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Frieren (Sousou no Frieren)"
+                    value={registerForm.character}
+                    onChange={(e) => setRegisterForm({ ...registerForm, character: e.target.value })}
+                    className="form-control"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                      Ciudad de Origen <span style={{ color: 'var(--secondary)' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: Concepción"
+                      value={registerForm.city}
+                      onChange={(e) => setRegisterForm({ ...registerForm, city: e.target.value })}
+                      className="form-control"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px' }}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                      Instagram
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="@tucuenta"
+                      value={registerForm.instagram}
+                      onChange={(e) => setRegisterForm({ ...registerForm, instagram: e.target.value })}
+                      className="form-control"
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                    Teléfono / WhatsApp o Email de Contacto <span style={{ color: 'var(--secondary)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+56 9 1234 5678 o tu@correo.com"
+                    value={registerForm.contact}
+                    onChange={(e) => setRegisterForm({ ...registerForm, contact: e.target.value })}
+                    className="form-control"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px' }}
+                  />
+                  <small style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                    Solo visible para el staff organizador con el fin de coordinar tu participación.
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                    Foto de tu Cosplay o Traje
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>O URL:</span>
+                      <input
+                        type="url"
+                        placeholder="https://ejemplo.com/mifoto.jpg"
+                        value={registerForm.photo && !registerForm.photo.startsWith('data:') ? registerForm.photo : ''}
+                        onChange={(e) => setRegisterForm({ ...registerForm, photo: e.target.value })}
+                        className="form-control"
+                        style={{ flex: 1, padding: '7px 10px', fontSize: '0.82rem', borderRadius: '8px' }}
+                      />
+                    </div>
+                  </div>
+                  {registerForm.photo && (
+                    <div style={{ marginTop: '10px', position: 'relative', width: '90px', height: '110px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                      <img src={registerForm.photo} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button
+                        type="button"
+                        onClick={() => setRegisterForm({ ...registerForm, photo: '' })}
+                        style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                    Breve Presentación o Propuesta en Escenario
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Cuéntanos un poco sobre tu traje, confección o tu dinámica para la pasarela..."
+                    value={registerForm.bio}
+                    onChange={(e) => setRegisterForm({ ...registerForm, bio: e.target.value })}
+                    className="form-control"
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    disabled={registerLoading}
+                    onClick={() => setIsRegisterModalOpen(false)}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, padding: '11px' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={registerLoading}
+                    className="btn btn-primary"
+                    style={{ flex: 2, padding: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    {registerLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                    {registerLoading ? 'Enviando...' : 'Enviar Postulación'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

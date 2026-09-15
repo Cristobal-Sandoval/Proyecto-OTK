@@ -1,59 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { MapPin, Clock } from 'lucide-react';
 
 const ScheduleTimeline = ({ schedule = [] }) => {
-  const [selectedStage, setSelectedStage] = useState('Todos');
-
-  // Stages filter list
-  const stages = ['Todos', ...new Set(schedule.map(item => item.stage))];
-
-  const filteredSchedule = schedule.filter(item => {
-    return selectedStage === 'Todos' || item.stage.toLowerCase() === selectedStage.toLowerCase();
-  });
-
   return (
     <section className="section-padding" id="schedule" style={{ minHeight: '80vh' }}>
       <div className="container" style={{ maxWidth: '800px' }}>
         {/* Section Header */}
         <div className="section-title">
           <h2>Cronograma <span className="text-neon-cyan">Actividades</span></h2>
-          <p>Planifica tu visita y no te pierdas ningún bloque. Filtra por escenario para ver lo que más te interesa.</p>
-        </div>
-
-        {/* Stage selector buttons */}
-        <div 
-          style={{
-            display: 'flex',
-            gap: '8px',
-            overflowX: 'auto',
-            paddingBottom: '12px',
-            marginBottom: '40px',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
-          className="stage-filter-list"
-        >
-          {stages.map((stage) => (
-            <button
-              key={stage}
-              onClick={() => setSelectedStage(stage)}
-              style={{
-                background: selectedStage === stage ? 'var(--filter-btn-active-bg)' : 'var(--filter-btn-bg)',
-                border: '1px solid',
-                borderColor: selectedStage === stage ? 'var(--border-pop)' : 'var(--filter-btn-border)',
-                color: selectedStage === stage ? 'var(--filter-btn-active-text)' : 'var(--filter-btn-text)',
-                padding: '8px 18px',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                whiteSpace: 'nowrap',
-                transition: 'var(--transition-fast)'
-              }}
-            >
-              {stage}
-            </button>
-          ))}
+          <p>Planifica tu visita y no te pierdas ningún bloque de actividades durante Otakonce 2026.</p>
         </div>
 
         {/* Timeline body */}
@@ -79,8 +34,8 @@ const ScheduleTimeline = ({ schedule = [] }) => {
             }}
           />
 
-          {filteredSchedule.length > 0 ? (
-            filteredSchedule.map((item) => (
+          {schedule.length > 0 ? (
+            schedule.map((item) => (
               <div 
                 key={item.id}
                 style={{
@@ -178,16 +133,13 @@ const ScheduleTimeline = ({ schedule = [] }) => {
                 color: 'var(--text-muted)'
               }}
             >
-              No hay actividades programadas en este escenario.
+              No hay actividades programadas por el momento.
             </div>
           )}
         </div>
       </div>
 
       <style>{`
-        .stage-filter-list::-webkit-scrollbar {
-          display: none;
-        }
         .timeline-item:hover .timeline-marker {
           border-color: var(--secondary) !important;
           box-shadow: 0 0 12px var(--secondary) !important;
