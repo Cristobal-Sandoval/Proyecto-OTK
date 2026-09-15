@@ -25,10 +25,9 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
         right: 0,
         height: '34px',
         zIndex: 200,
-        padding: '0 10px 0 14px',
+        padding: '0 12px 0 16px',
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
         background: '#E0F2FE', // Soft light sky blue
         color: '#0369A1', // Deep sky blue
         borderBottom: '1px solid rgba(3, 105, 161, 0.2)',
@@ -38,60 +37,110 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
       }}
       className="top-announcement-bar"
     >
-      {/* Fixed Badge on the Left */}
-      <span 
-        style={{ 
-          background: '#00A3FF', 
-          color: '#FFFFFF', 
-          padding: '2px 7px', 
-          borderRadius: '4px',
-          fontSize: '0.62rem',
-          fontWeight: 800,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-          flexShrink: 0,
-          boxShadow: '0 1px 4px rgba(0, 163, 255, 0.3)'
-        }}
-      >
-        ANUNCIO
-      </span>
-
-      {/* Marquee / Ticker Track in the Center */}
+      {/* ========================================================
+          DESKTOP VIEW (>= 768px): Clean, Static & Perfectly Centered
+          ======================================================== */}
       <div 
+        className="banner-desktop-wrapper"
         onClick={handleActionClick}
-        className="banner-marquee-container"
-        style={{ 
+        style={{
           flex: 1,
-          overflow: 'hidden',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
           cursor: config.link ? 'pointer' : 'default',
-          position: 'relative',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center'
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 16px',
+          overflow: 'hidden'
         }}
-        title={config.link ? "Haz clic para ver más información" : undefined}
       >
-        <div className="banner-marquee-track">
-          {/* First loop item */}
-          <div className="banner-item">
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {config.text}
-            </span>
-            {config.link && (
-              <ArrowRight size={13} style={{ flexShrink: 0, color: 'var(--cyan)' }} />
-            )}
-            <span className="banner-separator">•</span>
-          </div>
+        <span 
+          style={{ 
+            background: '#00A3FF', 
+            color: '#FFFFFF', 
+            padding: '2px 8px', 
+            borderRadius: '4px',
+            fontSize: '0.65rem',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            flexShrink: 0,
+            boxShadow: '0 1px 4px rgba(0, 163, 255, 0.25)'
+          }}
+        >
+          ANUNCIO
+        </span>
 
-          {/* Duplicate loop item for seamless endless scroll */}
-          <div className="banner-item">
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
-              {config.text}
-            </span>
-            {config.link && (
-              <ArrowRight size={13} style={{ flexShrink: 0, color: 'var(--cyan)' }} />
-            )}
-            <span className="banner-separator">•</span>
+        <span 
+          style={{ 
+            fontSize: '0.82rem', 
+            fontWeight: 700, 
+            letterSpacing: '-0.01em',
+            color: '#0369A1',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
+          {config.text}
+        </span>
+
+        {config.link && (
+          <ArrowRight size={14} style={{ flexShrink: 0, color: '#00A3FF' }} />
+        )}
+      </div>
+
+      {/* ========================================================
+          MOBILE VIEW (< 768px): Smooth Endless Ticker/Marquee
+          ======================================================== */}
+      <div className="banner-mobile-wrapper" style={{ flex: 1, height: '100%', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+        {/* Fixed Badge on Left */}
+        <span 
+          style={{ 
+            background: '#00A3FF', 
+            color: '#FFFFFF', 
+            padding: '2px 6px', 
+            borderRadius: '4px',
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            flexShrink: 0
+          }}
+        >
+          ANUNCIO
+        </span>
+
+        {/* Ticker in Center */}
+        <div 
+          onClick={handleActionClick}
+          className="banner-mobile-ticker-container"
+          style={{ 
+            flex: 1,
+            overflow: 'hidden',
+            cursor: config.link ? 'pointer' : 'default',
+            position: 'relative',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <div className="banner-mobile-track">
+            <div className="banner-mobile-item">
+              <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>
+                {config.text}
+              </span>
+              {config.link && <ArrowRight size={13} style={{ color: 'var(--cyan)' }} />}
+              <span className="banner-separator">•</span>
+            </div>
+            <div className="banner-mobile-item">
+              <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>
+                {config.text}
+              </span>
+              {config.link && <ArrowRight size={13} style={{ color: 'var(--cyan)' }} />}
+              <span className="banner-separator">•</span>
+            </div>
           </div>
         </div>
       </div>
@@ -120,27 +169,45 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
       </button>
 
       <style>{`
-        .banner-marquee-container {
-          mask-image: linear-gradient(90deg, transparent 0%, black 15px, black calc(100% - 15px), transparent 100%);
-          -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 15px, black calc(100% - 15px), transparent 100%);
+        /* Responsive Display Toggle */
+        @media (min-width: 768px) {
+          .banner-desktop-wrapper {
+            display: flex !important;
+          }
+          .banner-mobile-wrapper {
+            display: none !important;
+          }
         }
-        .banner-marquee-track {
+        @media (max-width: 767px) {
+          .banner-desktop-wrapper {
+            display: none !important;
+          }
+          .banner-mobile-wrapper {
+            display: flex !important;
+          }
+        }
+
+        .banner-mobile-ticker-container {
+          mask-image: linear-gradient(90deg, transparent 0%, black 12px, black calc(100% - 12px), transparent 100%);
+          -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 12px, black calc(100% - 12px), transparent 100%);
+        }
+        .banner-mobile-track {
           display: flex;
           align-items: center;
           width: max-content;
           animation: bannerScroll 20s linear infinite;
           will-change: transform;
         }
-        .banner-marquee-container:hover .banner-marquee-track,
-        .banner-marquee-container:active .banner-marquee-track {
+        .banner-mobile-ticker-container:hover .banner-mobile-track,
+        .banner-mobile-ticker-container:active .banner-mobile-track {
           animation-play-state: paused;
         }
-        .banner-item {
+        .banner-mobile-item {
           display: inline-flex;
           align-items: center;
           gap: 8px;
           white-space: nowrap;
-          padding-right: 32px;
+          padding-right: 28px;
         }
         .banner-separator {
           color: #0284C7;
