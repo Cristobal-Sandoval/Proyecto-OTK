@@ -26,7 +26,9 @@ export function getSessionSecret() {
 export function getStoredHash() {
   // Permite override en memoria tras cambio de clave (efímero; para persistir actualiza el env).
   if (globalThis.__OTK_ADMIN_HASH_OVERRIDE__) return globalThis.__OTK_ADMIN_HASH_OVERRIDE__;
-  return process.env.ADMIN_PASSWORD_HASH || '';
+  // Preferencia: hash scrypt. Alternativa para entornos de prueba: clave en texto plano
+  // (server-only, nunca viaja al navegador; la comparación es en el servidor).
+  return process.env.ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD || '';
 }
 
 export function setStoredHashOverride(hash) {
@@ -46,12 +48,23 @@ export function parseStoredHash(stored) {
 }
 
 export function verifyPassword(password, stored) {
+  if (typeof password !== 'string' || !password || !stored) return false;
   const parsed = parseStoredHash(stored);
-  if (!parsed) return false;
-  if (typeof password !== 'string' || !password) return false;
+  if (parsed) {
+    try {
+      const derived = crypto.scryptSync(password.slice(0, 200), parsed.salt, parsed.hash.length);
+      return derived.length === parsed.hash.length && crypto.timingSafeEqual(derived, parsed.hash);
+    } catch {
+      return false;
+    }
+  }
+  // Fallback: secreto en texto plano (solo para entornos de prueba).
+  // Se compara con timingSafeEqual sobre HMAC para no filtrar por longitud.
   try {
-    const derived = crypto.scryptSync(password.slice(0, 200), parsed.salt, parsed.hash.length);
-    return derived.length === parsed.hash.length && crypto.timingSafeEqual(derived, parsed.hash);
+    const secret = getSessionSecret() || 'otakonce-compare-fallback';
+    const a = crypto.createHmac('sha256', secret).update(password.slice(0, 200)).digest();
+    const b = crypto.createHmac('sha256', secret).update(stored.slice(0, 200)).digest();
+    return crypto.timingSafeEqual(a, b);
   } catch {
     return false;
   }
