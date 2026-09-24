@@ -1,4 +1,5 @@
 import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Star, MapPin, Search, X, User } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
@@ -24,6 +25,21 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
   const [searchQuery, setSearchQuery] = useState('');
   const [activeModalGuest, setActiveModalGuest] = useState(null);
 
+  // Lock body scroll + Escape to close for activeModalGuest
+  useEffect(() => {
+    if (!activeModalGuest) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') setActiveModalGuest(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [activeModalGuest]);
+
   // Carousel refs & state
   const sliderRef = useRef(null);
   const isInteracting = useRef(false);
@@ -45,7 +61,6 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
   // Pausa si reduced-motion, pestaña oculta o carrusel fuera de viewport
   useEffect(() => {
     if (mode !== 'carousel') return;
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     let animationFrameId;
     let lastTime = performance.now();
     let isVisible = true;
@@ -58,7 +73,7 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
       observer = new IntersectionObserver(([entry]) => {
         inViewport = entry.isIntersecting;
         lastTime = performance.now();
-      }, { threshold: 0.05 });
+      }, { rootMargin: '350px' });
       observer.observe(sliderRef.current);
     }
 
@@ -67,7 +82,7 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
       lastTime = time;
 
       if (!isInteracting.current && isVisible && inViewport && sliderRef.current && carouselItems.length > 0) {
-        const speed = 0.045; // pixels/ms (~45px per second)
+        const speed = 0.052; // pixels/ms (~52px/sec) — smooth, balanced showcase drift
         sliderRef.current.scrollLeft += speed * delta;
 
         const { scrollLeft, scrollWidth } = sliderRef.current;
@@ -90,16 +105,32 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
       cancelAnimationFrame(animationFrameId);
       document.removeEventListener('visibilitychange', onVisibility);
       observer?.disconnect();
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
     };
   }, [mode, carouselItems, guests.length]);
 
-  // Pause on user manual interaction, resume smoothly after 2.5s
+  // Initial scroll position to the middle clone for bidirectional infinite scrolling
+  useEffect(() => {
+    if (mode !== 'carousel') return;
+    const track = sliderRef.current;
+    if (!track || !guests.length) return;
+    const timeout = setTimeout(() => {
+      const repeatCount = carouselItems.length / guests.length;
+      const singleSetWidth = track.scrollWidth / repeatCount;
+      if (singleSetWidth > 0 && track.scrollLeft === 0) {
+        track.scrollLeft = singleSetWidth;
+      }
+    }, 80);
+    return () => clearTimeout(timeout);
+  }, [mode, carouselItems.length, guests.length]);
+
+  // Pause on user manual interaction, resume smoothly after 1.8s
   const pauseInteraction = () => {
     isInteracting.current = true;
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
   };
 
-  const resumeInteractionAfterDelay = (ms = 2500) => {
+  const resumeInteractionAfterDelay = (ms = 1800) => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
     resumeTimer.current = setTimeout(() => {
       isInteracting.current = false;
@@ -257,6 +288,7 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
               <div 
                 ref={sliderRef}
                 className="guests-infinite-track"
+                onMouseEnter={pauseInteraction}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUpOrLeave}
@@ -268,8 +300,8 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
                   pauseInteraction();
                   hasMoved.current = false;
                 }}
-                onTouchEnd={() => resumeInteractionAfterDelay(2200)}
-                onTouchCancel={() => resumeInteractionAfterDelay(2200)}
+                onTouchEnd={() => resumeInteractionAfterDelay(1800)}
+                onTouchCancel={() => resumeInteractionAfterDelay(1800)}
               >
                 {carouselItems.map((guest, index) => (
                   <div 
@@ -635,105 +667,96 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
       {/* =========================================================================
           INTERACTIVE MODAL PROFILE (Full bio, image, actions)
           ========================================================================= */}
-      {activeModalGuest && (
+      {activeModalGuest && typeof document !== 'undefined' && createPortal(
         <div 
           onClick={() => setActiveModalGuest(null)}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 9999,
-            background: 'rgba(5, 5, 10, 0.85)',
-            backdropFilter: 'blur(8px)',
+            zIndex: 10000,
+            background: 'rgba(5, 5, 10, 0.88)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '20px'
+            padding: 'clamp(12px, 3vw, 24px)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
           }}
           className="animate-fade-in"
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'var(--bg-surface-solid)',
-              border: '2px solid var(--border-color)',
-              borderRadius: '24px',
-              maxWidth: '460px',
-              width: '100%',
-              overflow: 'hidden',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-              position: 'relative'
-            }}
+            className="guest-modal-card"
           >
-            {/* Modal Header Image */}
-            <div style={{ height: '240px', position: 'relative', background: 'linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%)' }}>
-              {activeModalGuest.image && (
-                <img 
-                  src={activeModalGuest.image} 
-                  alt={activeModalGuest.name} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
-              )}
-              
-              <button
-                onClick={() => setActiveModalGuest(null)}
-                aria-label="Cerrar modal"
-                style={{
-                  position: 'absolute',
-                  top: '14px',
-                  right: '14px',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.6)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  color: '#FFFFFF',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+            {/* LEFT COLUMN: FULL PHOTO BOX */}
+            <div className="guest-modal-photo-box">
+              <img 
+                src={activeModalGuest.image || '/assets/cosplay_placeholder.jpg'} 
+                alt={activeModalGuest.name} 
+                loading="eager"
+                decoding="async"
+                onError={(e) => { 
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/assets/cosplay_placeholder.jpg'; 
                 }}
-              >
-                <X size={18} />
-              </button>
-
-              <div style={{ position: 'absolute', bottom: '16px', left: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ background: 'var(--secondary)', color: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800 }}>
+                className="guest-modal-img"
+              />
+              
+              <div className="guest-modal-badges">
+                <span className="badge-char">
                   {activeModalGuest.character}
                 </span>
                 {activeModalGuest.city && (
-                  <span style={{ background: 'rgba(0,0,0,0.7)', color: '#FFFFFF', padding: '4px 10px', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <MapPin size={12} color="var(--cyan)" /> {activeModalGuest.city}
+                  <span className="badge-city">
+                    <MapPin size={11} color="var(--cyan)" /> {activeModalGuest.city}
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Modal Content */}
-            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {/* RIGHT COLUMN: INFO & ACTIONS */}
+            <div className="guest-modal-info-box">
+              <button
+                onClick={() => setActiveModalGuest(null)}
+                aria-label="Cerrar modal"
+                className="guest-modal-close-btn"
+              >
+                <X size={20} />
+              </button>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '36px' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '0.04em' }}>
                   <Star size={12} fill="currentColor" /> {activeModalGuest.role || 'Invitado Especial'}
                 </span>
-                <h2 style={{ fontSize: '1.6rem', fontWeight: 850, margin: '2px 0 8px' }}>
+                <h2 style={{ fontSize: 'clamp(1.4rem, 2.8vw, 1.85rem)', fontWeight: 850, margin: '2px 0 0', color: 'var(--text-primary)', lineHeight: 1.2 }}>
                   {activeModalGuest.name}
                 </h2>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--secondary)' }}>
+                  {activeModalGuest.character}
+                </span>
+              </div>
+
+              <div className="guest-modal-bio">
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
                   {activeModalGuest.bio}
                 </p>
               </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-                <a
-                  href={activeModalGuest.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-primary"
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                >
-                  <Instagram size={18} />
-                  Seguir en Instagram ({activeModalGuest.instagram ? `@${activeModalGuest.instagram.split('/').filter(Boolean).pop()}` : '@instagram'})
-                </a>
+              <div className="guest-modal-actions">
+                {activeModalGuest.instagram && (
+                  <a
+                    href={activeModalGuest.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary"
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', fontWeight: 800, textDecoration: 'none', fontSize: '0.92rem' }}
+                  >
+                    <Instagram size={17} />
+                    Seguir en Instagram ({activeModalGuest.instagram ? `@${activeModalGuest.instagram.split('/').filter(Boolean).pop()}` : '@instagram'})
+                  </a>
+                )}
 
                 <button
                   onClick={() => {
@@ -744,14 +767,15 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
                     }
                   }}
                   className="btn btn-secondary"
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px', fontWeight: 700 }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '44px', fontWeight: 700, fontSize: '0.92rem' }}
                 >
                   Ver Ficha Completa & Galería &rarr;
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* =========================================================================
@@ -771,6 +795,7 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
           display: flex;
           gap: 24px;
           overflow-x: auto;
+          scroll-behavior: auto !important;
           scrollbar-width: none;
           -ms-overflow-style: none;
           padding: 8px 4px 16px;
@@ -902,6 +927,151 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
           .guest-card {
             height: 410px;
             border-radius: 18px;
+          }
+        }
+
+        /* 2-in-1 Guest Modal Card */
+        .guest-modal-card {
+          background: var(--bg-surface-solid);
+          border: 2px solid var(--border-color);
+          border-radius: 24px;
+          width: min(840px, 94vw);
+          max-height: min(88vh, 520px);
+          display: flex;
+          flex-direction: row;
+          overflow: hidden;
+          box-shadow: 0 25px 60px rgba(0,0,0,0.65), 0 0 35px rgba(254, 220, 0, 0.2);
+          position: relative;
+          margin: auto;
+        }
+
+        .guest-modal-photo-box {
+          flex: 0 0 46%;
+          max-width: 46%;
+          position: relative;
+          background: linear-gradient(135deg, #1e1b4b 0%, #4c0519 100%);
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justifyContent: center;
+        }
+
+        .guest-modal-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .guest-modal-badges {
+          position: absolute;
+          bottom: 16px;
+          left: 16px;
+          right: 16px;
+          display: flex;
+          justifyContent: space-between;
+          align-items: center;
+          gap: 8px;
+          z-index: 5;
+          flex-wrap: wrap;
+        }
+
+        .badge-char {
+          background: var(--secondary);
+          color: #FFFFFF;
+          padding: 5px 12px;
+          border-radius: 8px;
+          font-size: 0.80rem;
+          font-weight: 800;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .badge-city {
+          background: rgba(8, 7, 17, 0.88);
+          color: #FFFFFF;
+          border: 1px solid rgba(0, 136, 255, 0.35);
+          padding: 5px 10px;
+          border-radius: 8px;
+          font-size: 0.76rem;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          backdrop-filter: blur(4px);
+        }
+
+        .guest-modal-info-box {
+          flex: 1 1 54%;
+          display: flex;
+          flex-direction: column;
+          padding: 32px 28px;
+          overflow-y: auto;
+          position: relative;
+          gap: 16px;
+        }
+
+        .guest-modal-close-btn {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          width: 40px;
+          height: 40px;
+          min-height: 40px;
+          border-radius: 50%;
+          background: rgba(15, 23, 42, 0.08);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justifyContent: center;
+          z-index: 10;
+          transition: var(--transition-fast);
+        }
+        .guest-modal-close-btn:hover {
+          background: var(--secondary);
+          color: #FFFFFF;
+          border-color: transparent;
+        }
+
+        .guest-modal-bio {
+          flex-grow: 1;
+          overflow-y: auto;
+          padding-right: 4px;
+        }
+
+        .guest-modal-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          border-top: 1px solid var(--border-color);
+          padding-top: 16px;
+          margin-top: auto;
+        }
+
+        /* Responsive Mobile Layout: 1 column on screens below 680px */
+        @media (max-width: 679px) {
+          .guest-modal-card {
+            flex-direction: column !important;
+            width: min(450px, 94vw) !important;
+            max-height: min(90vh, 640px) !important;
+          }
+          .guest-modal-photo-box {
+            flex: 0 0 auto !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            height: clamp(190px, 28vh, 240px) !important;
+          }
+          .guest-modal-info-box {
+            padding: 20px 18px !important;
+            gap: 12px !important;
+          }
+          .guest-modal-close-btn {
+            top: 12px !important;
+            right: 12px !important;
+            background: rgba(8, 7, 17, 0.75) !important;
+            color: #FFFFFF !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
           }
         }
       `}</style>

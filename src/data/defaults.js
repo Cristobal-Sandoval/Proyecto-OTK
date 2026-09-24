@@ -233,7 +233,8 @@ export const defaultCosplayers = [
     city: "Concepción",
     instagram: "https://instagram.com/dandan_cos_demo",
     image: "/assets/cosplay_kaelu.jpg",
-    bio: "Cosplayer local de Concepción, fanático del Shonen y la caracterización teatral en escenario."
+    bio: "Cosplayer local de Concepción, fanático del Shonen y la caracterización teatral en escenario.",
+    pinned: true
   },
   {
     id: 6,
@@ -278,6 +279,150 @@ export const defaultCosplayers = [
     instagram: "https://instagram.com/sakura_temuco_demo",
     image: "/assets/cosplay_nico.jpg",
     bio: "Viajando desde Temuco a Concepción. Más de 3 años participando en eventos del sur de Chile."
+  },
+  {
+    id: 10,
+    name: "Rin Lota",
+    character: "Rin Tohsaka (Fate)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Lota",
+    instagram: "https://instagram.com/rin_lota_demo",
+    image: "/assets/cosplay_aki.jpg",
+    bio: "Cosplayer de la cuenca del carbón en Lota. Especialista en trajes de la franquicia Fate y pelucas de anime clásico.",
+    pinned: true
+  },
+  {
+    id: 11,
+    name: "Aoi San Pedro",
+    character: "Nezuko Kamado (Kimetsu)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "San Pedro de la Paz",
+    instagram: "https://instagram.com/aoi_sanpedro_demo",
+    image: "/assets/cosplay_nico.jpg",
+    bio: "Entusiasta del cosplay y el diseño textil tradicional japonés desde San Pedro de la Paz."
+  },
+  {
+    id: 12,
+    name: "Kitsune Coronel",
+    character: "Ahri (League of Legends)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Coronel",
+    instagram: "https://instagram.com/kitsune_coronel_demo",
+    image: "/assets/cosplay_kaelu.jpg",
+    bio: "Cosmaker y gamer coronelina. Especialista en la confección artesanal de colas de zorro y accesorios iluminados con LED."
+  },
+  {
+    id: 13,
+    name: "Shinobi Chiguayante",
+    character: "Kakashi Hatake (Naruto)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Chiguayante",
+    instagram: "https://instagram.com/shinobi_chiguayante_demo",
+    image: "/assets/cosplay_aki.jpg",
+    bio: "Apasionado por las acrobacias y poses escénicas ninja. Siempre presente en las pasarelas del Biobío."
+  },
+  {
+    id: 14,
+    name: "Luna Tomé",
+    character: "Sailor Moon",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Tomé",
+    instagram: "https://instagram.com/luna_tome_demo",
+    image: "/assets/cosplay_nico.jpg",
+    bio: "Desde la costa de Tomé. Representando la magia y el brillo de los mahou shoujo de los 90s."
+  },
+  {
+    id: 15,
+    name: "Zack Penco",
+    character: "Cloud Strife (FFVII)",
+    type: "community",
+    role: "Cosmaker & Props",
+    city: "Penco",
+    instagram: "https://instagram.com/zack_penco_demo",
+    image: "/assets/cosplay_kaelu.jpg",
+    bio: "Modelado 3D y réplicas de la Buster Sword en escala real. Listo para la batalla en el escenario principal."
+  },
+  {
+    id: 16,
+    name: "Yoru Hualpén",
+    character: "Yor Forger (Spy x Family)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Hualpén",
+    instagram: "https://instagram.com/yoru_hualpen_demo",
+    image: "/assets/cosplay_aki.jpg",
+    bio: "Cosplayer penquista destacando la elegancia y la acción de Spy x Family en Otakonce 2026."
+  },
+  {
+    id: 17,
+    name: "Kenji Chillán",
+    character: "Tanjiro Kamado (Kimetsu)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Chillán",
+    instagram: "https://instagram.com/kenji_chillan_demo",
+    image: "/assets/cosplay_kaelu.jpg",
+    bio: "Representando a Chillán con el traje cazador de demonios y katana réplica de bambú."
+  },
+  {
+    id: 18,
+    name: "Hikari Conce",
+    character: "Rem (Re:Zero)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Concepción",
+    instagram: "https://instagram.com/hikari_conce_demo",
+    image: "/assets/cosplay_nico.jpg",
+    bio: "Cosplayer penquista apasionada por las mucamas de fantasía y el estilizado de pelucas celestes."
+  },
+  {
+    id: 19,
+    name: "Ren San Pedro",
+    character: "Joker (Persona 5)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "San Pedro de la Paz",
+    instagram: "https://instagram.com/ren_sanpedro_demo",
+    image: "/assets/cosplay_aki.jpg",
+    bio: "Desde San Pedro de la Paz, recreando la gabardina y máscara de los Phantom Thieves."
+  },
+  {
+    id: 20,
+    name: "Tatsumaki Lota",
+    character: "Tatsumaki (OPM)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Lota",
+    instagram: "https://instagram.com/tatsumaki_lota_demo",
+    image: "/assets/cosplay_nico.jpg",
+    bio: "Especialista en efectos visuales y caracterización de héroes clase S."
+  },
+  {
+    id: 21,
+    name: "Sora Talcahuano",
+    character: "Sora (Kingdom Hearts)",
+    type: "community",
+    role: "Cosmaker & Props",
+    city: "Talcahuano",
+    instagram: "https://instagram.com/sora_talcahuano_demo",
+    image: "/assets/cosplay_kaelu.jpg",
+    bio: "Keyblade de 1.10 metros hecha a mano con fibra de vidrio y pintura automotriz brillante."
+  },
+  {
+    id: 22,
+    name: "Aqua Coronel",
+    character: "Aqua (KonoSuba)",
+    type: "community",
+    role: "Pasarela Individual",
+    city: "Coronel",
+    instagram: "https://instagram.com/aqua_coronel_demo",
+    image: "/assets/cosplay_aki.jpg",
+    bio: "La diosa inútil más divertida del anime directo al escenario de Concepción."
   }
 ];
 

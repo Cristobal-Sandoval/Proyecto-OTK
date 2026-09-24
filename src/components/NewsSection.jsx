@@ -1,13 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Calendar, Clock, X, Newspaper } from 'lucide-react';
 import { slugify } from '../utils/slugify';
 import { cardSrc } from '../services/media';
 import { safeUrlOr } from '../utils/sanitize';
 
-const NewsSection = ({ newsList = [], onSelectArticle }) => {
+const NewsSection = ({ newsList = [], onSelectArticle, isHomePreview = false }) => {
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArticle, setSelectedArticle] = useState(null);
+
+  // Lock body scroll + Escape to close for selectedArticle
+  useEffect(() => {
+    if (!selectedArticle) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => {
+      if (e.key === 'Escape') setSelectedArticle(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [selectedArticle]);
 
   const categories = ['Todas', 'Anuncio', 'Cosplay', 'Comunidad'];
 
@@ -41,7 +57,7 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
   };
 
   return (
-    <section className="section-padding" id="news" style={{ minHeight: '80vh' }}>
+    <section className="section-padding" id="news" style={{ minHeight: isHomePreview ? 'auto' : '80vh', padding: isHomePreview ? '36px 0 20px' : undefined }}>
       <div className="container">
         {/* Section Header */}
         <div className="section-title">
@@ -248,22 +264,21 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
       </div>
 
       {/* Article Detail Modal */}
-      {selectedArticle && (
+      {selectedArticle && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(15, 23, 42, 0.65)',
+            inset: 0,
+            background: 'rgba(5, 5, 10, 0.88)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
-            zIndex: 200,
+            zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '20px',
+            padding: 'clamp(12px, 3vw, 24px)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
             animation: 'fadeIn var(--transition-fast)'
           }}
           onClick={() => setSelectedArticle(null)}
@@ -271,15 +286,16 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
           <div
             style={{
               background: 'var(--bg-surface-solid)',
-              border: '1px solid var(--border-color)',
+              border: '2px solid var(--border-color)',
               borderRadius: '24px',
-              maxWidth: '700px',
+              maxWidth: '680px',
               width: '100%',
-              maxHeight: '90vh',
+              maxHeight: 'min(90vh, 680px)',
               overflowY: 'auto',
               position: 'relative',
-              boxShadow: '0 20px 50px rgba(15, 23, 42, 0.25)',
-              animation: 'slideInUp var(--transition-smooth)'
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.65)',
+              animation: 'slideInUp var(--transition-smooth)',
+              margin: 'auto'
             }}
             onClick={(e) => e.stopPropagation()}
             className="modal-body"
@@ -289,7 +305,7 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
               role="img"
               aria-label={`Imagen de cabecera de la noticia: ${selectedArticle.title}`}
               style={{
-                height: '240px',
+                height: 'clamp(180px, 25vh, 240px)',
                 width: '100%',
                 background: getPlaceholderGradient(selectedArticle.category),
                 backgroundImage: selectedArticle.image ? `url(${selectedArticle.image})` : getPlaceholderGradient(selectedArticle.category),
@@ -302,26 +318,29 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
               {/* Close button */}
               <button
                 onClick={() => setSelectedArticle(null)}
+                aria-label="Cerrar noticia"
                 style={{
                   position: 'absolute',
-                  top: '16px',
-                  right: '16px',
+                  top: '12px',
+                  right: '12px',
                   zIndex: 10,
-                  background: 'rgba(8, 7, 17, 0.7)',
-                  border: '1px solid var(--border-color)',
+                  background: 'rgba(8, 7, 17, 0.75)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
                   color: 'white',
                   borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
+                  width: '42px',
+                  height: '42px',
+                  minHeight: '42px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
+                  backdropFilter: 'blur(6px)',
                   transition: 'var(--transition-fast)'
                 }}
                 className="modal-close-btn"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
 
               <span 
@@ -338,7 +357,7 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
             </div>
 
             {/* Modal Content */}
-            <div style={{ padding: '24px 20px' }} className="modal-content-area">
+            <div style={{ padding: 'clamp(18px, 3vw, 32px)' }} className="modal-content-area">
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Calendar size={12} />
@@ -350,7 +369,7 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
                 </span>
               </div>
 
-              <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.6rem)', color: 'var(--text-primary)', fontWeight: 800, marginBottom: '16px', lineHeight: 1.2 }}>
+              <h2 style={{ fontSize: 'clamp(1.3rem, 4vw, 1.6rem)', color: 'var(--text-primary)', fontWeight: 800, marginBottom: '16px', lineHeight: 1.25 }}>
                 {selectedArticle.title}
               </h2>
 
@@ -366,7 +385,8 @@ const NewsSection = ({ newsList = [], onSelectArticle }) => {
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

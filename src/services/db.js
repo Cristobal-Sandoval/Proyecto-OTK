@@ -7,6 +7,12 @@ import {
   defaultCommunities,
   defaultSchedule
 } from '../data/defaults';
+import {
+  defaultEvents,
+  defaultPhotos,
+  defaultAboutConfig,
+  defaultContactConfig
+} from '../data/events';
 
 const KEYS = {
   EVENT_CONFIG: 'otakonce_event_config',
@@ -15,7 +21,11 @@ const KEYS = {
   NEWS: 'otakonce_news',
   COSPLAYERS: 'otakonce_cosplayers',
   COMMUNITIES: 'otakonce_communities',
-  SCHEDULE: 'otakonce_schedule'
+  SCHEDULE: 'otakonce_schedule',
+  EVENTS: 'otakonce_events',
+  PHOTOS: 'otakonce_photos',
+  ABOUT: 'otakonce_about',
+  CONTACT: 'otakonce_contact'
 };
 
 let _initialized = false;
@@ -51,7 +61,7 @@ export const initializeDB = () => {
   } else {
     try {
       const currentCos = JSON.parse(localStorage.getItem(KEYS.COSPLAYERS));
-      if (!Array.isArray(currentCos) || !currentCos.some(c => c.type === 'guest') || currentCos.filter(c => c.type === 'guest').length < 4) {
+      if (!Array.isArray(currentCos) || !currentCos.some(c => c.type === 'guest') || currentCos.filter(c => c.type === 'guest').length < 4 || currentCos.length < defaultCosplayers.length) {
         localStorage.setItem(KEYS.COSPLAYERS, JSON.stringify(defaultCosplayers));
       }
     } catch (e) {
@@ -63,6 +73,18 @@ export const initializeDB = () => {
   }
   if (!localStorage.getItem(KEYS.SCHEDULE)) {
     localStorage.setItem(KEYS.SCHEDULE, JSON.stringify(defaultSchedule));
+  }
+  if (!localStorage.getItem(KEYS.EVENTS)) {
+    localStorage.setItem(KEYS.EVENTS, JSON.stringify(defaultEvents));
+  }
+  if (!localStorage.getItem(KEYS.PHOTOS)) {
+    localStorage.setItem(KEYS.PHOTOS, JSON.stringify(defaultPhotos));
+  }
+  if (!localStorage.getItem(KEYS.ABOUT)) {
+    localStorage.setItem(KEYS.ABOUT, JSON.stringify(defaultAboutConfig));
+  }
+  if (!localStorage.getItem(KEYS.CONTACT)) {
+    localStorage.setItem(KEYS.CONTACT, JSON.stringify(defaultContactConfig));
   }
 };
 
@@ -152,3 +174,48 @@ export const saveBanners = (banners) => {
   localStorage.setItem(KEYS.BANNERS, JSON.stringify(banners));
   return banners;
 };
+
+// Events (Todos Nuestros Eventos)
+export const getEvents = () => {
+  initializeDB();
+  return JSON.parse(localStorage.getItem(KEYS.EVENTS)) || defaultEvents;
+};
+
+export const saveEvents = (events) => {
+  localStorage.setItem(KEYS.EVENTS, JSON.stringify(events));
+  return events;
+};
+
+// Photos (Galería de Fotos)
+export const getPhotos = () => {
+  initializeDB();
+  return JSON.parse(localStorage.getItem(KEYS.PHOTOS)) || defaultPhotos;
+};
+
+export const savePhotos = (photos) => {
+  localStorage.setItem(KEYS.PHOTOS, JSON.stringify(photos));
+  return photos;
+};
+
+// About (¿Qué es Otakonce?)
+export const getAboutConfig = () => {
+  initializeDB();
+  return JSON.parse(localStorage.getItem(KEYS.ABOUT)) || defaultAboutConfig;
+};
+
+export const saveAboutConfig = (config) => {
+  localStorage.setItem(KEYS.ABOUT, JSON.stringify(config));
+  return config;
+};
+
+// Contact (Contáctanos)
+export const getContactConfig = () => {
+  initializeDB();
+  return JSON.parse(localStorage.getItem(KEYS.CONTACT)) || defaultContactConfig;
+};
+
+export const saveContactConfig = (config) => {
+  localStorage.setItem(KEYS.CONTACT, JSON.stringify(config));
+  return config;
+};
+

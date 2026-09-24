@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Menu, X, Calendar, Users, Camera, Newspaper, LayoutDashboard, Star } from 'lucide-react';
+import { Menu, X, Newspaper, LayoutDashboard, Archive, Mail, CalendarDays, Sparkles, Users } from 'lucide-react';
 
 const Header = ({ activeTab, setActiveTab, topOffset }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,18 +37,21 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
 
   const navItems = [
     { id: 'home', label: 'Inicio', icon: null },
-    { id: 'news', label: 'Noticias', icon: Newspaper },
-    { id: 'invitados', label: 'Invitados', icon: Star },
-    { id: 'cosplay', label: 'Pasarela Cosplay', icon: Camera },
+    { id: 'about', label: '¿Qué es Otakonce?', icon: null },
+    { id: 'events', label: 'Próximos Eventos', icon: CalendarDays },
+    { id: 'past-events', label: 'Eventos Anteriores', icon: Archive },
+    { id: 'cosplay', label: 'Pasarela Cosplay', icon: Sparkles },
     { id: 'communities', label: 'Comunidades', icon: Users },
-    { id: 'schedule', label: 'Cronograma', icon: Calendar },
+    { id: 'news', label: 'Blog', icon: Newspaper },
+    { id: 'contact', label: 'Contáctanos', icon: Mail },
     ...(activeTab === 'admin' ? [{ id: 'admin', label: 'Admin', icon: LayoutDashboard }] : [])
   ];
 
   const handleNavClick = (id) => {
+    const isSameTab = activeTab === id;
     setActiveTab(id);
     setIsOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: isSameTab ? 'smooth' : 'auto' });
   };
 
   return (
@@ -87,7 +90,8 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            textDecoration: 'none'
+            textDecoration: 'none',
+            flexShrink: 0
           }}
           aria-label="Otakonce 2026 Inicio"
         >
@@ -95,18 +99,18 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
             src="/otakonce-logo.svg" 
             alt="Otakonce 2026 — inicio" 
             width="120"
-            height="38"
+            height="36"
             fetchpriority="low"
             decoding="async"
             style={{ 
-              height: '38px', 
+              height: '36px', 
               width: 'auto', 
               display: 'block',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.12))'
+              filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))'
             }} 
           />
           <span style={{ 
-            fontSize: '0.72rem', 
+            fontSize: '0.70rem', 
             fontWeight: 900, 
             border: '2px solid var(--border-pop, #0F172A)', 
             padding: '2px 6px', 
@@ -114,7 +118,8 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
             color: '#FFFFFF', 
             background: 'var(--secondary)', 
             boxShadow: '2px 2px 0px var(--border-pop, #0F172A)',
-            letterSpacing: '0.04em'
+            letterSpacing: '0.04em',
+            whiteSpace: 'nowrap'
           }}>
             2026
           </span>
@@ -126,7 +131,9 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
           style={{
             display: 'none',
             alignItems: 'center',
-            gap: '8px'
+            gap: '3px',
+            marginLeft: 'auto',
+            flexWrap: 'nowrap'
           }}
           className="desktop-nav"
         >
@@ -139,24 +146,25 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
                 onClick={() => handleNavClick(item.id)}
                 aria-current={isActive ? 'page' : undefined}
                 style={{
-                  background: isActive ? 'rgba(0, 163, 255, 0.1)' : 'transparent',
+                  background: isActive ? 'rgba(0, 163, 255, 0.12)' : 'transparent',
                   border: '1px solid',
-                  borderColor: isActive ? 'var(--border-color)' : 'transparent',
+                  borderColor: isActive ? 'var(--cyan)' : 'transparent',
                   color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  padding: '10px 16px',
-                  minHeight: '44px',
-                  borderRadius: '10px',
+                  padding: '6px 8px',
+                  minHeight: '34px',
+                  borderRadius: '7px',
                   cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
+                  fontWeight: isActive ? 750 : 600,
+                  fontSize: '0.80rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '4px',
+                  whiteSpace: 'nowrap',
                   transition: 'var(--transition-fast)'
                 }}
                 className={isActive ? 'nav-active' : ''}
               >
-                {Icon && <Icon size={16} />}
+                {Icon && <Icon size={13} style={{ color: isActive ? 'var(--cyan)' : 'inherit' }} />}
                 {item.label}
               </button>
             );
@@ -221,15 +229,16 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
               position: 'fixed',
               top: 0,
               right: 0,
-              width: '290px',
-              height: '100vh',
+              width: 'min(300px, 86vw)',
+              height: '100dvh',
+              maxHeight: '100dvh',
               background: 'var(--bg-surface-solid)',
               borderLeft: '1px solid var(--border-color)',
               zIndex: 9999,
-              padding: '24px 20px 40px',
+              padding: 'clamp(10px, 1.8vh, 16px) clamp(12px, 3vw, 18px) max(clamp(12px, 2vh, 18px), env(safe-area-inset-bottom, 12px))',
               display: 'flex',
               flexDirection: 'column',
-              gap: '12px',
+              gap: 'clamp(3px, 0.7vh, 6px)',
               transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
               transition: 'transform var(--transition-smooth)',
               boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
@@ -239,9 +248,16 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
             className="mobile-nav-drawer"
           >
             {/* Drawer Top Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              paddingBottom: 'clamp(6px, 1.2vh, 10px)', 
+              borderBottom: '1px solid var(--border-color)', 
+              marginBottom: 'clamp(2px, 0.5vh, 4px)' 
+            }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Menú</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(1rem, 2.2vh, 1.15rem)', color: 'var(--text-primary)' }}>Menú</span>
                 <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: 'var(--secondary)', color: '#FFF' }}>2026</span>
               </div>
               <button
@@ -251,14 +267,14 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
                   background: 'rgba(0, 163, 255, 0.08)',
                   border: '1px solid var(--border-color)',
                   color: 'var(--text-primary)',
-                  padding: '10px',
+                  padding: '6px',
                   borderRadius: '8px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  minHeight: '44px',
-                  minWidth: '44px'
+                  minHeight: '36px',
+                  minWidth: '36px'
                 }}
               >
                 <X size={18} aria-hidden="true" />
@@ -277,26 +293,26 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
                     border: '1px solid',
                     borderColor: isActive ? 'var(--border-color)' : 'transparent',
                     color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    padding: '14px 18px',
-                    borderRadius: '12px',
+                    padding: 'clamp(6px, 1.2vh, 9px) clamp(10px, 2.5vw, 14px)',
+                    borderRadius: '10px',
                     cursor: 'pointer',
                     fontWeight: isActive ? 750 : 600,
-                    fontSize: '0.98rem',
+                    fontSize: 'clamp(0.82rem, 1.8vh, 0.90rem)',
                     textAlign: 'left',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     width: '100%',
-                    minHeight: '48px',
+                    minHeight: 'clamp(36px, 4.6vh, 42px)',
                     transition: 'var(--transition-fast)'
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {Icon && <Icon size={20} style={{ color: isActive ? 'var(--secondary)' : 'var(--text-muted)' }} />}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {Icon && <Icon size={16} style={{ color: isActive ? 'var(--secondary)' : 'var(--text-muted)', flexShrink: 0 }} />}
                     {item.label}
                   </span>
                   {isActive && (
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 8px var(--secondary-glow)' }} />
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'var(--secondary)', boxShadow: '0 0 8px var(--secondary-glow)', flexShrink: 0 }} />
                   )}
                 </button>
               );
@@ -308,7 +324,7 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
 
       {/* CSS injection for responsive navbar layout */}
       <style>{`
-        @media (min-width: 768px) {
+        @media (min-width: 1120px) {
           .desktop-nav {
             display: flex !important;
           }
@@ -317,6 +333,13 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
           }
           .mobile-nav-drawer {
             display: none !important;
+          }
+        }
+        @media (min-width: 1280px) {
+          .desktop-nav button {
+            padding: 6px 11px !important;
+            font-size: 0.83rem !important;
+            gap: 5px !important;
           }
         }
       `}</style>

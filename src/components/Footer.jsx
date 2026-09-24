@@ -20,7 +20,7 @@ const Instagram = ({ size = 20, ...props }) => (
   </svg>
 );
 
-const Footer = ({ setActiveTab }) => {
+const Footer = ({ setActiveTab, contactConfig }) => {
   const pressTimerRef = useRef(null);
 
   const triggerAdminPortal = () => {
@@ -60,7 +60,7 @@ const Footer = ({ setActiveTab }) => {
 
   const handleNavClick = (tabId) => {
     setActiveTab(tabId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   const currentYear = new Date().getFullYear();
@@ -85,8 +85,8 @@ const Footer = ({ setActiveTab }) => {
         }}
       >
         {/* Branding & Logo with secret stealth admin access (5-second hold) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <h2 
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+          <div
             role="button"
             tabIndex={0}
             onClick={handleBrandClick}
@@ -99,19 +99,38 @@ const Footer = ({ setActiveTab }) => {
             onMouseLeave={handleEndPress}
             aria-label="Otakonce 2026 — ir al inicio"
             style={{
-              fontSize: '1.8rem',
-              fontWeight: 900,
-              fontFamily: 'var(--font-display)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
               cursor: 'pointer',
               userSelect: 'none',
               WebkitUserSelect: 'none'
             }}
-            className="text-gradient"
             title="Otakonce 2026"
           >
-            OTAKONCE
-          </h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px', lineHeight: 1.4 }}>
+            <img 
+              src="/otakonce-logo.svg" 
+              alt="Otakonce 2026" 
+              width="160"
+              height="50"
+              style={{ height: '50px', width: 'auto', display: 'block', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.3))' }} 
+            />
+            <span style={{ 
+              fontSize: '0.8rem', 
+              fontWeight: 900, 
+              border: '2px solid var(--border-pop, #0F172A)', 
+              padding: '3px 8px', 
+              borderRadius: '7px', 
+              color: '#FFFFFF', 
+              background: 'var(--secondary)', 
+              boxShadow: '2px 2px 0px var(--border-pop, #0F172A)',
+              letterSpacing: '0.04em'
+            }}>
+              2026
+            </span>
+          </div>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '440px', lineHeight: 1.5, margin: 0 }}>
             El evento de anime, cosplay y videojuegos gratuito más grande del sur de Chile, organizado por y para la comunidad en Concepción.
           </p>
         </div>
@@ -123,20 +142,30 @@ const Footer = ({ setActiveTab }) => {
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'center',
-            gap: '20px',
-            fontSize: '0.85rem',
-            fontWeight: 600,
+            gap: '18px',
+            fontSize: '0.88rem',
+            fontWeight: 650,
             color: 'var(--text-secondary)'
           }}
           className="footer-nav"
         >
           <a href="#home" onClick={(e) => { e.preventDefault(); handleNavClick('home'); }}>Inicio</a>
-          <a href="#news" onClick={(e) => { e.preventDefault(); handleNavClick('news'); }}>Noticias</a>
-          <a href="#invitados" onClick={(e) => { e.preventDefault(); handleNavClick('invitados'); }}>Invitados</a>
+          <a href="#about" onClick={(e) => { e.preventDefault(); handleNavClick('about'); }}>¿Qué es Otakonce?</a>
+          <a href="#events" onClick={(e) => { e.preventDefault(); handleNavClick('events'); }}>Próximos Eventos</a>
+          <a href="#past-events" onClick={(e) => { e.preventDefault(); handleNavClick('past-events'); }}>Eventos Anteriores</a>
           <a href="#cosplay" onClick={(e) => { e.preventDefault(); handleNavClick('cosplay'); }}>Pasarela Cosplay</a>
           <a href="#communities" onClick={(e) => { e.preventDefault(); handleNavClick('communities'); }}>Comunidades</a>
-          <a href="#schedule" onClick={(e) => { e.preventDefault(); handleNavClick('schedule'); }}>Cronograma</a>
+          <a href="#news" onClick={(e) => { e.preventDefault(); handleNavClick('news'); }}>Blog</a>
+          <a href="#contact" onClick={(e) => { e.preventDefault(); handleNavClick('contact'); }}>Contáctanos</a>
         </nav>
+
+        {/* Contacto rápido en footer */}
+        {contactConfig && (contactConfig.email || contactConfig.location) && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            {contactConfig.email && <span>✉️ {contactConfig.email}</span>}
+            {contactConfig.location && <span>📍 {contactConfig.location}</span>}
+          </div>
+        )}
 
         {/* Social Media Link */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>

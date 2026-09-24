@@ -6,14 +6,20 @@ import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
 import SeasonalOverlay from './components/SeasonalOverlay';
 
-// Code-split non-critical and heavy components
-const NewsSection = lazy(() => import('./components/NewsSection'));
+import NewsSection from './components/NewsSection';
+import GuestsSection from './components/GuestsSection';
+import CosplayerGallery from './components/CosplayerGallery';
+import CommunityList from './components/CommunityList';
+import ScheduleTimeline from './components/ScheduleTimeline';
+import EventsShowcase from './components/EventsShowcase';
+import PhotoGallery from './components/PhotoGallery';
+import AboutSection from './components/AboutSection';
+import ContactSection from './components/ContactSection';
+import UpcomingEventSection from './components/UpcomingEventSection';
+
+// Code-split infrequent and heavy secondary routes
 const NewsDetail = lazy(() => import('./components/NewsDetail'));
 const GuestDetail = lazy(() => import('./components/GuestDetail'));
-const GuestsSection = lazy(() => import('./components/GuestsSection'));
-const CosplayerGallery = lazy(() => import('./components/CosplayerGallery'));
-const CommunityList = lazy(() => import('./components/CommunityList'));
-const ScheduleTimeline = lazy(() => import('./components/ScheduleTimeline'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
 import { slugify } from './utils/slugify';
@@ -24,7 +30,11 @@ import {
   getCosplayers, saveCosplayers,
   getCommunities, saveCommunities,
   getSchedule, saveSchedule,
-  getBanners, saveBanners
+  getBanners, saveBanners,
+  getEvents, saveEvents,
+  getPhotos, savePhotos,
+  getAboutConfig, saveAboutConfig,
+  getContactConfig, saveContactConfig
 } from './services/db';
 import { getGlobalTheme, getPublicCosplayers, mergePublishedCosplayers, getPublicCommunities, mergePublishedCommunities } from './services/cloudSync';
 
@@ -47,7 +57,7 @@ function App() {
       if (hash.startsWith('#cosplay/') || hash === '#cosplay') {
         return 'cosplay';
       }
-      if (['#news', '#communities', '#schedule'].includes(hash)) {
+      if (['#news', '#communities', '#schedule', '#about', '#events', '#past-events', '#gallery', '#contact'].includes(hash)) {
         return hash.replace('#', '');
       }
     }
@@ -64,6 +74,10 @@ function App() {
   const [cosplayers, setCosplayersState] = useState(() => getCosplayers());
   const [communities, setCommunitiesState] = useState(() => getCommunities());
   const [schedule, setScheduleState] = useState(() => getSchedule());
+  const [events, setEventsState] = useState(() => getEvents());
+  const [photos, setPhotosState] = useState(() => getPhotos());
+  const [aboutConfig, setAboutConfigState] = useState(() => getAboutConfig());
+  const [contactConfig, setContactConfigState] = useState(() => getContactConfig());
   
   // Banner visibility state (closes announcements bar)
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -96,6 +110,22 @@ function App() {
   const setSchedule = (val) => {
     setScheduleState(val);
     saveSchedule(val);
+  };
+  const setEvents = (val) => {
+    setEventsState(val);
+    saveEvents(val);
+  };
+  const setPhotos = (val) => {
+    setPhotosState(val);
+    savePhotos(val);
+  };
+  const setAboutConfig = (val) => {
+    setAboutConfigState(val);
+    saveAboutConfig(val);
+  };
+  const setContactConfig = (val) => {
+    setContactConfigState(val);
+    saveContactConfig(val);
   };
 
   // Merge published cosplayers (admin-approved) so they appear on every device
@@ -225,6 +255,11 @@ function App() {
     } else {
       const titles = {
         home: 'Otakonce 2026 | El Evento de Anime y Cultura Geek de Concepción',
+        about: '¿Qué es Otakonce? | Otakonce 2026',
+        events: 'Próximos Eventos | Otakonce 2026',
+        'past-events': 'Todos Nuestros Eventos | Otakonce 2026',
+        gallery: 'Galería de Fotos | Otakonce 2026',
+        contact: 'Contáctanos | Otakonce 2026',
         news: 'Noticias y Comunicados | Otakonce 2026',
         invitados: 'Invitados Especiales | Otakonce 2026',
         cosplay: 'Pasarela Cosplay & Comunidad | Otakonce 2026',
@@ -233,7 +268,18 @@ function App() {
         admin: 'Acceso Administrativo | Otakonce Staff'
       };
       title = titles[activeTab] || 'Otakonce 2026';
-      const hashMap = { news: '#news', invitados: '#invitados', cosplay: '#cosplay', communities: '#communities', schedule: '#schedule' };
+      const hashMap = {
+        about: '#about',
+        events: '#events',
+        'past-events': '#past-events',
+        gallery: '#gallery',
+        contact: '#contact',
+        news: '#news',
+        invitados: '#invitados',
+        cosplay: '#cosplay',
+        communities: '#communities',
+        schedule: '#schedule'
+      };
       if (hashMap[activeTab]) url = `${baseUrl}/${hashMap[activeTab]}`;
     }
 
@@ -249,7 +295,7 @@ function App() {
     setJsonLd('seo-dynamic-jsonld', jsonLd);
 
     if (activeTab === 'home') {
-      if (window.location.hash && window.location.hash !== '#home') {
+      if (window.location.hash && window.location.hash !== '#home' && !window.location.hash.startsWith('#cosplay/')) {
         history.replaceState(null, '', window.location.pathname);
       }
     } else if (activeTab !== 'admin' && activeTab !== 'news-detail' && activeTab !== 'guest-detail') {
@@ -301,9 +347,12 @@ function App() {
         setActiveTab('admin');
       } else if (hash === '#invitados' || hash === '#guests') {
         setActiveTab('invitados');
-      } else if (hash.startsWith('#cosplay/') || hash === '#cosplay') {
+      } else if (hash === '#cosplay') {
         setActiveTab('cosplay');
-      } else if (['#news', '#communities', '#schedule'].includes(hash)) {
+      } else if (hash.startsWith('#cosplay/')) {
+        // Only switch to cosplay tab if not already on home
+        setActiveTab(prev => (prev === 'home' ? 'home' : 'cosplay'));
+      } else if (['#news', '#communities', '#schedule', '#about', '#events', '#past-events', '#gallery', '#contact'].includes(hash)) {
         setActiveTab(hash.replace('#', ''));
       } else if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
         const slug = hash.replace(/^#(noticia|news)\//, '').toLowerCase();
@@ -394,11 +443,11 @@ function App() {
       <Header activeTab={activeTab} setActiveTab={setActiveTab} topOffset={isAnnouncementVisible ? '44px' : '0px'} />
 
       {/* Main Content Area */}
-      <main id="main-content" key={activeTab} style={{ flex: 1 }} className="animate-fade-in">
+      <main id="main-content" style={{ flex: 1 }}>
         <Suspense fallback={<LoadingSpinner />}>
           {activeTab === 'home' && (
             <>
-              {/* Widescreen Hero & Countdown Carousel */}
+              {/* 1. Header / Banners Hero */}
               <Hero config={eventConfig} onNavigate={handleNavigate} banners={banners} />
               
               {/* Quick Public Previews of sub-pages */}
@@ -412,31 +461,58 @@ function App() {
                   mode="carousel" 
                 />
 
-                {/* 3. Noticias y Anuncios */}
-                <NewsSection newsList={newsList.slice(0, 3)} onSelectArticle={handleSelectArticle} />
-                <div style={{ textAlign: 'center', marginTop: '-30px', marginBottom: '60px' }}>
+                {/* 3. Galería de Fotos (Preview) */}
+                <PhotoGallery photos={photos} mode="preview" onNavigate={handleNavigate} />
+
+                {/* 4. Noticias y Anuncios (Preview 3) */}
+                <NewsSection newsList={newsList.slice(0, 3)} onSelectArticle={handleSelectArticle} isHomePreview={true} />
+                <div style={{ textAlign: 'center', marginTop: '28px', marginBottom: '40px' }}>
                   <button className="btn btn-secondary" onClick={() => handleNavigate('news')}>
                     Ver todas las noticias &rarr;
                   </button>
                 </div>
 
-                {/* 4. Pasarela Cosplay & Comunidad (Regional & Local) */}
-                <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} />
+                {/* 5. Galería Cosplay */}
+                <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} onNavigate={handleNavigate} activeTab={activeTab} />
                 
-                {/* 5. Comunidades Locales */}
+                {/* 6. Comunidades Locales */}
                 <CommunityList communities={communities.slice(0, 3)} />
-                {communities.length > 3 && (
-                  <div style={{ textAlign: 'center', marginTop: '-30px', marginBottom: '60px' }}>
-                    <button className="btn btn-secondary" onClick={() => handleNavigate('communities')}>
-                      Ver todas las comunidades &rarr;
-                    </button>
-                  </div>
-                )}
+                <div style={{ textAlign: 'center', marginTop: '28px', marginBottom: '40px' }}>
+                  <button className="btn btn-secondary" onClick={() => handleNavigate('communities')}>
+                    Ver todas las comunidades &rarr;
+                  </button>
+                </div>
+
+                {/* 7. Todos Nuestros Eventos (Preview) */}
+                <EventsShowcase events={events} mode="preview" onNavigate={handleNavigate} />
               </div>
             </>
           )}
 
           {/* Full Section Tabs */}
+          {activeTab === 'about' && (
+            <AboutSection config={eventConfig} aboutConfig={aboutConfig} />
+          )}
+
+          {activeTab === 'events' && (
+            <>
+              <UpcomingEventSection config={eventConfig} />
+              <ScheduleTimeline schedule={schedule} />
+            </>
+          )}
+
+          {activeTab === 'past-events' && (
+            <EventsShowcase events={events} mode="grid" onNavigate={handleNavigate} />
+          )}
+
+          {activeTab === 'gallery' && (
+            <PhotoGallery photos={photos} mode="full" onNavigate={handleNavigate} />
+          )}
+
+          {activeTab === 'contact' && (
+            <ContactSection contactConfig={contactConfig} />
+          )}
+
           {activeTab === 'news' && (
             <NewsSection newsList={newsList} onSelectArticle={handleSelectArticle} />
           )}
@@ -471,7 +547,7 @@ function App() {
           )}
 
           {activeTab === 'cosplay' && (
-            <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} />
+            <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} onNavigate={handleNavigate} activeTab={activeTab} />
           )}
 
           {activeTab === 'communities' && (
@@ -499,13 +575,21 @@ function App() {
               schedule={schedule}
               setSchedule={setSchedule}
               onNavigate={handleNavigate}
+              events={events}
+              setEvents={setEvents}
+              photos={photos}
+              setPhotos={setPhotos}
+              aboutConfig={aboutConfig}
+              setAboutConfig={setAboutConfig}
+              contactConfig={contactConfig}
+              setContactConfig={setContactConfig}
             />
           )}
         </Suspense>
       </main>
 
       {/* Footer Branding & Links */}
-      <Footer activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Footer activeTab={activeTab} setActiveTab={setActiveTab} contactConfig={contactConfig} />
     </div>
   );
 }

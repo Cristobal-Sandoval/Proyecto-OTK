@@ -1,115 +1,136 @@
 # 🌸 Otakonce 2026 — Plataforma Web Oficial
 
-Sitio web oficial y panel de administración interactivo para **Otakonce 2026**, el mayor evento de anime, videojuegos, cosplay y cultura geek de Concepción y el sur de Chile.
+Sitio web oficial y panel de administración interactivo para **Otakonce 2026**, el mayor evento de anime, videojuegos, cosplay y cultura geek de Concepción y la Región del Biobío.
 
 ---
 
 ## 🚀 Tecnologías & Arquitectura
 
 - **Frontend**: React 19 + Vite 8
-- **Estilos & Diseño**: Sistema Pop-Art / Comic Book UI responsivo, variables CSS dinámicas, transiciones aceleradas por hardware
+- **Estilos & Diseño**: Sistema Pop-Art / Comic Book UI responsivo, variables CSS dinámicas, transiciones fluidas aceleradas por hardware
 - **Iconografía**: Lucide React
-- **Almacenamiento & CDN**: Integración con **Cloudinary CDN** para entrega optimizada de imágenes en formato WebP y fallback local
+- **Almacenamiento & CDN**: Soporte de subida y optimización con **Cloudinary CDN** y fallback a almacenamiento local persistente
+- **Base de Datos & Tiempo Real (Opcional)**: Integración con **Supabase** para sincronización en tiempo real de temas, postulaciones y catálogo
 - **Optimización de Rendimiento**:
-  - Code-splitting con `React.lazy()` y `<Suspense>`
-  - Optimización de chunks con Rolldown / Vite
-  - Soporte de caché inmutable para assets estáticos
+  - Code-splitting modular con `React.lazy()` y `<Suspense>`
+  - Optimización de empaquetado por chunks
+  - Portales de React para modales (`createPortal`) evitando conflictos de apilamiento y scroll
+  - Prevención de clics fantasma (*ghost-click guard*) en interacción móvil y táctil
 - **Seguridad**:
-  - Encriptación criptográfica con Web Crypto API (SHA-256)
+  - Autenticación administrativa server-side con hash scrypt y sesión firmada HMAC en cookie `httpOnly`
+  - Sanitización estricta de entradas y contenidos (anti-XSS)
   - Limitación de tasa de intentos (Rate-limiting anti-fuerza bruta)
   - Cabeceras HTTP de seguridad (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`)
 - **SEO & Social Sharing**:
-  - Enrutamiento por slugs amigables para noticias (`/#noticia/slug`) y fichas de invitados (`/#invitado/slug`)
-  - Botones integrados para compartir en WhatsApp, X (Twitter) y copia de enlace directo
-  - Títulos de pestaña dinámicos según la sección o perfil activo
+  - Enrutamiento SPA por hash y slugs amigables (`/#noticia/slug`, `/#invitado/slug`, `/#cosplay`, `/#past-events`, etc.)
+  - Integración con Web Share API nativa y portapapeles para compartir fichas y eventos en redes sociales
   - Structured Data JSON-LD, OpenGraph, `sitemap.xml` y `robots.txt`
-- **Despliegue**: Listo para producción en **Vercel** con reglas de reescritura SPA (`vercel.json`)
+- **Despliegue**: Optimizado para **Vercel** con Serverless Functions (`api/`) y reglas de reescritura SPA (`vercel.json`)
 
 ---
 
 ## 🛠️ Instalación y Ejecución Local
 
-1. **Clonar el repositorio**:
-   ```bash
-   git clone https://github.com/Cristobal-Sandoval/Proyecto-OTK.git
-   cd Proyecto-OTK
-   ```
+### Prerrequisitos
+- Node.js 18+ (recomendado 20+)
+- npm 9+
 
-2. **Instalar dependencias**:
-   ```bash
-   npm install
-   ```
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/Cristobal-Sandoval/Proyecto-OTK.git
+cd Proyecto-OTK
+```
 
-3. **Iniciar servidor de desarrollo**:
-   ```bash
-   npm run dev
-   ```
-   La aplicación estará disponible en `http://localhost:5173/`.
+### 2. Configurar variables de entorno
+Crea tu archivo local a partir del ejemplo:
+```bash
+cp .env.example .env.local
+```
+> **Nota de Seguridad**: Nunca subas archivos `.env` o `.env.local` con credenciales reales al repositorio. El archivo `.gitignore` ya está configurado para protegerlos. Consulta `.env.example` para conocer los nombres de variables disponibles.
 
-4. **Verificar sintaxis y calidad de código**:
-   ```bash
-   npm run lint
-   ```
+### 3. Instalar dependencias
+```bash
+npm install
+```
 
-5. **Compilar para producción**:
-   ```bash
-   npm run build
-   ```
+### 4. Iniciar servidor de desarrollo
+```bash
+npm run dev
+```
+La aplicación estará disponible en `http://localhost:5173/`.
+
+### 5. Verificaciones de código y compilación
+```bash
+# Validar sintaxis y reglas de código
+npm run lint
+
+# Compilar para producción
+npm run build
+
+# Previsualizar la compilación de producción
+npm run preview
+```
 
 ---
 
 ## ⚙️ Módulos y Funcionalidades
 
-### 🌟 Experiencia Pública
+### 🌟 Experiencia del Usuario (Frontend)
 
-1. **Hero & Cronómetro de Cuenta Regresiva**:
-   - Banners widescreen de alto impacto visual con diseño pop-art.
-   - Contador regresivo hacia el evento con encuadre adaptable para móviles y escritorio.
-   - Barra superior de anuncios (fija en escritorio, marquesina continua en móviles).
+1. **Hero & Cuenta Regresiva**:
+   - Portada widescreen con estética manga/pop-art y contador regresivo dinámico hacia el evento.
+   - Barra superior de anuncios destacados con marquesina continua adaptable a pantallas móviles.
 
 2. **Invitados Especiales (Cosplay Alley & Jurados)**:
-   - **En el Inicio**: Carrusel infinito de desplazamiento suave continuo con flechas flotantes estilo CardPoint y pausa inteligente al interactuar.
-   - **En la Sección Dedicada (`#invitados`)**: Grilla responsiva con buscador en tiempo real por nombre, personaje, ciudad o rol.
-   - **Página Dedicada por Invitado (`#invitado/slug`)**:
-     - Cabecera con imagen destacada, insignias de rol, personaje y ciudad.
-     - Reseña y trayectoria del artista.
-     - **Mini Galería de Cosplays con Lightbox**: Muestra las presentaciones del invitado con ampliación interactiva a pantalla completa al hacer clic.
-     - **Redes Sociales Oficiales**: Enlaces directos a Instagram, TikTok y Twitter/X.
-     - **Compartir Real**: Botones directos para compartir en WhatsApp, X o copiar enlace con la URL canónica de la ficha.
+   - Carrusel continuo en portada y catálogo completo en `#invitados` con buscador en tiempo real.
+   - Fichas individuales con biografía, redes sociales (Instagram, TikTok, Twitter/X) y mini galería lightbox con ampliación interactiva.
 
-3. **Noticias y Anuncios**:
-   - Filtros por categoría y barra de búsqueda.
-   - Vista individual de noticia (`#noticia/slug`) con formato de lectura optimizado y botones para compartir.
+3. **Pasarela Cosplay & Exponentes Regionales**:
+   - **En Portada (`/`)**: Carrusel visual continuo de cosplayers con movimiento infinito y acceso directo a la sección completa.
+   - **En Sección Dedicada (`#cosplay`)**: Directorio completo en cuadrícula 4x3 paginada (12 exponentes por página), con buscador instantáneo por nombre, personaje o ciudad, y filtro por categorías.
+   - **Ficha 2-en-1**: Modal interactivo que presenta la fotografía completa a la izquierda y la información detallada (redes, bio, botón para compartir) a la derecha, adaptándose a 1 columna en móviles.
+   - **Postulaciones Abiertas**: Formulario interactivo para que cosplayers de la comunidad puedan inscribirse a la pasarela.
 
-4. **Pasarela Cosplay & Comunidad (Regional & Local)**:
-   - Carrusel infinito cinemático con controles flotantes y filtros por ciudad (Concepción, Chillán, Temuco, Santiago, etc.).
-   - Fichas interactivas con personajes y enlaces de contacto con URL directa (`#cosplay/slug`).
-   - **Sistema de Inscripciones Abiertas**: Botón destacado *"Inscríbete a la Pasarela Cosplay"* que despliega un formulario interactivo para registrar nombre, personaje, ciudad, redes, contacto, fotos y propuesta en escenario.
+4. **Eventos Pasados & Trayectoria (`#past-events`)**:
+   - Vitrina histórica de las ediciones anteriores de Otakonce.
+   - Modal interactivo 2-en-1 con póster en alta resolución, hitos del evento, descripción extendida y botones para compartir.
 
-5. **Zonas de Comunidades & Cronograma**:
-   - Directorio de agrupaciones, comunidades de videojuegos, TCG y tiendas aliadas.
-   - Cronograma limpio y uniforme de actividades por bloques horarios y escenarios.
+5. **Galería de Fotos & Comunidad (`#galeria`)**:
+   - Álbum fotográfico categorizado (Cosplay, Escenario, Torneos, Comunidad) con visor lightbox a pantalla completa y navegación táctil.
 
-6. **Ambientación Dinámica y Sincronización Global en Tiempo Real**:
-   - Soporte de personalización visual con paletas temáticas (Normal, Halloween, Navidad, Teletón, Fiestas Patrias) con animaciones atmosféricas sincronizadas.
-   - **Sincronización Multi-Dispositivo**: Cada vez que el staff cambia el tema desde el panel de administración, el cambio se transmite vía API en la nube y se refleja automáticamente en todos los visitantes y dispositivos sin requerir recarga manual.
+6. **¿Qué es Otakonce? (`#sobre-nosotros`)**:
+   - Sección informativa con reseña, misión, pilares del evento, fotografías destacadas y equipo organizador.
+
+7. **Noticias & Cronograma**:
+   - Centro de novedades con artículos individuales y botones para compartir.
+   - Cronograma horario interactivo por escenarios y zonas temáticas.
+
+8. **Contáctanos (`#contacto`)**:
+   - Información de ubicación oficial (Gimnasio USM Sede Concepción, Av. España 1680), redes sociales y canales de atención.
+
+9. **Ambientación y Sincronización Global en Tiempo Real**:
+   - Paletas temáticas dinámicas (Normal, Halloween, Navidad, Teletón, Fiestas Patrias) que se sincronizan en vivo entre todos los visitantes conectados cuando el staff actualiza el tema.
+
+---
 
 ### 🛡️ Panel de Gestión Staff (`#stf-portal`)
 
-- **Gestión Integral de Contenidos**:
-  - Modos de temporada con sincronización multi-dispositivo en la nube.
-  - **Bandeja de Postulaciones Pasarela**: Pestaña dedicada con contador en tiempo real para revisar solicitudes de inscripción de cosplayers, con opción de previsualizar sus fotos y detalles, aprobarlos en 1 clic para integrarlos a la galería oficial o descartarlos.
-  - Banners de portada tipo hero con colores, alineación y badges personalizables.
-  - Comunicado flotante superior con interruptor de activación.
-  - Noticias y anuncios con selector de categoría y fecha.
-  - **Cosplayers & Invitados Especiales**: Creación y edición completa de fichas con fotos principales, redes sociales (Instagram, TikTok, Twitter/X) y subida de múltiples fotos para la mini galería lightbox.
-  - Comunidades aliadas y cronograma de horarios.
-- **Configuración de Almacenamiento**:
-  - Vinculación con Cloudinary CDN con test de subida y fallback automático a almacenamiento local.
-- **Seguridad & Credenciales**:
-  - Módulo para cambio seguro de contraseña de administrador con hash SHA-256.
-  - Bloqueo temporal anti-fuerza bruta ante intentos fallidos consecutivos.
-  - Enrutamiento stealth protegido contra indexación de motores de búsqueda.
+El panel de administración permite gestionar el 100% del contenido de la plataforma de manera visual:
+
+- **Próxima Edición**: Configuración de fecha, lugar, horarios y enlaces de entradas.
+- **Banners & Marquesina**: Creación y ordenamiento de banners principales con guías de proporción recomendada (1920x800 px).
+- **Noticias & Comunicados**: Redacción de anuncios con asignación de categorías y fecha de publicación.
+- **Invitados de Honor & Cosplayers**:
+  - Subida de fotografías con optimización inteligente.
+  - **Fijar al Frente (Pin)**: Capacidad de pinear cosplayers destacados para que aparezcan primero en la cuadrícula y en la portada.
+  - Guías visuales de resolución recomendada (ej. 600x800 px relación 3:4).
+- **Postulaciones Pasarela & Comunidades**: Bandeja de entrada con previsualización completa y aprobación/descarte en un clic.
+- **Eventos Pasados & Galería**: Edición de ediciones históricas, fotos de archivo y categorías.
+- **Nosotros & Contacto**: Personalización de textos de presentación, equipo y datos de contacto.
+- **Seguridad**:
+  - Gestión segura de contraseña administrativa con hashing scrypt.
+  - Bloqueo temporal anti-fuerza bruta ante intentos fallidos.
+  - Protección de rutas y headers de seguridad en producción.
 
 ---
 

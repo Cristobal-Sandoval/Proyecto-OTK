@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
   Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield,
-  Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers, Star, MapPin, UserCheck, RefreshCw
+  Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers, Star, MapPin, UserCheck, RefreshCw, Pin
 } from 'lucide-react';
 import { SEASONAL_THEMES } from '../data/defaults';
 import { 
@@ -29,7 +29,11 @@ const AdminDashboard = ({
   cosplayers, setCosplayers,
   communities, setCommunities,
   schedule, setSchedule,
-  onNavigate
+  onNavigate,
+  events = [], setEvents,
+  photos = [], setPhotos,
+  aboutConfig, setAboutConfig,
+  contactConfig, setContactConfig
 }) => {
   // Always prompt for password whenever the secret portal is accessed.
   // La sesión vive en cookie httpOnly; al montar se valida contra /api/auth-me.
@@ -221,7 +225,8 @@ const AdminDashboard = ({
     name: '', character: '', instagram: '', tiktok: '', twitter: '', image: '', photos: [], bio: '',
     type: 'guest',
     role: 'Invitado Especial',
-    city: 'Concepción'
+    city: 'Concepción',
+    pinned: false
   });
 
   // Community CRUD state
@@ -236,6 +241,25 @@ const AdminDashboard = ({
     time: '', title: '', stage: 'Escenario Principal', description: ''
   });
 
+  // Events CRUD state
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [eventForm, setEventForm] = useState({
+    name: '', date: '', image: '', description: '', highlights: ''
+  });
+
+  // Photos CRUD state
+  const [photoForm, setPhotoForm] = useState({
+    src: '', alt: '', category: 'Evento'
+  });
+
+  // About config form
+  const [aboutForm, setAboutForm] = useState({ ...(aboutConfig || {}) });
+  const [newAboutPhoto, setNewAboutPhoto] = useState({ url: '', caption: '' });
+  const [newStaffMember, setNewStaffMember] = useState({ name: '', role: '', image: '', instagram: '' });
+
+  // Contact config form
+  const [contactForm, setContactForm] = useState({ ...(contactConfig || {}) });
+
   // Cloudinary State & Settings
   const [cloudinarySettings, setCloudinarySettings] = useState(() => getCloudinaryConfig());
   const [cloudinarySaveSuccess, setCloudinarySaveSuccess] = useState(false);
@@ -247,13 +271,13 @@ const AdminDashboard = ({
 
   // Smart Image Upload: Cloudinary CDN with graceful Base64 local fallback
   const handleSmartImageUpload = async (e, callback) => {
-    const file = e.target.files[0];
+    const file = e?.target?.files ? e.target.files[0] : (e instanceof File ? e : e?.target?.files?.[0]);
     if (!file) return;
 
     const fileError = validateImageFile(file, 10);
     if (fileError) {
       alert(fileError);
-      e.target.value = '';
+      if (e?.target) e.target.value = '';
       return;
     }
 
@@ -441,7 +465,8 @@ const AdminDashboard = ({
       ...cosplayerForm,
       photos: photosArray,
       tiktok: cosplayerForm.tiktok || '',
-      twitter: cosplayerForm.twitter || ''
+      twitter: cosplayerForm.twitter || '',
+      pinned: Boolean(cosplayerForm.pinned)
     });
     if (!clean.name) {
       alert('El nombre es obligatorio.');
@@ -467,7 +492,7 @@ const AdminDashboard = ({
     }
     setCosplayerForm({ 
       name: '', character: '', instagram: '', tiktok: '', twitter: '', image: '', photos: [], bio: '', 
-      type: 'guest', role: 'Invitado Especial', city: 'Concepción' 
+      type: 'guest', role: 'Invitado Especial', city: 'Concepción', pinned: false 
     });
   };
 
@@ -484,8 +509,14 @@ const AdminDashboard = ({
       bio: cos.bio || '',
       type: cos.type || 'community',
       role: cos.role || (cos.type === 'guest' ? 'Invitado Especial' : 'Pasarela Individual'),
-      city: cos.city || 'Concepción'
+      city: cos.city || 'Concepción',
+      pinned: Boolean(cos.pinned)
     });
+  };
+
+  const handleTogglePinCosplayer = (id) => {
+    const updatedList = cosplayers.map(c => c.id === id ? { ...c, pinned: !c.pinned } : c);
+    setCosplayers(updatedList);
   };
 
   const handleDeleteCosplayer = (id) => {
@@ -738,7 +769,11 @@ const AdminDashboard = ({
                   { id: 'news', label: '📰 Noticias' },
                   { id: 'cosplayers', label: '🎭 Invitados & Pasarela' },
                   { id: 'communities', label: '👥 Comunidades' },
-                  { id: 'schedule', label: '📅 Cronograma' }
+                  { id: 'schedule', label: '📅 Cronograma' },
+                  { id: 'admin_events', label: `🎪 Eventos Pasados (${events?.length || 0})` },
+                  { id: 'admin_gallery', label: `📸 Galería de Fotos (${photos?.length || 0})` },
+                  { id: 'admin_about', label: '📖 ¿Qué es Otakonce?' },
+                  { id: 'admin_contact', label: '📞 Contacto' }
                 ].map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.label}
@@ -763,7 +798,11 @@ const AdminDashboard = ({
               { id: 'news', label: 'Noticias', icon: Newspaper },
               { id: 'cosplayers', label: 'Invitados & Pasarela', icon: Camera },
               { id: 'communities', label: 'Comunidades', icon: Users },
-              { id: 'schedule', label: 'Cronograma', icon: Calendar }
+              { id: 'schedule', label: 'Cronograma', icon: Calendar },
+              { id: 'admin_events', label: 'Eventos Pasados', icon: Calendar, badge: events?.length },
+              { id: 'admin_gallery', label: 'Galería Fotos', icon: ImageIcon, badge: photos?.length },
+              { id: 'admin_about', label: 'Sobre Nosotros', icon: Star },
+              { id: 'admin_contact', label: 'Contacto', icon: Users }
             ].map((tab) => {
             const Icon = tab.icon;
             const isActive = adminTab === tab.id;
@@ -1689,7 +1728,12 @@ const AdminDashboard = ({
               </div>
 
               <div className="form-group">
-                <label>Banner Principal (Imagen de Fondo)</label>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <span>Banner Principal (Imagen de Fondo)</span>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                    📐 Recomendado: 1920 × 1080 px (16:9 Panorámica)
+                  </span>
+                </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
                   {configForm.bannerImage && (
                     <div style={{ width: '120px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
@@ -1707,6 +1751,9 @@ const AdminDashboard = ({
                     />
                   </label>
                 </div>
+                <small style={{ display: 'block', marginTop: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  📐 <strong>Medida sugerida:</strong> 1920 × 1080 px (Panorámica 16:9). Formato JPG o WEBP optimizado para el fondo general de la web.
+                </small>
               </div>
 
               <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start', marginTop: '12px' }}>
@@ -1824,7 +1871,12 @@ const AdminDashboard = ({
                 </div>
 
                 <div className="form-group">
-                  <label>Imagen del Banner (Formato Widescreen Recomendado)</label>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <span>Imagen del Banner de Inicio</span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                      📐 Recomendado: 1920 × 800 px (16:9 / 21:9)
+                    </span>
+                  </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
                     {heroBannerForm.image && (
                       <div style={{ width: '160px', height: '80px', borderRadius: '10px', overflow: 'hidden', border: '2px solid #0F172A', boxShadow: '4px 4px 0px rgba(15,23,42,0.1)' }}>
@@ -1842,6 +1894,9 @@ const AdminDashboard = ({
                       />
                     </label>
                   </div>
+                  <small style={{ display: 'block', marginTop: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    📐 <strong>Medida sugerida:</strong> 1920 × 800 px (Widescreen panorámico). Formato JPG o WEBP (máx. 2MB) con el contenido principal centrado.
+                  </small>
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -2021,7 +2076,12 @@ const AdminDashboard = ({
                 </div>
 
                 <div className="form-group">
-                  <label>Imagen Ilustrativa</label>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <span>Imagen Ilustrativa de la Noticia</span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                      📐 Recomendado: 1200 × 675 px (16:9 Horizontal)
+                    </span>
+                  </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
                     {newsForm.image && (
                       <div style={{ width: '100px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
@@ -2039,6 +2099,9 @@ const AdminDashboard = ({
                       />
                     </label>
                   </div>
+                  <small style={{ display: 'block', marginTop: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    📐 <strong>Medida sugerida:</strong> 1200 × 675 px (Proporción 16:9 horizontal). Formato JPG o WEBP, ideal para tarjetas de noticias y miniaturas al compartir.
+                  </small>
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -2375,6 +2438,20 @@ const AdminDashboard = ({
                     </small>
                   </div>
 
+                  {/* Row 5b: Fijar / Pinear Cosplayer */}
+                  <div className="form-group" style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '14px 18px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0, fontWeight: 700, fontSize: '0.88rem', color: cosplayerForm.pinned ? 'var(--secondary)' : 'var(--text-primary)' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={Boolean(cosplayerForm.pinned)} 
+                        onChange={(e) => setCosplayerForm({ ...cosplayerForm, pinned: e.target.checked })} 
+                        style={{ width: '18px', height: '18px', accentColor: 'var(--secondary)', cursor: 'pointer' }}
+                      />
+                      <Pin size={16} style={{ color: cosplayerForm.pinned ? 'var(--secondary)' : 'var(--text-muted)', transform: cosplayerForm.pinned ? 'rotate(-25deg)' : 'none' }} />
+                      <span>Fijar / Pinear cosplayer (aparecerá al inicio en la primera página del grid público)</span>
+                    </label>
+                  </div>
+
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
                       {editingCosplayer ? 'Guardar Ficha' : 'Agregar Cosplayer'}
@@ -2472,6 +2549,7 @@ const AdminDashboard = ({
                           <th style={{ padding: '14px 16px' }}>Personaje</th>
                           <th style={{ padding: '14px 16px' }}>Sección / Rol</th>
                           <th style={{ padding: '14px 16px' }}>Instagram</th>
+                          <th style={{ padding: '14px 16px', textAlign: 'center' }}>Fijar</th>
                           <th style={{ padding: '14px 16px', textAlign: 'right' }}>Acciones</th>
                         </tr>
                       </thead>
@@ -2484,7 +2562,24 @@ const AdminDashboard = ({
                               </div>
                             </td>
                             <td style={{ padding: '10px 16px' }}>
-                              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{cos.name}</div>
+                              <div style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {cos.name}
+                                {cos.pinned && (
+                                  <span style={{
+                                    fontSize: '0.68rem',
+                                    fontWeight: 800,
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    background: 'rgba(253, 52, 132, 0.15)',
+                                    color: 'var(--secondary)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}>
+                                    <Pin size={10} style={{ transform: 'rotate(-25deg)' }} /> Fijado
+                                  </span>
+                                )}
+                              </div>
                               {cos.city && (
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                   <MapPin size={11} color="var(--cyan)" /> {cos.city}
@@ -2513,6 +2608,32 @@ const AdminDashboard = ({
                               </div>
                             </td>
                             <td style={{ padding: '10px 16px', color: 'var(--cyan)' }}>@{cos.instagram ? cos.instagram.split('/').filter(Boolean).pop() : 'instagram'}</td>
+                            <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                              <button 
+                                type="button"
+                                onClick={() => handleTogglePinCosplayer(cos.id)}
+                                title={cos.pinned ? 'Quitar de fijados' : 'Fijar al inicio del grid'}
+                                aria-label={cos.pinned ? 'Quitar de fijados' : 'Fijar al inicio'}
+                                style={{
+                                  background: cos.pinned ? 'rgba(253, 52, 132, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                                  color: cos.pinned ? 'var(--secondary)' : 'var(--text-muted)',
+                                  border: '1px solid',
+                                  borderColor: cos.pinned ? 'var(--secondary)' : 'var(--border-color)',
+                                  borderRadius: '8px',
+                                  padding: '6px 10px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  transition: 'var(--transition-fast)'
+                                }}
+                              >
+                                <Pin size={13} style={{ transform: cos.pinned ? 'rotate(-25deg)' : 'none' }} />
+                                {cos.pinned ? 'Fijado' : 'Fijar'}
+                              </button>
+                            </td>
                             <td style={{ padding: '10px 16px', textAlign: 'right' }}>
                               <div style={{ display: 'inline-flex', gap: '8px' }}>
                                 <button 
@@ -2568,6 +2689,21 @@ const AdminDashboard = ({
                               }}>
                                 {cos.type === 'guest' ? '⭐ Invitado VIP' : 'Pasarela'}
                               </span>
+                              {cos.pinned && (
+                                <span style={{
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  background: 'rgba(253, 52, 132, 0.2)',
+                                  color: 'var(--secondary)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
+                                }}>
+                                  <Pin size={9} style={{ transform: 'rotate(-25deg)' }} /> Fijado
+                                </span>
+                              )}
                               {cos.city && (
                                 <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                                   <MapPin size={10} color="var(--cyan)" /> {cos.city}
@@ -2579,22 +2715,42 @@ const AdminDashboard = ({
                             <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>@{cos.instagram ? cos.instagram.split('/').filter(Boolean).pop() : 'instagram'}</span>
                           </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--border-color)' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePinCosplayer(cos.id)}
+                            className="btn btn-secondary"
+                            style={{
+                              minHeight: '40px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              fontSize: '0.82rem',
+                              fontWeight: 700,
+                              background: cos.pinned ? 'rgba(253, 52, 132, 0.15)' : undefined,
+                              color: cos.pinned ? 'var(--secondary)' : undefined,
+                              borderColor: cos.pinned ? 'var(--secondary)' : undefined
+                            }}
+                          >
+                            <Pin size={14} style={{ transform: cos.pinned ? 'rotate(-25deg)' : 'none' }} />
+                            {cos.pinned ? 'Fijado' : 'Fijar al Inicio'}
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleEditCosplayer(cos)}
                             className="btn btn-secondary"
-                            style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem' }}
+                            style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.82rem' }}
                           >
-                            <Edit size={16} /> Editar
+                            <Edit size={14} /> Editar
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteCosplayer(cos.id)}
                             className="btn btn-secondary"
-                            style={{ minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
+                            style={{ minHeight: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--secondary)', borderColor: 'rgba(255, 59, 108, 0.3)' }}
                           >
-                            <Trash2 size={16} /> Eliminar
+                            <Trash2 size={14} /> Eliminar
                           </button>
                         </div>
                       </div>
@@ -2648,7 +2804,12 @@ const AdminDashboard = ({
                     />
                   </div>
                   <div className="form-group">
-                    <label>Logo de la Agrupación</label>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <span>Logo de la Agrupación</span>
+                      <span style={{ fontSize: '0.74rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                        📐 Recomendado: 500 × 500 px (1:1 Cuadrado)
+                      </span>
+                    </label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
                       {communityForm.logo && (
                         <div style={{ width: '60px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
@@ -2666,6 +2827,9 @@ const AdminDashboard = ({
                         />
                       </label>
                     </div>
+                    <small style={{ display: 'block', marginTop: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      📐 <strong>Medida sugerida:</strong> 500 × 500 px (Formato cuadrado 1:1). PNG con fondo transparente o WEBP centrado.
+                    </small>
                   </div>
                 </div>
 
@@ -2972,6 +3136,941 @@ const AdminDashboard = ({
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* 13. ADMIN TAB: EVENTOS HISTÓRICOS (TODOS NUESTROS EVENTOS)     */}
+          {/* ============================================================== */}
+          {adminTab === 'admin_events' && (
+            <div className="admin-card animate-fade-in" style={{ background: 'var(--bg-surface-solid)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Calendar size={20} color="var(--primary)" /> Gestión de Eventos Pasados
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Administra las ediciones de Otakonce que se muestran en la sección "Todos Nuestros Eventos".
+                </p>
+              </div>
+
+              {/* Formulario Agregar / Editar Evento */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!eventForm.name.trim()) {
+                    alert('El nombre del evento es requerido.');
+                    return;
+                  }
+                  const highlightsArray = typeof eventForm.highlights === 'string'
+                    ? eventForm.highlights.split(',').map(h => h.trim()).filter(Boolean)
+                    : (eventForm.highlights || []);
+
+                  if (editingEvent) {
+                    setEvents(events.map(ev => ev.id === editingEvent.id ? { ...ev, ...eventForm, highlights: highlightsArray } : ev));
+                    setEditingEvent(null);
+                    alert('¡Evento actualizado correctamente!');
+                  } else {
+                    const newEvent = {
+                      id: Date.now(),
+                      name: eventForm.name.trim(),
+                      date: eventForm.date.trim() || 'Noviembre 2026',
+                      image: eventForm.image || '/assets/hero_banner.webp',
+                      description: eventForm.description.trim(),
+                      highlights: highlightsArray
+                    };
+                    setEvents([...events, newEvent]);
+                    alert('¡Nuevo evento agregado con éxito!');
+                  }
+                  setEventForm({ name: '', date: '', image: '', description: '', highlights: '' });
+                }}
+                style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-color)', marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}
+              >
+                <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                  {editingEvent ? '✏️ Editando Evento' : '➕ Agregar Nueva Edición de Evento'}
+                </h5>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      NOMBRE DEL EVENTO:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Otakonce 2024"
+                      value={eventForm.name}
+                      onChange={(e) => setEventForm({ ...eventForm, name: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      FECHA / AÑO:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Noviembre 2024"
+                      value={eventForm.date}
+                      onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    DESCRIPCIÓN DEL EVENTO:
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Resumen de lo que ocurrió en esta edición, asistencia, invitados, etc."
+                    value={eventForm.description}
+                    onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    DESTACADOS / HITOS (Separados por coma):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="3.000 asistentes, 30 stands, Pasarela Cosplay"
+                    value={eventForm.highlights}
+                    onChange={(e) => setEventForm({ ...eventForm, highlights: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    <span>FOTO / POSTER DEL EVENTO:</span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                      📐 Recomendado: 1200 × 800 px (3:2 o 16:9)
+                    </span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleSmartImageUpload(e, (url) => setEventForm({ ...eventForm, image: url }))}
+                      style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}
+                    />
+                    {eventForm.image && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>✓ Imagen seleccionada</span>
+                    )}
+                  </div>
+                  <small style={{ display: 'block', marginTop: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    📐 <strong>Medida sugerida:</strong> 1200 × 800 px (Horizontal 3:2 o 16:9). Afiches oficiales o fotografías panorámicas de la edición.
+                  </small>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                  <button type="submit" className="btn btn-primary" style={{ minHeight: '44px', padding: '0 24px' }}>
+                    {editingEvent ? 'Guardar Cambios' : '➕ Agregar Evento'}
+                  </button>
+                  {editingEvent && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingEvent(null);
+                        setEventForm({ name: '', date: '', image: '', description: '', highlights: '' });
+                      }}
+                      className="btn btn-secondary"
+                      style={{ minHeight: '44px' }}
+                    >
+                      Cancelar Edición
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {/* Lista de Eventos Existentes */}
+              <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '14px' }}>
+                Ediciones Registradas ({events.length})
+              </h5>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {events.map((ev) => (
+                  <div
+                    key={ev.id}
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '16px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1 1 300px' }}>
+                      <img
+                        src={ev.image}
+                        alt={ev.name}
+                        style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--border-color)', flexShrink: 0 }}
+                        onError={(e) => { e.target.src = '/assets/hero_banner.webp'; }}
+                      />
+                      <div>
+                        <h6 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '2px' }}>{ev.name}</h6>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--cyan)', fontWeight: 700 }}>📅 {ev.date}</span>
+                        {ev.description && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.3 }}>
+                            {ev.description.slice(0, 100)}...
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingEvent(ev);
+                          setEventForm({
+                            name: ev.name || '',
+                            date: ev.date || '',
+                            image: ev.image || '',
+                            description: ev.description || '',
+                            highlights: Array.isArray(ev.highlights) ? ev.highlights.join(', ') : (ev.highlights || '')
+                          });
+                          window.scrollTo({ top: 300, behavior: 'smooth' });
+                        }}
+                        className="btn btn-secondary"
+                        style={{ minHeight: '38px', padding: '0 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Edit size={14} /> Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`¿Seguro que deseas eliminar "${ev.name}"?`)) {
+                            setEvents(events.filter(e => e.id !== ev.id));
+                          }
+                        }}
+                        className="btn btn-secondary"
+                        style={{ minHeight: '38px', padding: '0 14px', fontSize: '0.85rem', color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* 14. ADMIN TAB: GALERÍA DE FOTOS (FOTOS & LIGHTBOX)             */}
+          {/* ============================================================== */}
+          {adminTab === 'admin_gallery' && (
+            <div className="admin-card animate-fade-in" style={{ background: 'var(--bg-surface-solid)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <ImageIcon size={20} color="var(--primary)" /> Galería Oficial de Fotos
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Sube y gestiona las fotos que aparecen en la galería pública del sitio con lightbox interactivo.
+                </p>
+              </div>
+
+              {/* Subir Nueva Foto */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!photoForm.src) {
+                    alert('Debes subir o indicar una URL para la foto.');
+                    return;
+                  }
+                  const newPhoto = {
+                    id: Date.now(),
+                    src: photoForm.src,
+                    alt: photoForm.alt.trim() || 'Foto de Otakonce',
+                    category: photoForm.category || 'Evento'
+                  };
+                  setPhotos([newPhoto, ...photos]);
+                  setPhotoForm({ src: '', alt: '', category: 'Evento' });
+                  alert('¡Foto agregada a la galería con éxito!');
+                }}
+                style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-color)', marginBottom: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}
+              >
+                <h5 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                  📸 Subir Nueva Foto a la Galería
+                </h5>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      DESCRIPCIÓN / TEXTO ALT:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Pasarela cosplay 2024, Escenario principal..."
+                      value={photoForm.alt}
+                      onChange={(e) => setPhotoForm({ ...photoForm, alt: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      CATEGORÍA:
+                    </label>
+                    <select
+                      value={photoForm.category}
+                      onChange={(e) => setPhotoForm({ ...photoForm, category: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem' }}
+                    >
+                      <option value="Evento">Evento General</option>
+                      <option value="Cosplay">Cosplay & Pasarela</option>
+                      <option value="Gaming">Gaming & Torneos</option>
+                      <option value="Comunidad">Comunidades & K-Pop</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    <span>SELECCIONAR ARCHIVO DE IMAGEN:</span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                      📐 Recomendado: 1200 × 800 px (3:2) u 800 × 1200 px (2:3)
+                    </span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleSmartImageUpload(e, (url) => setPhotoForm({ ...photoForm, src: url }))}
+                    style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}
+                  />
+                  {photoForm.src && (
+                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <img src={photoForm.src} alt="Preview" style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '8px' }} />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--cyan)' }}>✓ Imagen lista para guardar</span>
+                    </div>
+                  )}
+                  <small style={{ display: 'block', marginTop: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    📐 <strong>Medida sugerida:</strong> 1200 × 800 px (Horizontal) u 800 × 1200 px (Vertical). Formato JPG o WEBP (máx. 5MB).
+                  </small>
+                </div>
+
+                <div>
+                  <button type="submit" className="btn btn-primary" style={{ minHeight: '44px', padding: '0 24px' }}>
+                    ➕ Agregar Foto
+                  </button>
+                </div>
+              </form>
+
+              {/* Grilla de Fotos Actuales */}
+              <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '14px' }}>
+                Fotos Publicadas ({photos.length})
+              </h5>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '14px' }}>
+                {photos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      position: 'relative'
+                    }}
+                  >
+                    <div style={{ position: 'relative', paddingTop: '75%' }}>
+                      <img
+                        src={photo.src}
+                        alt={photo.alt}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.src = '/assets/hero_banner.webp'; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm('¿Deseas eliminar esta foto de la galería?')) {
+                            setPhotos(photos.filter(p => p.id !== photo.id));
+                          }
+                        }}
+                        aria-label="Eliminar foto"
+                        style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          background: 'rgba(0,0,0,0.7)',
+                          color: '#FF3B6C',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '32px',
+                          height: '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <div style={{ padding: '8px' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--cyan)', fontWeight: 700 }}>{photo.category}</span>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {photo.alt || 'Sin descripción'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* 15. ADMIN TAB: ¿QUÉ ES OTAKONCE? (SOBRE NOSOTROS)             */}
+          {/* ============================================================== */}
+          {/* ============================================================== */}
+          {/* 15. ADMIN TAB: ¿QUÉ ES OTAKONCE? (SOBRE NOSOTROS)             */}
+          {/* ============================================================== */}
+          {adminTab === 'admin_about' && (
+            <div className="admin-card animate-fade-in" style={{ background: 'var(--bg-surface-solid)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Star size={20} color="var(--primary)" /> Sección "¿Qué es Otakonce?"
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Edita la presentación oficial del evento, misión, fotos del evento y el equipo/staff oficial.
+                </p>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setAboutConfig(aboutForm);
+                  alert('¡Configuración de "¿Qué es Otakonce?" guardada con éxito!');
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}
+              >
+                {/* 1. Textos Generales */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      <span>IMAGEN PRINCIPAL DESTACADA (HERO):</span>
+                      <span style={{ fontSize: '0.74rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                        📐 Recomendado: 1200 × 800 px (3:2 o 16:9 Horizontal)
+                      </span>
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        placeholder="/assets/otakonce_about_hero.jpg o URL"
+                        value={aboutForm.heroImage || ''}
+                        onChange={(e) => setAboutForm({ ...aboutForm, heroImage: e.target.value })}
+                        style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
+                      />
+                      <label
+                        className="btn btn-secondary"
+                        style={{ minHeight: 'unset', height: '42px', padding: '0 16px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.85rem' }}
+                      >
+                        <Upload size={16} style={{ marginRight: '6px' }} /> Subir
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) handleSmartImageUpload(file, (url) => setAboutForm(prev => ({ ...prev, heroImage: url })));
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <small style={{ display: 'block', marginTop: '6px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      📐 <strong>Medida sugerida:</strong> 1200 × 800 px (Proporción 3:2 o 16:9). Afiche oficial del evento o fotografía representativa del escenario.
+                    </small>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      DESCRIPCIÓN GENERAL:
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={aboutForm.description || ''}
+                      onChange={(e) => setAboutForm({ ...aboutForm, description: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', resize: 'vertical' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      MISIÓN:
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={aboutForm.mission || ''}
+                      onChange={(e) => setAboutForm({ ...aboutForm, mission: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', resize: 'vertical' }}
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Fotos de ¿Qué es Otakonce? */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <h5 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        <Camera size={18} color="var(--secondary)" /> Galería de Fotos del Evento
+                      </h5>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                        Fotos que acompañan la explicación de qué es Otakonce.
+                      </p>
+                    </div>
+
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      <input
+                        type="checkbox"
+                        checked={aboutForm.showPhotos !== false}
+                        onChange={(e) => setAboutForm({ ...aboutForm, showPhotos: e.target.checked })}
+                        style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
+                      />
+                      Mostrar fotos en la página
+                    </label>
+                  </div>
+
+                  {/* Formulario para añadir foto */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px', marginBottom: '16px', alignItems: 'end' }}>
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        <span>IMAGEN (URL O ARCHIVO):</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                          📐 Recomendado: 1200 × 800 px (3:2)
+                        </span>
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                          type="text"
+                          placeholder="/assets/gallery_1.webp o URL"
+                          value={newAboutPhoto.url}
+                          onChange={(e) => setNewAboutPhoto({ ...newAboutPhoto, url: e.target.value })}
+                          style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                        />
+                        <label
+                          className="btn btn-secondary"
+                          style={{ minHeight: 'unset', height: '36px', padding: '0 12px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                          <Upload size={14} />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) handleSmartImageUpload(file, (url) => setNewAboutPhoto(p => ({ ...p, url })));
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <small style={{ display: 'block', marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        📐 <strong>Medida sugerida:</strong> 1200 × 800 px (Proporción 3:2 horizontal).
+                      </small>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        PIE DE FOTO / DESCRIPCIÓN:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. El público disfrutando..."
+                        value={newAboutPhoto.caption}
+                        onChange={(e) => setNewAboutPhoto({ ...newAboutPhoto, caption: e.target.value })}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newAboutPhoto.url) {
+                            alert('Ingresa una URL o sube una imagen');
+                            return;
+                          }
+                          const updated = [...(aboutForm.photos || []), { id: Date.now(), ...newAboutPhoto }];
+                          setAboutForm({ ...aboutForm, photos: updated });
+                          setNewAboutPhoto({ url: '', caption: '' });
+                        }}
+                        className="btn btn-secondary"
+                        style={{ width: '100%', height: '38px', minHeight: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 700 }}
+                      >
+                        <Plus size={16} /> Añadir Foto
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Lista de fotos actuales */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+                    {(aboutForm.photos || []).map((photo, idx) => (
+                      <div
+                        key={photo.id || idx}
+                        style={{
+                          background: 'rgba(0,0,0,0.4)',
+                          borderRadius: '10px',
+                          overflow: 'hidden',
+                          border: '1px solid var(--border-color)',
+                          position: 'relative'
+                        }}
+                      >
+                        <div style={{ height: '110px', position: 'relative' }}>
+                          <img
+                            src={photo.url}
+                            alt={photo.caption}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { e.target.src = '/assets/hero_banner.webp'; }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (aboutForm.photos || []).filter((_, i) => i !== idx);
+                              setAboutForm({ ...aboutForm, photos: updated });
+                            }}
+                            aria-label="Eliminar foto"
+                            style={{
+                              position: 'absolute',
+                              top: '6px',
+                              right: '6px',
+                              background: 'rgba(0,0,0,0.7)',
+                              color: '#FF3B6C',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '28px',
+                              height: '28px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <div style={{ padding: '8px' }}>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {photo.caption || 'Sin pie de foto'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Equipo & Staff de Otakonce (Desactivable por defecto) */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <h5 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                        <Users size={18} color="var(--cyan)" /> Equipo & Staff de Otakonce
+                      </h5>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                        Administra a los organizadores y coordinadores de la página.
+                      </p>
+                    </div>
+
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 800, color: aboutForm.showStaff ? 'var(--cyan)' : 'var(--text-muted)' }}>
+                      <input
+                        type="checkbox"
+                        checked={aboutForm.showStaff === true}
+                        onChange={(e) => setAboutForm({ ...aboutForm, showStaff: e.target.checked })}
+                        style={{ width: '18px', height: '18px', accentColor: 'var(--cyan)' }}
+                      />
+                      Activar sección Staff en la página web
+                    </label>
+                  </div>
+
+                  {/* Estado actual de visibilidad */}
+                  <div
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      marginBottom: '18px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      background: aboutForm.showStaff ? 'rgba(0, 163, 255, 0.1)' : 'rgba(255, 180, 0, 0.1)',
+                      border: `1px solid ${aboutForm.showStaff ? 'rgba(0, 163, 255, 0.3)' : 'rgba(255, 180, 0, 0.3)'}`,
+                      color: aboutForm.showStaff ? 'var(--cyan)' : '#F59E0B',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {aboutForm.showStaff ? (
+                      <>
+                        <CheckCircle2 size={16} /> La sección de Staff está actualmente ACTIVADA y visible para todos los visitantes en la web.
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle size={16} /> La sección de Staff está actualmente DESACTIVADA (oculta al público). Puedes gestionarla aquí y activarla con la casilla de arriba cuando desees.
+                      </>
+                    )}
+                  </div>
+
+                  {/* Formulario para añadir miembro del staff */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px', alignItems: 'end' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        NOMBRE:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. Cristóbal Sandoval"
+                        value={newStaffMember.name}
+                        onChange={(e) => setNewStaffMember({ ...newStaffMember, name: e.target.value })}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        CARGO / ROL:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej. Producción General"
+                        value={newStaffMember.role}
+                        onChange={(e) => setNewStaffMember({ ...newStaffMember, role: e.target.value })}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        <span>FOTO (URL O ARCHIVO):</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--cyan)', background: 'rgba(0, 240, 255, 0.08)', border: '1px solid rgba(0, 240, 255, 0.25)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                          📐 Recomendado: 400 × 400 px (1:1 Cuadrado)
+                        </span>
+                      </label>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <input
+                          type="text"
+                          placeholder="URL foto (opcional)"
+                          value={newStaffMember.image}
+                          onChange={(e) => setNewStaffMember({ ...newStaffMember, image: e.target.value })}
+                          style={{ flex: 1, padding: '8px 10px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                        />
+                        <label
+                          className="btn btn-secondary"
+                          style={{ minHeight: 'unset', height: '36px', padding: '0 10px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                          <Upload size={14} />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) handleSmartImageUpload(file, (url) => setNewStaffMember(s => ({ ...s, image: url })));
+                            }}
+                          />
+                        </label>
+                      </div>
+                      <small style={{ display: 'block', marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        📐 <strong>Medida sugerida:</strong> 400 × 400 px (Cuadrado 1:1). Retrato centrado del miembro del staff (JPG/PNG).
+                      </small>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                        INSTAGRAM:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="https://instagram.com/..."
+                        value={newStaffMember.instagram}
+                        onChange={(e) => setNewStaffMember({ ...newStaffMember, instagram: e.target.value })}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newStaffMember.name || !newStaffMember.role) {
+                            alert('Ingresa al menos el nombre y rol del miembro del staff');
+                            return;
+                          }
+                          const updated = [...(aboutForm.staff || []), { id: Date.now(), ...newStaffMember }];
+                          setAboutForm({ ...aboutForm, staff: updated });
+                          setNewStaffMember({ name: '', role: '', image: '', instagram: '' });
+                        }}
+                        className="btn btn-secondary"
+                        style={{ height: '38px', minHeight: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 750, padding: '0 20px' }}
+                      >
+                        <Plus size={16} /> Añadir Miembro al Staff
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Lista de miembros del staff */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+                    {(aboutForm.staff || []).map((member, idx) => (
+                      <div
+                        key={member.id || idx}
+                        style={{
+                          background: 'rgba(0,0,0,0.4)',
+                          borderRadius: '12px',
+                          padding: '14px',
+                          border: '1px solid var(--border-color)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          position: 'relative'
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '46px',
+                            height: '46px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            border: '1.5px solid var(--cyan)',
+                            background: 'rgba(255,255,255,0.05)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}
+                        >
+                          {member.image ? (
+                            <img src={member.image} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                          ) : (
+                            <Users size={20} color="var(--text-muted)" />
+                          )}
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h6 style={{ margin: 0, fontSize: '0.88rem', color: '#FFF', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {member.name}
+                          </h6>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--cyan)', fontWeight: 700 }}>
+                            {member.role}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (aboutForm.staff || []).filter((_, i) => i !== idx);
+                            setAboutForm({ ...aboutForm, staff: updated });
+                          }}
+                          aria-label="Eliminar miembro"
+                          style={{
+                            background: 'transparent',
+                            color: '#FF3B6C',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botón de guardado principal */}
+                <div>
+                  <button type="submit" className="btn btn-primary" style={{ minHeight: '46px', padding: '0 32px', fontSize: '0.95rem', fontWeight: 800 }}>
+                    Guardar Cambios de "¿Qué es Otakonce?"
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* 16. ADMIN TAB: INFORMACIÓN DE CONTACTO                        */}
+          {/* ============================================================== */}
+          {adminTab === 'admin_contact' && (
+            <div className="admin-card animate-fade-in" style={{ background: 'var(--bg-surface-solid)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Users size={20} color="var(--primary)" /> Información de Contacto
+                </h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  Configura los canales oficiales de contacto que se muestran en la sección dedicada y en el pie de página.
+                </p>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setContactConfig(contactForm);
+                  alert('¡Información de contacto guardada exitosamente!');
+                }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
+              >
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    CORREO ELECTRÓNICO OFICIAL:
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="contacto@otakonce.cl"
+                    value={contactForm.email || ''}
+                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    ENLACE A INSTAGRAM OFICIAL:
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://www.instagram.com/laotakonce/"
+                    value={contactForm.instagram || ''}
+                    onChange={(e) => setContactForm({ ...contactForm, instagram: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      UBICACIÓN DEL EVENTO:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Gimnasio USM Sede Concepción"
+                      value={contactForm.location || ''}
+                      onChange={(e) => setContactForm({ ...contactForm, location: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                      DIRECCIÓN EXACTA:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Av. España 1680, Concepción, Chile"
+                      value={contactForm.locationDetail || ''}
+                      onChange={(e) => setContactForm({ ...contactForm, locationDetail: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <button type="submit" className="btn btn-primary" style={{ minHeight: '44px', padding: '0 28px' }}>
+                    Guardar Contacto
+                  </button>
+                </div>
+              </form>
             </div>
           )}
 

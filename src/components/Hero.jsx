@@ -52,8 +52,6 @@ const Hero = ({ config, onNavigate, banners }) => {  const [timeLeft, setTimeLef
   });
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  // Sin botón de pausa: la rotación es continua, salvo reduced-motion (accesibilidad)
-  const prefersReducedMotion = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   // Precarga todas las imágenes para que el crossfade nunca muestre blanco
   useEffect(() => {
@@ -92,14 +90,14 @@ const Hero = ({ config, onNavigate, banners }) => {  const [timeLeft, setTimeLef
     return () => clearInterval(interval);
   }, [config.countdownDate]);
 
-  // Auto-rotate banners (siempre activo, salvo reduced-motion)
+  // Auto-rotate banners (siempre activo)
   useEffect(() => {
-    if (!banners || banners.length <= 1 || prefersReducedMotion) return;
+    if (!banners || banners.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % banners.length);
     }, 6000); // 6 seconds slide duration
     return () => clearInterval(interval);
-  }, [banners, prefersReducedMotion]);
+  }, [banners]);
 
   const activeBanner = banners && banners.length > 0 && banners[currentSlide]
     ? banners[currentSlide]

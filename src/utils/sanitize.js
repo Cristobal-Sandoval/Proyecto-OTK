@@ -79,6 +79,7 @@ export const sanitizeCosplayer = (f) => ({
   type: f.type === 'community' ? 'community' : 'guest',
   role: trimStr(f.role, 80),
   city: trimStr(f.city, 60),
+  pinned: Boolean(f.pinned),
 });
 
 export const sanitizeCommunity = (f) => ({
