@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { ArrowUp, Cat } from 'lucide-react';
 
 const Instagram = ({ size = 20, ...props }) => (
@@ -21,32 +21,6 @@ const Instagram = ({ size = 20, ...props }) => (
 );
 
 const Footer = ({ setActiveTab, contactConfig }) => {
-  const pressTimerRef = useRef(null);
-
-  const triggerAdminPortal = () => {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([80, 50, 80]);
-    }
-    sessionStorage.removeItem('otakonce_admin_auth');
-    window.location.hash = 'stf-portal';
-    setActiveTab('admin');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleStartPress = () => {
-    // Requiere mantener presionado durante 5 segundos completos
-    pressTimerRef.current = setTimeout(() => {
-      triggerAdminPortal();
-    }, 5000);
-  };
-
-  const handleEndPress = () => {
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
-  };
-
   const handleBrandClick = () => {
     handleNavClick('home');
   };
@@ -84,19 +58,13 @@ const Footer = ({ setActiveTab, contactConfig }) => {
           textAlign: 'center'
         }}
       >
-        {/* Branding & Logo with secret stealth admin access (5-second hold) */}
+        {/* Branding & Logo */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
           <div
             role="button"
             tabIndex={0}
             onClick={handleBrandClick}
             onKeyDown={handleBrandKeyDown}
-            onTouchStart={handleStartPress}
-            onTouchEnd={handleEndPress}
-            onTouchCancel={handleEndPress}
-            onMouseDown={handleStartPress}
-            onMouseUp={handleEndPress}
-            onMouseLeave={handleEndPress}
             aria-label="Otakonce 2026 — ir al inicio"
             style={{
               display: 'inline-flex',
@@ -122,8 +90,8 @@ const Footer = ({ setActiveTab, contactConfig }) => {
               border: '2px solid var(--border-pop, #0F172A)', 
               padding: '3px 8px', 
               borderRadius: '7px', 
-              color: '#FFFFFF', 
-              background: 'var(--secondary)', 
+              color: 'var(--btn-primary-text)', 
+              background: 'var(--btn-primary-bg)', 
               boxShadow: '2px 2px 0px var(--border-pop, #0F172A)',
               letterSpacing: '0.04em'
             }}>

@@ -90,8 +90,9 @@ const ScheduleTimeline = ({ schedule = [] }) => {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        color: 'var(--secondary)',
-                        background: 'rgba(236, 72, 153, 0.1)',
+                        color: 'var(--accent-strong)',
+                        background: 'var(--countdown-box-bg)',
+                        border: '1px solid var(--countdown-box-border)',
                         padding: '3px 8px',
                         borderRadius: '6px'
                       }}
@@ -104,8 +105,9 @@ const ScheduleTimeline = ({ schedule = [] }) => {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        color: 'var(--cyan)',
-                        background: 'rgba(6, 182, 212, 0.1)',
+                        color: 'var(--accent-strong)',
+                        background: 'var(--countdown-box-bg)',
+                        border: '1px solid var(--countdown-box-border)',
                         padding: '3px 8px',
                         borderRadius: '6px'
                       }}

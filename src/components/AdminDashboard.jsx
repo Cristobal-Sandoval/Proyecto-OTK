@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Lock, LayoutDashboard, Settings, Megaphone, Newspaper, Camera, Users, Calendar, 
-  Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, Copy, CheckCircle2, Shield,
+  Trash2, Edit, Plus, Check, LogOut, Upload, Image as ImageIcon, Sparkles, CheckCircle2, Shield,
   Cloud, ExternalLink, Loader2, AlertCircle, ChevronDown, Layers, Star, MapPin, UserCheck, RefreshCw, Pin
 } from 'lucide-react';
 import { SEASONAL_THEMES } from '../data/defaults';
@@ -55,7 +55,6 @@ const AdminDashboard = ({
   
   // Dashboard Sub-navigation Tabs
   const [adminTab, setAdminTab] = useState('themes'); // themes, config, hero_banners, banner, news, cosplayers, communities, schedule
-  const [copiedUrl, setCopiedUrl] = useState(false);
   const [themeSuccessMsg, setThemeSuccessMsg] = useState('');
 
   // Form states
@@ -69,13 +68,6 @@ const AdminDashboard = ({
   const [passError, setPassError] = useState('');
   const [passSuccess, setPassSuccess] = useState('');
   const [isChangingPass, setIsChangingPass] = useState(false);
-
-  const handleCopySecretUrl = () => {
-    const secretUrl = `${window.location.origin}/#stf-portal`;
-    navigator.clipboard.writeText(secretUrl);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 3000);
-  };
 
   const handleSelectTheme = (themeId) => {
     const updated = { ...configForm, themeMode: themeId };
@@ -812,11 +804,11 @@ const AdminDashboard = ({
                 onClick={() => setAdminTab(tab.id)}
                 style={{
                   background: isActive 
-                    ? 'linear-gradient(135deg, var(--cyan) 0%, var(--secondary) 100%)' 
+                    ? 'var(--filter-btn-active-bg)' 
                     : 'var(--bg-surface-solid)',
                   border: '1.5px solid',
                   borderColor: isActive ? 'transparent' : 'var(--border-color)',
-                  color: isActive ? '#FFFFFF' : 'var(--text-primary)',
+                  color: isActive ? 'var(--filter-btn-active-text)' : 'var(--text-primary)',
                   padding: '10px 18px',
                   borderRadius: '12px',
                   cursor: 'pointer',
@@ -835,8 +827,8 @@ const AdminDashboard = ({
                 {tab.label}
                 {typeof tab.badge === 'number' && tab.badge > 0 && (
                   <span style={{
-                    background: isActive ? '#FFFFFF' : 'var(--secondary)',
-                    color: isActive ? 'var(--secondary)' : '#FFFFFF',
+                    background: isActive ? '#FFFFFF' : 'var(--btn-primary-bg)',
+                    color: isActive ? '#0F172A' : 'var(--btn-primary-text)',
                     fontSize: '0.72rem',
                     fontWeight: 900,
                     padding: '2px 7px',
@@ -923,7 +915,7 @@ const AdminDashboard = ({
                           {isActive ? (
                             <span 
                               style={{
-                                background: '#10B981',
+                                background: '#047857',
                                 color: '#FFFFFF',
                                 fontSize: '0.72rem',
                                 fontWeight: 900,
@@ -977,9 +969,9 @@ const AdminDashboard = ({
                           fontWeight: 700,
                           fontSize: '0.85rem',
                           background: isActive 
-                            ? 'rgba(16, 185, 129, 0.2)' 
-                            : 'linear-gradient(135deg, var(--cyan) 0%, var(--secondary) 100%)',
-                          color: isActive ? '#10B981' : '#FFFFFF',
+                            ? 'var(--countdown-box-bg)' 
+                            : 'var(--btn-primary-bg)',
+                          color: isActive ? 'var(--accent-strong)' : 'var(--btn-primary-text)',
                           transition: 'var(--transition-fast)'
                         }}
                       >
@@ -1010,36 +1002,10 @@ const AdminDashboard = ({
                   </h4>
                 </div>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  El botón de administración ha sido <strong>completamente removido</strong> del pie de página público. Solo quienes conozcan el enlace secreto o el atajo de teclado pueden acceder:
+                  El acceso al panel es por gestos y palabra de desbloqueo (sin enlaces públicos ni atajos visibles). La autenticación real es tu contraseña server-side.
                 </p>
-                
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    readOnly
-                    value={`${window.location.origin}/#stf-portal`}
-                    style={{
-                      flex: '1 1 280px',
-                      padding: '10px 14px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color)',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.88rem',
-                      fontFamily: 'monospace'
-                    }}
-                  />
-                  <button
-                    onClick={handleCopySecretUrl}
-                    className="btn btn-secondary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}
-                  >
-                    {copiedUrl ? <CheckCircle2 size={16} color="#10B981" /> : <Copy size={16} />}
-                    {copiedUrl ? '¡Copiado!' : 'Copiar Enlace Secreto'}
-                  </button>
-                </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  💡 <strong>Atajo de teclado invisible:</strong> Presiona <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Ctrl + Shift + A</kbd> (o <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px' }}>Cmd + Shift + A</kbd> en Mac) en cualquier pantalla para abrir o cerrar el panel.
+                  💡 Para activar la palabra de desbloqueo genera su hash con <code>npm run gen:unlock -- "tu-palabra"</code> y pégalo en <code>src/hooks/useStealthAdmin.js</code>.
                 </div>
               </div>
             </div>
@@ -1109,13 +1075,13 @@ const AdminDashboard = ({
                           }}
                         />
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--secondary)', letterSpacing: '0.04em' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-strong)', letterSpacing: '0.04em' }}>
                             {app.city || 'Concepción'}
                           </span>
                           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '2px 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {app.name}
                           </h4>
-                          <p style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700, margin: '0 0 6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <p style={{ fontSize: '0.85rem', color: 'var(--accent-strong)', fontWeight: 700, margin: '0 0 6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {app.character}
                           </p>
                           {app.instagram && (
@@ -1236,12 +1202,12 @@ const AdminDashboard = ({
                             onError={(e) => { e.target.style.display = 'none'; }}
                           />
                         ) : (
-                          <div style={{ width: '72px', height: '72px', borderRadius: '14px', background: 'linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                          <div style={{ width: '72px', height: '72px', borderRadius: '14px', background: 'var(--btn-primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, color: 'var(--btn-primary-text)', flexShrink: 0 }}>
                             {String(app.name || '?').trim().charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--cyan)', letterSpacing: '0.04em' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent-strong)', letterSpacing: '0.04em' }}>
                             {app.type || 'Comunidad'}
                           </span>
                           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, margin: '2px 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1353,12 +1319,12 @@ const AdminDashboard = ({
 
                 <div>
                   <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                    Atajo Invisible
+                    Apertura del Panel
                   </span>
                   <div style={{ marginTop: '4px' }}>
-                    <kbd style={{ background: 'rgba(255,255,255,0.15)', padding: '3px 8px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 700 }}>
-                      Ctrl + Shift + A
-                    </kbd>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      Por gestos y palabra de desbloqueo (sin enlaces ni atajos visibles).
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2355,7 +2321,7 @@ const AdminDashboard = ({
                       )}
                       <label 
                         className="btn btn-secondary" 
-                        style={{ cursor: 'pointer', padding: '10px 16px', fontSize: '0.85rem', display: 'flex', gap: '6px' }}
+                        style={{ cursor: 'pointer', padding: '10px 16px', fontSize: '0.85rem', display: 'flex', gap: '6px', maxWidth: '100%' }}
                       >
                         <Upload size={16} /> Subir Imagen Principal
                         <input 
@@ -2406,7 +2372,7 @@ const AdminDashboard = ({
                       ))}
                       <label 
                         className="btn btn-secondary" 
-                        style={{ cursor: 'pointer', padding: '8px 14px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        style={{ cursor: 'pointer', padding: '8px 14px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px', maxWidth: '100%' }}
                       >
                         <Upload size={14} /> + Agregar Foto a la Galería
                         <input 
@@ -2452,8 +2418,8 @@ const AdminDashboard = ({
                     </label>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <button type="submit" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '0.9rem', flex: '1 1 160px' }}>
                       {editingCosplayer ? 'Guardar Ficha' : 'Agregar Cosplayer'}
                     </button>
                     {editingCosplayer && (
@@ -2491,10 +2457,10 @@ const AdminDashboard = ({
                           fontSize: '0.8rem',
                           fontWeight: 700,
                           cursor: 'pointer',
-                          background: cosplayerAdminFilter === 'all' ? 'var(--primary)' : 'rgba(255,255,255,0.04)',
-                          color: cosplayerAdminFilter === 'all' ? '#0F172A' : 'var(--text-secondary)',
+                          background: cosplayerAdminFilter === 'all' ? 'var(--filter-btn-active-bg)' : 'rgba(255,255,255,0.04)',
+                          color: cosplayerAdminFilter === 'all' ? 'var(--filter-btn-active-text)' : 'var(--text-secondary)',
                           border: '1px solid',
-                          borderColor: cosplayerAdminFilter === 'all' ? 'var(--primary)' : 'var(--border-color)',
+                          borderColor: cosplayerAdminFilter === 'all' ? 'transparent' : 'var(--border-color)',
                           transition: 'var(--transition-fast)'
                         }}
                       >
@@ -2509,8 +2475,8 @@ const AdminDashboard = ({
                           fontSize: '0.8rem',
                           fontWeight: 700,
                           cursor: 'pointer',
-                          background: cosplayerAdminFilter === 'guest' ? 'linear-gradient(135deg, #FFE200 0%, #FF3B6C 100%)' : 'rgba(255,255,255,0.04)',
-                          color: cosplayerAdminFilter === 'guest' ? '#0F172A' : 'var(--text-secondary)',
+                          background: cosplayerAdminFilter === 'guest' ? 'var(--filter-btn-active-bg)' : 'rgba(255,255,255,0.04)',
+                          color: cosplayerAdminFilter === 'guest' ? 'var(--filter-btn-active-text)' : 'var(--text-secondary)',
                           border: '1px solid',
                           borderColor: cosplayerAdminFilter === 'guest' ? 'transparent' : 'var(--border-color)',
                           transition: 'var(--transition-fast)'
@@ -2527,10 +2493,10 @@ const AdminDashboard = ({
                           fontSize: '0.8rem',
                           fontWeight: 700,
                           cursor: 'pointer',
-                          background: cosplayerAdminFilter === 'community' ? 'var(--cyan)' : 'rgba(255,255,255,0.04)',
-                          color: cosplayerAdminFilter === 'community' ? '#0F172A' : 'var(--text-secondary)',
+                          background: cosplayerAdminFilter === 'community' ? 'var(--filter-btn-active-bg)' : 'rgba(255,255,255,0.04)',
+                          color: cosplayerAdminFilter === 'community' ? 'var(--filter-btn-active-text)' : 'var(--text-secondary)',
                           border: '1px solid',
-                          borderColor: cosplayerAdminFilter === 'community' ? 'var(--cyan)' : 'var(--border-color)',
+                          borderColor: cosplayerAdminFilter === 'community' ? 'transparent' : 'var(--border-color)',
                           transition: 'var(--transition-fast)'
                         }}
                       >
@@ -3441,7 +3407,7 @@ const AdminDashboard = ({
                     type="file"
                     accept="image/*"
                     onChange={(e) => handleSmartImageUpload(e, (url) => setPhotoForm({ ...photoForm, src: url }))}
-                    style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}
+                    style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', width: '100%', maxWidth: '100%', minWidth: 0 }}
                   />
                   {photoForm.src && (
                     <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -3455,7 +3421,7 @@ const AdminDashboard = ({
                 </div>
 
                 <div>
-                  <button type="submit" className="btn btn-primary" style={{ minHeight: '44px', padding: '0 24px' }}>
+                  <button type="submit" className="btn btn-primary" style={{ minHeight: '44px', padding: '0 24px', width: '100%' }}>
                     ➕ Agregar Foto
                   </button>
                 </div>
@@ -3557,17 +3523,17 @@ const AdminDashboard = ({
                         📐 Recomendado: 1200 × 800 px (3:2 o 16:9 Horizontal)
                       </span>
                     </label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <input
                         type="text"
-                        placeholder="/assets/otakonce_about_hero.jpg o URL"
+                        placeholder="/assets/otakonce_about_hero.webp o URL"
                         value={aboutForm.heroImage || ''}
                         onChange={(e) => setAboutForm({ ...aboutForm, heroImage: e.target.value })}
-                        style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
+                        style={{ flex: 1, minWidth: 0, padding: '10px 14px', borderRadius: '10px', background: 'var(--bg-surface-solid)', border: '1.5px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.95rem' }}
                       />
                       <label
                         className="btn btn-secondary"
-                        style={{ minHeight: 'unset', height: '42px', padding: '0 16px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.85rem' }}
+                        style={{ minHeight: 'unset', height: '42px', padding: '0 16px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.85rem', flexShrink: 0 }}
                       >
                         <Upload size={16} style={{ marginRight: '6px' }} /> Subir
                         <input
@@ -3643,17 +3609,17 @@ const AdminDashboard = ({
                           📐 Recomendado: 1200 × 800 px (3:2)
                         </span>
                       </label>
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <input
                           type="text"
                           placeholder="/assets/gallery_1.webp o URL"
                           value={newAboutPhoto.url}
                           onChange={(e) => setNewAboutPhoto({ ...newAboutPhoto, url: e.target.value })}
-                          style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                          style={{ flex: 1, minWidth: 0, padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                         />
                         <label
                           className="btn btn-secondary"
-                          style={{ minHeight: 'unset', height: '36px', padding: '0 12px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.8rem' }}
+                          style={{ minHeight: 'unset', height: '36px', padding: '0 12px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.8rem', flexShrink: 0 }}
                         >
                           <Upload size={14} />
                           <input
@@ -3792,9 +3758,9 @@ const AdminDashboard = ({
                       marginBottom: '18px',
                       fontSize: '0.82rem',
                       fontWeight: 700,
-                      background: aboutForm.showStaff ? 'rgba(0, 163, 255, 0.1)' : 'rgba(255, 180, 0, 0.1)',
-                      border: `1px solid ${aboutForm.showStaff ? 'rgba(0, 163, 255, 0.3)' : 'rgba(255, 180, 0, 0.3)'}`,
-                      color: aboutForm.showStaff ? 'var(--cyan)' : '#F59E0B',
+                      background: aboutForm.showStaff ? 'var(--countdown-box-bg)' : 'rgba(255, 180, 0, 0.1)',
+                      border: `1px solid ${aboutForm.showStaff ? 'var(--countdown-box-border)' : 'rgba(255, 180, 0, 0.3)'}`,
+                      color: aboutForm.showStaff ? 'var(--accent-strong)' : 'var(--text-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
@@ -3846,17 +3812,17 @@ const AdminDashboard = ({
                           📐 Recomendado: 400 × 400 px (1:1 Cuadrado)
                         </span>
                       </label>
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         <input
                           type="text"
                           placeholder="URL foto (opcional)"
                           value={newStaffMember.image}
                           onChange={(e) => setNewStaffMember({ ...newStaffMember, image: e.target.value })}
-                          style={{ flex: 1, padding: '8px 10px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                          style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: '8px', background: 'var(--bg-surface-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                         />
                         <label
                           className="btn btn-secondary"
-                          style={{ minHeight: 'unset', height: '36px', padding: '0 10px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.8rem' }}
+                          style={{ minHeight: 'unset', height: '36px', padding: '0 10px', display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.8rem', flexShrink: 0 }}
                         >
                           <Upload size={14} />
                           <input
@@ -3901,7 +3867,7 @@ const AdminDashboard = ({
                           setNewStaffMember({ name: '', role: '', image: '', instagram: '' });
                         }}
                         className="btn btn-secondary"
-                        style={{ height: '38px', minHeight: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 750, padding: '0 20px' }}
+                        style={{ height: '38px', minHeight: 'unset', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 750, padding: '0 20px', width: '100%' }}
                       >
                         <Plus size={16} /> Añadir Miembro al Staff
                       </button>

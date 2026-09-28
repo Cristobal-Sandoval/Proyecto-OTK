@@ -65,7 +65,9 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
           zIndex: 100,
           display: 'flex',
           alignItems: 'center',
-          background: scrolled ? 'var(--bg-surface)' : 'transparent',
+          // Fondo sólido siempre: el header transparente quedaba sobre fondos
+          // claros (ej. Contáctanos) y el nav se volvía ilegible según la skin
+          background: 'var(--bg-surface)',
           borderBottom: '1px solid',
           borderColor: scrolled ? 'var(--border-color)' : 'transparent',
           backdropFilter: 'blur(var(--glass-blur))',
@@ -115,8 +117,8 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
             border: '2px solid var(--border-pop, #0F172A)', 
             padding: '2px 6px', 
             borderRadius: '6px', 
-            color: '#FFFFFF', 
-            background: 'var(--secondary)', 
+            color: 'var(--btn-primary-text)', 
+            background: 'var(--btn-primary-bg)', 
             boxShadow: '2px 2px 0px var(--border-pop, #0F172A)',
             letterSpacing: '0.04em',
             whiteSpace: 'nowrap'
@@ -258,7 +260,7 @@ const Header = ({ activeTab, setActiveTab, topOffset }) => {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(1rem, 2.2vh, 1.15rem)', color: 'var(--text-primary)' }}>Menú</span>
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: 'var(--secondary)', color: '#FFF' }}>2026</span>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: 'var(--btn-primary-bg)', color: 'var(--btn-primary-text)' }}>2026</span>
               </div>
               <button
                 onClick={() => setIsOpen(false)}

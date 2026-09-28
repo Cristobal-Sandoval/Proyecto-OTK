@@ -58,7 +58,7 @@ const ContactSection = ({ contactConfig }) => {
         width: '100%'
       }}
     >
-      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '48px' }} data-admin-hotspot="contacto">
         <h2
           className="text-gradient"
           style={{

@@ -420,12 +420,13 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '6px',
-                                color: 'var(--secondary)',
+                                color: 'var(--accent-strong)',
                                 fontSize: '0.82rem',
                                 fontWeight: 700,
                                 padding: '4px 8px',
                                 borderRadius: '6px',
-                                background: 'rgba(253, 52, 132, 0.12)'
+                                background: 'var(--countdown-box-bg)',
+                                border: '1px solid var(--countdown-box-border)'
                               }}
                               className="hover-glow"
                             >
@@ -627,12 +628,13 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '5px',
-                            color: 'var(--secondary)',
+                            color: 'var(--accent-strong)',
                             fontSize: '0.8rem',
                             fontWeight: 700,
                             padding: '5px 10px',
                             borderRadius: '8px',
-                            background: 'rgba(253, 52, 132, 0.12)'
+                            background: 'var(--countdown-box-bg)',
+                            border: '1px solid var(--countdown-box-border)'
                           }}
                           className="hover-glow"
                         >
@@ -690,6 +692,13 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
             onClick={(e) => e.stopPropagation()}
             className="guest-modal-card"
           >
+            <button
+              onClick={() => setActiveModalGuest(null)}
+              aria-label="Cerrar modal"
+              className="guest-modal-close-btn"
+            >
+              <X size={20} />
+            </button>
             {/* LEFT COLUMN: FULL PHOTO BOX */}
             <div className="guest-modal-photo-box">
               <img 
@@ -718,22 +727,14 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
 
             {/* RIGHT COLUMN: INFO & ACTIONS */}
             <div className="guest-modal-info-box">
-              <button
-                onClick={() => setActiveModalGuest(null)}
-                aria-label="Cerrar modal"
-                className="guest-modal-close-btn"
-              >
-                <X size={20} />
-              </button>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '36px' }}>
-                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '0.04em' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingRight: '52px' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-strong)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '0.04em' }}>
                   <Star size={12} fill="currentColor" /> {activeModalGuest.role || 'Invitado Especial'}
                 </span>
                 <h2 style={{ fontSize: 'clamp(1.4rem, 2.8vw, 1.85rem)', fontWeight: 850, margin: '2px 0 0', color: 'var(--text-primary)', lineHeight: 1.2 }}>
                   {activeModalGuest.name}
                 </h2>
-                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--secondary)' }}>
+                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--accent-strong)' }}>
                   {activeModalGuest.character}
                 </span>
               </div>
@@ -1014,9 +1015,9 @@ const GuestsSection = ({ guests = [], mode = 'carousel', onNavigate, onSelectGue
           position: absolute;
           top: 16px;
           right: 16px;
-          width: 40px;
-          height: 40px;
-          min-height: 40px;
+          width: 44px;
+          height: 44px;
+          min-height: 44px;
           border-radius: 50%;
           background: rgba(15, 23, 42, 0.08);
           border: 1px solid var(--border-color);

@@ -331,8 +331,8 @@ const EventsShowcase = ({ events = [], mode = 'preview', onNavigate }) => {
                             position: 'absolute',
                             top: '12px',
                             left: '12px',
-                            background: 'var(--primary)',
-                            color: '#000',
+                            background: 'var(--btn-primary-bg)',
+                            color: 'var(--btn-primary-text)',
                             padding: '4px 12px',
                             borderRadius: '20px',
                             fontSize: '0.75rem',
@@ -360,10 +360,10 @@ const EventsShowcase = ({ events = [], mode = 'preview', onNavigate }) => {
                             {event.highlights.map((h, i) => (
                               <span
                                 key={i}
-                                style={{
-                                  background: 'rgba(255,255,255,0.08)',
-                                  border: '1px solid rgba(255,255,255,0.1)',
-                                  color: 'var(--text-secondary)',
+                    style={{
+                      background: 'rgba(255,255,255,0.08)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: '#E2E8F0',
                                   padding: '2px 8px',
                                   borderRadius: '8px',
                                   fontSize: '0.72rem',
@@ -474,8 +474,8 @@ const EventsShowcase = ({ events = [], mode = 'preview', onNavigate }) => {
                       position: 'absolute',
                       top: '12px',
                       left: '12px',
-                      background: 'var(--primary)',
-                      color: '#000',
+                      background: 'var(--btn-primary-bg)',
+                      color: 'var(--btn-primary-text)',
                       padding: '4px 12px',
                       borderRadius: '20px',
                       fontSize: '0.75rem',
@@ -611,13 +611,13 @@ const EventsShowcase = ({ events = [], mode = 'preview', onNavigate }) => {
             {/* RIGHT COLUMN: INFO & ACTIONS BOX */}
             <div className="event-modal-info-box">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '40px' }}>
-                <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--accent-strong)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   HISTORIAL DE EVENTOS OTAKONCE
                 </span>
                 <h2 style={{ fontSize: 'clamp(1.4rem, 2.8vw, 1.9rem)', fontWeight: 850, margin: '2px 0 0', color: 'var(--text-primary)', lineHeight: 1.25 }}>
                   {activeModalEvent.name}
                 </h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--secondary)', marginTop: '2px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 700, color: 'var(--accent-strong)', marginTop: '2px' }}>
                   <Calendar size={15} /> {activeModalEvent.date}
                 </div>
               </div>
@@ -854,8 +854,8 @@ const EventsShowcase = ({ events = [], mode = 'preview', onNavigate }) => {
         }
 
         .badge-event-date {
-          background: var(--primary);
-          color: #000000;
+          background: var(--btn-primary-bg);
+          color: var(--btn-primary-text);
           padding: 5px 12px;
           border-radius: 8px;
           font-size: 0.78rem;
@@ -894,10 +894,10 @@ const EventsShowcase = ({ events = [], mode = 'preview', onNavigate }) => {
           position: absolute;
           top: 16px;
           right: 16px;
-          width: 42px !important;
-          height: 42px !important;
-          min-height: 42px !important;
-          max-height: 42px !important;
+          width: 44px !important;
+          height: 44px !important;
+          min-height: 44px !important;
+          max-height: 44px !important;
           border-radius: 50% !important;
           background: rgba(15, 23, 42, 0.08);
           border: 1px solid var(--border-color);
@@ -955,10 +955,10 @@ const EventsShowcase = ({ events = [], mode = 'preview', onNavigate }) => {
           .event-modal-close-btn {
             top: 12px !important;
             right: 12px !important;
-            width: 38px !important;
-            height: 38px !important;
-            min-height: 38px !important;
-            max-height: 38px !important;
+            width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            max-height: 44px !important;
             background: rgba(8, 7, 17, 0.85) !important;
             color: #FFFFFF !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;

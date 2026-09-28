@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import FloatingBanner from './components/FloatingBanner';
@@ -8,21 +8,31 @@ import SeasonalOverlay from './components/SeasonalOverlay';
 
 import NewsSection from './components/NewsSection';
 import GuestsSection from './components/GuestsSection';
-import CosplayerGallery from './components/CosplayerGallery';
-import CommunityList from './components/CommunityList';
-import ScheduleTimeline from './components/ScheduleTimeline';
-import EventsShowcase from './components/EventsShowcase';
-import PhotoGallery from './components/PhotoGallery';
-import AboutSection from './components/AboutSection';
-import ContactSection from './components/ContactSection';
-import UpcomingEventSection from './components/UpcomingEventSection';
 
 // Code-split infrequent and heavy secondary routes
 const NewsDetail = lazy(() => import('./components/NewsDetail'));
 const GuestDetail = lazy(() => import('./components/GuestDetail'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
+// Secciones below-fold y de pestañas: carga diferida para un home inicial liviano
+const CosplayerGallery = lazy(() => import('./components/CosplayerGallery'));
+const CommunityList = lazy(() => import('./components/CommunityList'));
+const ScheduleTimeline = lazy(() => import('./components/ScheduleTimeline'));
+const EventsShowcase = lazy(() => import('./components/EventsShowcase'));
+const PhotoGallery = lazy(() => import('./components/PhotoGallery'));
+const AboutSection = lazy(() => import('./components/AboutSection'));
+const ContactSection = lazy(() => import('./components/ContactSection'));
+const UpcomingEventSection = lazy(() => import('./components/UpcomingEventSection'));
+
 import { slugify } from './utils/slugify';
+import { useStealthAdmin } from './hooks/useStealthAdmin';
+
+// Esqueleto liviano por sección: evita pantalla completa en blanco mientras
+// carga cada chunk diferido. Cada sección below-fold tiene su propio
+// Suspense, así el Hero e Invitados pintan de inmediato al refrescar.
+const SectionSkeleton = ({ height = 320 }) => (
+  <div aria-hidden="true" className="section-skeleton" style={{ height }} />
+);
 import {
   getEventConfig, saveEventConfig,
   getFloatingBanner, saveFloatingBanner,
@@ -42,9 +52,6 @@ function App() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#stf-portal' || hash === '#staff-access' || hash === '#admin') {
-        return 'admin';
-      }
       if (hash.startsWith('#noticia/') || hash.startsWith('#news/')) {
         return 'news-detail';
       }
@@ -128,6 +135,12 @@ function App() {
     saveContactConfig(val);
   };
 
+  // Listas derivadas memoizadas (evitan filtrar en cada render)
+  const guestCosplayers = useMemo(() => cosplayers.filter(c => c.type === 'guest'), [cosplayers]);
+  const communityCosplayers = useMemo(() => cosplayers.filter(c => c.type !== 'guest'), [cosplayers]);
+  const homeNewsPreview = useMemo(() => newsList.slice(0, 3), [newsList]);
+  const homeCommunitiesPreview = useMemo(() => communities.slice(0, 3), [communities]);
+
   // Merge published cosplayers (admin-approved) so they appear on every device
   useEffect(() => {
     let isMounted = true;
@@ -193,7 +206,7 @@ function App() {
     };
 
     syncTheme();
-    const interval = setInterval(syncTheme, 15000);
+    const interval = setInterval(syncTheme, 60000);
     window.addEventListener('focus', syncTheme);
     return () => {
       isMounted = false;
@@ -265,7 +278,7 @@ function App() {
         cosplay: 'Pasarela Cosplay & Comunidad | Otakonce 2026',
         communities: 'Comunidades y Agrupaciones | Otakonce 2026',
         schedule: 'Cronograma de Actividades | Otakonce 2026',
-        admin: 'Acceso Administrativo | Otakonce Staff'
+        admin: 'Staff | Otakonce 2026'
       };
       title = titles[activeTab] || 'Otakonce 2026';
       const hashMap = {
@@ -339,13 +352,18 @@ function App() {
     resolveHashGuest();
   }, [cosplayers]);
 
-  // Listen for stealth admin shortcut (Ctrl+Shift+A or Cmd+Shift+A) or stealth hash (#stf-portal / #staff-access)
+  // Acceso del staff: taps en logo/banner + palabra tipeada (sin atajos
+  // con modificadores, funciona en PC, notebook y mobile). Abre el login
+  // en memoria sin exponer rutas. La autenticación real es server-side.
+  useStealthAdmin(() => {
+    setActiveTab('admin');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   useEffect(() => {
     const checkHash = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#stf-portal' || hash === '#staff-access' || hash === '#admin') {
-        setActiveTab('admin');
-      } else if (hash === '#invitados' || hash === '#guests') {
+      if (hash === '#invitados' || hash === '#guests') {
         setActiveTab('invitados');
       } else if (hash === '#cosplay') {
         setActiveTab('cosplay');
@@ -373,17 +391,8 @@ function App() {
     checkHash();
     window.addEventListener('hashchange', checkHash);
 
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
-        e.preventDefault();
-        setActiveTab(prev => (prev === 'admin' ? 'home' : 'admin'));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
     return () => {
       window.removeEventListener('hashchange', checkHash);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [newsList, cosplayers]);
 
@@ -455,17 +464,19 @@ function App() {
                 
                 {/* 2. Invitados Especiales (VIP & Jurados - Carrusel en Home) */}
                 <GuestsSection 
-                  guests={cosplayers.filter(c => c.type === 'guest')} 
+                  guests={guestCosplayers} 
                   onNavigate={handleNavigate} 
                   onSelectGuest={handleSelectGuest}
                   mode="carousel" 
                 />
 
                 {/* 3. Galería de Fotos (Preview) */}
-                <PhotoGallery photos={photos} mode="preview" onNavigate={handleNavigate} />
+                <Suspense fallback={<SectionSkeleton height={380} />}>
+                  <PhotoGallery photos={photos} mode="preview" onNavigate={handleNavigate} />
+                </Suspense>
 
                 {/* 4. Noticias y Anuncios (Preview 3) */}
-                <NewsSection newsList={newsList.slice(0, 3)} onSelectArticle={handleSelectArticle} isHomePreview={true} />
+                <NewsSection newsList={homeNewsPreview} onSelectArticle={handleSelectArticle} isHomePreview={true} />
                 <div style={{ textAlign: 'center', marginTop: '28px', marginBottom: '40px' }}>
                   <button className="btn btn-secondary" onClick={() => handleNavigate('news')}>
                     Ver todas las noticias &rarr;
@@ -473,10 +484,14 @@ function App() {
                 </div>
 
                 {/* 5. Galería Cosplay */}
-                <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} onNavigate={handleNavigate} activeTab={activeTab} />
+                <Suspense fallback={<SectionSkeleton height={420} />}>
+                  <CosplayerGallery cosplayers={communityCosplayers} onNavigate={handleNavigate} activeTab={activeTab} />
+                </Suspense>
                 
                 {/* 6. Comunidades Locales */}
-                <CommunityList communities={communities.slice(0, 3)} />
+                <Suspense fallback={<SectionSkeleton height={300} />}>
+                  <CommunityList communities={homeCommunitiesPreview} />
+                </Suspense>
                 <div style={{ textAlign: 'center', marginTop: '28px', marginBottom: '40px' }}>
                   <button className="btn btn-secondary" onClick={() => handleNavigate('communities')}>
                     Ver todas las comunidades &rarr;
@@ -484,33 +499,43 @@ function App() {
                 </div>
 
                 {/* 7. Todos Nuestros Eventos (Preview) */}
-                <EventsShowcase events={events} mode="preview" onNavigate={handleNavigate} />
+                <Suspense fallback={<SectionSkeleton height={380} />}>
+                  <EventsShowcase events={events} mode="preview" onNavigate={handleNavigate} />
+                </Suspense>
               </div>
             </>
           )}
 
           {/* Full Section Tabs */}
           {activeTab === 'about' && (
-            <AboutSection config={eventConfig} aboutConfig={aboutConfig} />
+            <Suspense fallback={<SectionSkeleton height={500} />}>
+              <AboutSection config={eventConfig} aboutConfig={aboutConfig} />
+            </Suspense>
           )}
 
           {activeTab === 'events' && (
-            <>
+            <Suspense fallback={<SectionSkeleton height={500} />}>
               <UpcomingEventSection config={eventConfig} />
               <ScheduleTimeline schedule={schedule} />
-            </>
+            </Suspense>
           )}
 
           {activeTab === 'past-events' && (
-            <EventsShowcase events={events} mode="grid" onNavigate={handleNavigate} />
+            <Suspense fallback={<SectionSkeleton height={500} />}>
+              <EventsShowcase events={events} mode="grid" onNavigate={handleNavigate} />
+            </Suspense>
           )}
 
           {activeTab === 'gallery' && (
-            <PhotoGallery photos={photos} mode="full" onNavigate={handleNavigate} />
+            <Suspense fallback={<SectionSkeleton height={500} />}>
+              <PhotoGallery photos={photos} mode="full" onNavigate={handleNavigate} />
+            </Suspense>
           )}
 
           {activeTab === 'contact' && (
-            <ContactSection contactConfig={contactConfig} />
+            <Suspense fallback={<SectionSkeleton height={400} />}>
+              <ContactSection contactConfig={contactConfig} />
+            </Suspense>
           )}
 
           {activeTab === 'news' && (
@@ -531,7 +556,7 @@ function App() {
           {activeTab === 'guest-detail' && selectedGuest && (
             <GuestDetail 
               guest={selectedGuest} 
-              guestsList={cosplayers.filter(c => c.type === 'guest')} 
+              guestsList={guestCosplayers} 
               onBack={() => handleNavigate('invitados')} 
               onSelectGuest={handleSelectGuest} 
             />
@@ -539,7 +564,7 @@ function App() {
 
           {activeTab === 'invitados' && (
             <GuestsSection 
-              guests={cosplayers.filter(c => c.type === 'guest')} 
+              guests={guestCosplayers} 
               mode="grid" 
               onNavigate={handleNavigate} 
               onSelectGuest={handleSelectGuest}
@@ -547,15 +572,21 @@ function App() {
           )}
 
           {activeTab === 'cosplay' && (
-            <CosplayerGallery cosplayers={cosplayers.filter(c => c.type !== 'guest')} onNavigate={handleNavigate} activeTab={activeTab} />
+            <Suspense fallback={<SectionSkeleton height={500} />}>
+              <CosplayerGallery cosplayers={communityCosplayers} onNavigate={handleNavigate} activeTab={activeTab} />
+            </Suspense>
           )}
 
           {activeTab === 'communities' && (
-            <CommunityList communities={communities} />
+            <Suspense fallback={<SectionSkeleton height={400} />}>
+              <CommunityList communities={communities} />
+            </Suspense>
           )}
 
           {activeTab === 'schedule' && (
-            <ScheduleTimeline schedule={schedule} />
+            <Suspense fallback={<SectionSkeleton height={400} />}>
+              <ScheduleTimeline schedule={schedule} />
+            </Suspense>
           )}
 
           {activeTab === 'admin' && (

@@ -287,15 +287,15 @@ const Hero = ({ config, onNavigate, banners }) => {  const [timeLeft, setTimeLef
                 }
               }}
               style={{
-                background: 'var(--primary)',
-                color: '#0F172A',
+                background: 'var(--btn-primary-bg)',
+                color: 'var(--btn-primary-text)',
                 padding: '12px 22px',
                 minHeight: '44px',
                 borderRadius: '12px',
                 fontWeight: 800,
                 fontSize: '0.85rem',
-                border: '2px solid #0F172A',
-                boxShadow: '3px 3px 0px #0F172A',
+                border: '2px solid var(--btn-primary-border)',
+                boxShadow: 'var(--btn-primary-shadow)',
                 marginTop: '10px',
                 display: 'inline-flex',
                 alignItems: 'center',

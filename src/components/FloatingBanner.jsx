@@ -143,14 +143,14 @@ const FloatingBanner = ({ config, onNavigate, onDismiss }) => {
               <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>
                 {config.text}
               </span>
-              {config.link && <ArrowRight size={13} aria-hidden="true" style={{ color: 'var(--cyan)' }} />}
+              {config.link && <ArrowRight size={13} aria-hidden="true" style={{ color: '#0369A1' }} />}
               <span className="banner-separator" aria-hidden="true">•</span>
             </div>
             <div className="banner-mobile-item" aria-hidden="true">
               <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>
                 {config.text}
               </span>
-              {config.link && <ArrowRight size={13} aria-hidden="true" style={{ color: 'var(--cyan)' }} />}
+              {config.link && <ArrowRight size={13} aria-hidden="true" style={{ color: '#0369A1' }} />}
               <span className="banner-separator" aria-hidden="true">•</span>
             </div>
           </div>

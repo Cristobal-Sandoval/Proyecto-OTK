@@ -233,7 +233,7 @@ const NewsSection = ({ newsList = [], onSelectArticle, isHomePreview = false }) 
                       if (onSelectArticle) onSelectArticle(article);
                       else setSelectedArticle(article);
                     }}
-                    style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--cyan)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '12px', minHeight: '44px' }}
+                    style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-strong)', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '12px', minHeight: '44px' }}
                   >
                     Leer noticia completa &rarr;
                   </a>
@@ -328,9 +328,9 @@ const NewsSection = ({ newsList = [], onSelectArticle, isHomePreview = false }) 
                   border: '1px solid rgba(255, 255, 255, 0.25)',
                   color: 'white',
                   borderRadius: '50%',
-                  width: '42px',
-                  height: '42px',
-                  minHeight: '42px',
+                  width: '44px',
+                  height: '44px',
+                  minHeight: '44px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

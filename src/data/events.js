@@ -42,7 +42,7 @@ export const defaultPhotos = [
 export const defaultAboutConfig = {
   title: "¿Qué es Otakonce?",
   subtitle: "El punto de encuentro oficial para los amantes del anime, cosplay y videojuegos en Concepción.",
-  heroImage: "/assets/otakonce_about_hero.jpg",
+  heroImage: "/assets/otakonce_about_hero.webp",
   description: "Otakonce es el mayor evento de anime, videojuegos, cosplay y cultura geek de Concepción y el sur de Chile. Reunimos a miles de fanáticos en jornadas llenas de cosplay, música, torneos, ilustración y comunidad. ¡Entrada liberada para todo público!",
   mission: "Crear un espacio gratuito e inclusivo donde la comunidad otaku y geek del sur de Chile pueda expresarse, conectar y celebrar su pasión.",
   highlights: [

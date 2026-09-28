@@ -135,7 +135,7 @@ const UpcomingEventSection = ({ config = {} }) => {
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 border: '1px solid rgba(254, 220, 0, 0.4)',
-                color: 'var(--primary)',
+                color: '#FFFFFF',
                 padding: '6px 14px',
                 borderRadius: '12px',
                 fontSize: '0.85rem',
@@ -174,7 +174,7 @@ const UpcomingEventSection = ({ config = {} }) => {
             <div
               style={{
                 background: 'rgba(253, 52, 132, 0.88)',
-                color: '#FFF',
+                color: '#0F172A',
                 padding: '6px 14px',
                 borderRadius: '12px',
                 fontSize: '0.85rem',
@@ -208,7 +208,7 @@ const UpcomingEventSection = ({ config = {} }) => {
             <h3 style={{ margin: '0 0 4px 0', fontSize: '1.15rem', color: '#FFF', fontWeight: 800 }}>
               ¡Todo listo para vivir la experiencia Otakonce!
             </h3>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)' }}>
               Revisa el cronograma completo de actividades más abajo para no perderte nada.
             </p>
           </div>
@@ -220,8 +220,8 @@ const UpcomingEventSection = ({ config = {} }) => {
               gap: '6px',
               padding: '10px 20px',
               borderRadius: '12px',
-              background: 'var(--primary)',
-              color: '#000',
+              background: 'var(--btn-primary-bg)',
+              color: 'var(--btn-primary-text)',
               fontWeight: 800,
               fontSize: '0.88rem',
               textDecoration: 'none',

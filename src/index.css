@@ -21,6 +21,9 @@
   --text-secondary: #475569;
   --text-muted: #64748B;
 
+  /* Acento fuerte legible sobre fondos claros (amarillo puro no contrasta) */
+  --accent-strong: #A16207;
+
   /* Borders */
   --border-color: rgba(0, 136, 255, 0.18);
   --border-hover: rgba(253, 52, 132, 0.35);
@@ -66,6 +69,9 @@
   /* Transitions */
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Controles nativos (selects, scrollbars) en modo claro */
+  color-scheme: light;
 
   /* Sizing */
   --header-height: 64px;
@@ -398,15 +404,15 @@ button {
   position: absolute;
   top: -60px;
   left: 16px;
-  background: var(--primary);
-  color: #0F172A;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   padding: 10px 20px;
   border-radius: 8px;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 0.9rem;
-  border: 2px solid #0F172A;
-  box-shadow: 3px 3px 0px #0F172A;
+  border: 2px solid var(--btn-primary-border);
+  box-shadow: var(--btn-primary-shadow);
   z-index: 9999;
   transition: top 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -436,10 +442,63 @@ img {
     padding: 16px !important;
     border-radius: 16px !important;
   }
+  /* Cards internas del admin (galería, about, eventos): menos padding fijo */
+  .admin-card {
+    padding: 16px !important;
+  }
+  /* Botones del admin a ancho completo en mobile: nada se corta al borde */
+  .admin-card .btn {
+    width: 100%;
+    max-width: 100%;
+  }
   /* Títulos de sección admin sin desborde */
   .admin-tab-panel h3 {
     font-size: 1.1rem !important;
     overflow-wrap: anywhere;
+  }
+}
+
+/* FIX colapso de cajas admin: inputs/selects siempre encogen en su columna */
+.form-control {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.grid-2-col > * {
+  min-width: 0;
+}
+.admin-card .btn {
+  max-width: 100%;
+}
+.admin-card input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Esqueleto por sección: shimmer liviano mientras carga cada chunk diferido */
+.section-skeleton {
+  margin: 24px auto;
+  max-width: 1200px;
+  width: calc(100% - 32px);
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(
+    100deg,
+    var(--bg-surface) 30%,
+    var(--bg-surface-hover) 50%,
+    var(--bg-surface) 70%
+  );
+  background-size: 200% 100%;
+  animation: section-shimmer 1.4s linear infinite;
+}
+@keyframes section-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .section-skeleton {
+    animation: none;
   }
 }
 
@@ -569,6 +628,8 @@ textarea.form-control {
   --text-secondary: #CBD5E1;
   --text-muted: #94A3B8;
 
+  --accent-strong: #FF6B00;
+
   --border-color: rgba(255, 107, 0, 0.35);
   --border-hover: rgba(168, 85, 247, 0.6);
   --border-cyan: rgba(16, 185, 129, 0.45);
@@ -602,6 +663,8 @@ textarea.form-control {
   --shadow-neon: 0 8px 30px rgba(255, 107, 0, 0.25);
   --shadow-neon-pink: 0 8px 30px rgba(168, 85, 247, 0.25);
   --shadow-card: 0 10px 30px -5px rgba(255, 107, 0, 0.2), 0 4px 12px -2px rgba(168, 85, 247, 0.15);
+
+  color-scheme: dark;
 }
 
 [data-theme="halloween"] body {
@@ -629,6 +692,8 @@ textarea.form-control {
   --text-primary: #FFFFFF;
   --text-secondary: #E2E8F0;
   --text-muted: #94A3B8;
+
+  --accent-strong: #FBBF24;
 
   --border-color: rgba(251, 191, 36, 0.35);
   --border-hover: rgba(220, 38, 38, 0.6);
@@ -663,6 +728,8 @@ textarea.form-control {
   --shadow-neon: 0 8px 30px rgba(220, 38, 38, 0.25);
   --shadow-neon-pink: 0 8px 30px rgba(22, 163, 74, 0.25);
   --shadow-card: 0 10px 30px -5px rgba(220, 38, 38, 0.2), 0 4px 12px -2px rgba(251, 191, 36, 0.15);
+
+  color-scheme: dark;
 }
 
 [data-theme="navidad"] body {
@@ -690,6 +757,8 @@ textarea.form-control {
   --text-primary: #1E1B4B;
   --text-secondary: #334155;
   --text-muted: #64748B;
+
+  --accent-strong: #BE123C;
 
   --border-color: rgba(225, 29, 72, 0.28);
   --border-hover: rgba(225, 29, 72, 0.55);
@@ -724,6 +793,8 @@ textarea.form-control {
   --shadow-neon: 0 8px 30px rgba(225, 29, 72, 0.2);
   --shadow-neon-pink: 0 8px 30px rgba(0, 57, 166, 0.18);
   --shadow-card: 0 10px 30px -5px rgba(225, 29, 72, 0.14), 0 4px 12px -2px rgba(0, 57, 166, 0.1);
+
+  color-scheme: light;
 }
 
 [data-theme="teleton"] body {
@@ -732,6 +803,15 @@ textarea.form-control {
   background-image: 
     radial-gradient(ellipse at 15% 20%, rgba(225, 29, 72, 0.1) 0%, transparent 45%),
     radial-gradient(ellipse at 85% 75%, rgba(0, 57, 166, 0.08) 0%, transparent 45%);
+}
+
+/* Teleton: el segmento ámbar del degradado no contrasta sobre fondo claro */
+[data-theme="teleton"] .text-gradient,
+[data-theme="teleton"] .text-neon-cyan {
+  background: linear-gradient(135deg, var(--text-primary) 20%, #B45309 60%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* --- 4. MODO FIESTAS PATRIAS (18 de Septiembre Chileno — Colores Oficiales Bandera Chilena) --- */
@@ -753,6 +833,8 @@ textarea.form-control {
   --text-primary: #001A4D;   /* Azul marino chileno profundo */
   --text-secondary: #1E293B; /* Pizarra 800 */
   --text-muted: #475569;     /* Pizarra 600 */
+
+  --accent-strong: #0039A6;
 
   --border-color: rgba(0, 57, 166, 0.25);
   --border-hover: rgba(213, 43, 30, 0.5);
@@ -787,6 +869,8 @@ textarea.form-control {
   --shadow-neon: 0 8px 30px rgba(0, 57, 166, 0.2);
   --shadow-neon-pink: 0 8px 30px rgba(213, 43, 30, 0.2);
   --shadow-card: 0 10px 30px -5px rgba(0, 57, 166, 0.15), 0 4px 12px -2px rgba(213, 43, 30, 0.1);
+
+  color-scheme: light;
 }
 
 [data-theme="fiestas_patrias"] body {

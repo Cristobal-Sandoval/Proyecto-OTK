@@ -217,8 +217,8 @@ const PhotoGallery = ({ photos = [], mode = 'preview', onNavigate }) => {
                   fontWeight: 700,
                   cursor: 'pointer',
                   border: '1.5px solid var(--border-color)',
-                  background: selectedCategory === cat ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                  color: selectedCategory === cat ? '#000' : 'var(--text-secondary)',
+                  background: selectedCategory === cat ? 'var(--filter-btn-active-bg)' : 'rgba(255,255,255,0.05)',
+                  color: selectedCategory === cat ? 'var(--filter-btn-active-text)' : 'var(--text-secondary)',
                   transition: 'all 0.2s ease',
                   boxShadow: selectedCategory === cat ? '0 4px 16px rgba(254, 220, 0, 0.3)' : 'none'
                 }}
@@ -648,8 +648,8 @@ const PhotoGallery = ({ photos = [], mode = 'preview', onNavigate }) => {
           align-self: flex-start;
           background: rgba(0,0,0,0.7);
           backdrop-filter: blur(6px);
-          color: var(--primary);
-          border: 1px solid rgba(254, 220, 0, 0.3);
+          color: #FFFFFF;
+          border: 1px solid var(--primary);
           padding: 3px 9px;
           border-radius: 8px;
           font-size: 0.74rem;

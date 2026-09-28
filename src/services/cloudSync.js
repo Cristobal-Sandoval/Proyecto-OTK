@@ -9,24 +9,44 @@ const LOCAL_KEYS = {
   THEME: 'otakonce_cloud_theme',
 };
 
+// Timeout corto para no bloquear el primer pintado en redes lentas
+const FETCH_TIMEOUT_MS = 4000;
+
 async function apiFetch(path, options = {}) {
-  const res = await fetch(path, {
-    credentials: 'include',
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-  });
-  return res;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(path, {
+      credentials: 'include',
+      ...options,
+      signal: options.signal || controller.signal,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Solo parsea JSON si el backend respondió JSON (en dev vite responde HTML)
+async function readJsonIfOk(res) {
+  if (!res.ok) return null;
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) return null;
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 export const getGlobalTheme = async () => {
   try {
     const res = await apiFetch('/api/theme', { method: 'GET', headers: { 'Cache-Control': 'no-cache' } });
-    if (res.ok) {
-      const json = await res.json();
-      if (json && typeof json.themeMode === 'string') {
-        localStorage.setItem(LOCAL_KEYS.THEME, json.themeMode);
-        return json.themeMode;
-      }
+    const json = await readJsonIfOk(res);
+    if (json && typeof json.themeMode === 'string') {
+      localStorage.setItem(LOCAL_KEYS.THEME, json.themeMode);
+      return json.themeMode;
     }
   } catch (err) {
     console.warn('Could not fetch theme from backend, falling back to local storage:', err);
@@ -116,11 +136,16 @@ export const removeCosplayApplication = async (applicationId) => {
  */
 export const getPublicCosplayers = async () => {
   try {
-    const res = await fetch('/api/cosplayers', { headers: { 'Cache-Control': 'no-cache' } });
-    if (res.ok) {
-      const json = await res.json();
-      if (json && Array.isArray(json.cosplayers)) return json.cosplayers;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetch('/api/cosplayers', { headers: { 'Cache-Control': 'no-cache' }, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
     }
+    const json = await readJsonIfOk(res);
+    if (json && Array.isArray(json.cosplayers)) return json.cosplayers;
   } catch (err) {
     console.warn('Could not fetch published cosplayers:', err);
   }
@@ -234,11 +259,16 @@ export const removeCommunityApplication = async (applicationId) => {
  */
 export const getPublicCommunities = async () => {
   try {
-    const res = await fetch('/api/communities', { headers: { 'Cache-Control': 'no-cache' } });
-    if (res.ok) {
-      const json = await res.json();
-      if (json && Array.isArray(json.communities)) return json.communities;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetch('/api/communities', { headers: { 'Cache-Control': 'no-cache' }, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
     }
+    const json = await readJsonIfOk(res);
+    if (json && Array.isArray(json.communities)) return json.communities;
   } catch (err) {
     console.warn('Could not fetch published communities:', err);
   }

@@ -539,7 +539,7 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
                           style={{
                             background: 'rgba(8, 7, 17, 0.88)',
                             border: '1px solid rgba(0, 163, 255, 0.45)',
-                            color: 'var(--cyan)',
+                            color: '#7DD3FC',
                             borderRadius: '6px',
                             padding: '4px 8px',
                             fontSize: '0.74rem',
@@ -552,7 +552,7 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          <MapPin size={11} color="var(--cyan)" />
+                          <MapPin size={11} color="#7DD3FC" />
                           {cosplayer.city}
                         </span>
                       ) : <div />}
@@ -617,7 +617,7 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
                       }}
                     >
                       {cosplayer.role && (
-                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#7DD3FC', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           {cosplayer.role}
                         </span>
                       )}
@@ -649,7 +649,7 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '5px',
-                              color: 'var(--secondary)',
+                              color: '#F9A8D4',
                               fontSize: '0.78rem',
                               fontWeight: 700,
                               padding: '6px 10px',
@@ -791,7 +791,7 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
                           style={{
                             background: 'rgba(8, 7, 17, 0.88)',
                             border: '1px solid rgba(0, 163, 255, 0.45)',
-                            color: 'var(--cyan)',
+                            color: '#7DD3FC',
                             borderRadius: '6px',
                             padding: '4px 8px',
                             fontSize: '0.72rem',
@@ -869,7 +869,7 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
                       }}
                     >
                       {cosplayer.role && (
-                        <span style={{ fontSize: '0.70rem', fontWeight: 800, color: 'var(--cyan)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        <span style={{ fontSize: '0.70rem', fontWeight: 800, color: '#7DD3FC', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           {cosplayer.role}
                         </span>
                       )}
@@ -895,7 +895,7 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '4px',
-                              color: 'var(--secondary)',
+                              color: '#F9A8D4',
                               fontSize: '0.74rem',
                               fontWeight: 700,
                               padding: '5px 9px',
@@ -1717,10 +1717,10 @@ const CosplayerGallery = ({ cosplayers = [], onNavigate, _onNavigate, activeTab 
           position: absolute;
           top: 16px;
           right: 16px;
-          width: 42px !important;
-          height: 42px !important;
-          min-height: 42px !important;
-          max-height: 42px !important;
+          width: 44px !important;
+          height: 44px !important;
+          min-height: 44px !important;
+          max-height: 44px !important;
           border-radius: 50% !important;
           background: rgba(15, 23, 42, 0.08);
           border: 1px solid var(--border-color);

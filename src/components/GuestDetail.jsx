@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
-  ArrowLeft, Star, MapPin, Share2, Copy, Check, ExternalLink, Image as ImageIcon, Sparkles, Heart
+  ArrowLeft, Star, MapPin, Share2, Copy, Check, ExternalLink, Image as ImageIcon, Sparkles, Heart, X
 } from 'lucide-react';
 import { slugify } from '../utils/slugify';
 import { heroSrc } from '../services/media';
@@ -36,6 +37,21 @@ const XTwitterIcon = ({ size = 18 }) => (
 const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
   const [copied, setCopied] = useState(false);
   const [activeLightboxImg, setActiveLightboxImg] = useState(null);
+
+  // Cierre con Escape + bloqueo de scroll cuando el lightbox está abierto
+  useEffect(() => {
+    if (!activeLightboxImg) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setActiveLightboxImg(null);
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [activeLightboxImg]);
 
   if (!guest) return null;
 
@@ -449,9 +465,12 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
       </div>
 
       {/* Lightbox Preview Modal for Photos */}
-      {activeLightboxImg && (
+      {activeLightboxImg && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => setActiveLightboxImg(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista ampliada de foto"
           style={{
             position: 'fixed',
             inset: 0,
@@ -473,24 +492,28 @@ const GuestDetail = ({ guest, guestsList = [], onBack, onSelectGuest }) => {
             />
             <button
               onClick={() => setActiveLightboxImg(null)}
+              aria-label="Cerrar vista ampliada"
               style={{
                 position: 'absolute',
-                top: '-45px',
-                right: '0',
-                background: 'transparent',
-                border: 'none',
+                top: '12px',
+                right: '12px',
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                background: 'rgba(8, 7, 17, 0.75)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
                 color: '#FFFFFF',
-                fontSize: '1.2rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                justifyContent: 'center'
               }}
             >
-              Cerrar ✕
+              <X size={20} />
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

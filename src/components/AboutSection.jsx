@@ -72,7 +72,7 @@ const AboutSection = ({ config, aboutConfig }) => {
           </p>
         </div>
 
-        {/* Imagen Destacada Placeholder (Editable por Admin) */}
+        {/* Imagen Destacada (Editable por Admin) */}
         <div
           className="glass-card"
           style={{
@@ -86,7 +86,7 @@ const AboutSection = ({ config, aboutConfig }) => {
         >
           <div style={{ position: 'relative', width: '100%', maxHeight: '440px', overflow: 'hidden' }}>
             <img
-              src={about.heroImage || '/assets/otakonce_about_hero.jpg'}
+              src={about.heroImage || '/assets/otakonce_about_hero.webp'}
               alt={about.title || '¿Qué es Otakonce?'}
               loading="lazy"
               decoding="async"
@@ -139,7 +139,7 @@ const AboutSection = ({ config, aboutConfig }) => {
                   background: 'rgba(8, 7, 17, 0.85)',
                   backdropFilter: 'blur(8px)',
                   border: '1px solid var(--primary)',
-                  color: 'var(--primary)',
+                  color: '#FFFFFF',
                   padding: '6px 14px',
                   borderRadius: '12px',
                   fontSize: '0.82rem',
@@ -152,7 +152,7 @@ const AboutSection = ({ config, aboutConfig }) => {
               <span
                 style={{
                   background: 'rgba(253, 52, 132, 0.9)',
-                  color: '#FFFFFF',
+                  color: '#0F172A',
                   padding: '6px 14px',
                   borderRadius: '12px',
                   fontSize: '0.82rem',
@@ -181,7 +181,7 @@ const AboutSection = ({ config, aboutConfig }) => {
           >
             <h3
               style={{
-                color: 'var(--primary)',
+                color: 'var(--accent-strong)',
                 fontSize: '1.15rem',
                 fontWeight: 850,
                 marginBottom: '10px',
@@ -233,9 +233,9 @@ const AboutSection = ({ config, aboutConfig }) => {
                       margin: '0 auto 14px'
                     }}
                   >
-                    <Icon size={26} color="var(--primary)" />
+                    <Icon size={26} color="var(--accent-strong)" />
                   </div>
-                  <h4 style={{ color: '#fff', fontSize: '1.05rem', fontWeight: 800, marginBottom: '6px' }}>
+                  <h4 style={{ color: 'var(--text-primary)', fontSize: '1.05rem', fontWeight: 800, marginBottom: '6px' }}>
                     {h.title}
                   </h4>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.5, margin: 0 }}>
@@ -257,7 +257,7 @@ const AboutSection = ({ config, aboutConfig }) => {
                 style={{
                   fontSize: '1.6rem',
                   fontWeight: 850,
-                  color: '#FFFFFF',
+                  color: 'var(--text-primary)',
                   fontFamily: 'var(--font-display)',
                   letterSpacing: '0.03em',
                   marginBottom: '8px'
@@ -325,7 +325,7 @@ const AboutSection = ({ config, aboutConfig }) => {
                   </div>
                   {item.caption && (
                     <div style={{ padding: '16px 20px', background: 'rgba(0,0,0,0.4)' }}>
-                      <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 650, lineHeight: 1.4 }}>
+                      <p style={{ margin: 0, color: '#FFFFFF', fontSize: '0.9rem', fontWeight: 650, lineHeight: 1.4 }}>
                         {item.caption}
                       </p>
                     </div>
@@ -351,7 +351,7 @@ const AboutSection = ({ config, aboutConfig }) => {
                   border: '1px solid rgba(0, 163, 255, 0.3)',
                   borderRadius: '20px',
                   padding: '4px 14px',
-                  color: 'var(--cyan)',
+                  color: 'var(--accent-strong)',
                   fontSize: '0.8rem',
                   fontWeight: 800,
                   marginBottom: '10px'
@@ -363,7 +363,7 @@ const AboutSection = ({ config, aboutConfig }) => {
                 style={{
                   fontSize: '1.6rem',
                   fontWeight: 850,
-                  color: '#FFFFFF',
+                  color: 'var(--text-primary)',
                   fontFamily: 'var(--font-display)',
                   letterSpacing: '0.03em',
                   marginBottom: '8px'
@@ -424,14 +424,14 @@ const AboutSection = ({ config, aboutConfig }) => {
                     )}
                   </div>
 
-                  <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 800, margin: '0 0 6px 0' }}>
+                  <h4 style={{ color: 'var(--text-primary)', fontSize: '1.1rem', fontWeight: 800, margin: '0 0 6px 0' }}>
                     {member.name}
                   </h4>
                   <span
                     style={{
-                      background: 'rgba(0, 163, 255, 0.12)',
-                      color: 'var(--cyan)',
-                      border: '1px solid rgba(0, 163, 255, 0.3)',
+                      background: 'var(--countdown-box-bg)',
+                      color: 'var(--accent-strong)',
+                      border: '1px solid var(--countdown-box-border)',
                       padding: '3px 10px',
                       borderRadius: '12px',
                       fontSize: '0.78rem',
@@ -451,13 +451,14 @@ const AboutSection = ({ config, aboutConfig }) => {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
-                        color: 'var(--secondary)',
+                        color: 'var(--accent-strong)',
                         fontSize: '0.82rem',
                         fontWeight: 700,
                         textDecoration: 'none',
                         padding: '4px 10px',
                         borderRadius: '8px',
-                        background: 'rgba(253, 52, 132, 0.08)'
+                        background: 'var(--countdown-box-bg)',
+                        border: '1px solid var(--countdown-box-border)'
                       }}
                     >
                       <Instagram size={14} /> Instagram

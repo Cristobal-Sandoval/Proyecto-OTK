@@ -159,13 +159,13 @@ const CommunityList = ({ communities = [] }) => {
           width: '60px',
           height: '60px',
           borderRadius: '16px',
-          background: 'linear-gradient(135deg, var(--cyan) 0%, var(--primary) 100%)',
+          background: 'var(--btn-primary-bg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '1.2rem',
           fontWeight: 800,
-          color: 'white',
+          color: 'var(--btn-primary-text)',
           boxShadow: 'var(--shadow-neon)'
         }}
       >
@@ -246,9 +246,9 @@ const CommunityList = ({ communities = [] }) => {
                   <span 
                     style={{ 
                       fontSize: '0.7rem', 
-                      background: 'rgba(6, 182, 212, 0.1)', 
-                      color: 'var(--cyan)', 
-                      border: '1px solid rgba(6, 182, 212, 0.2)',
+                      background: 'var(--countdown-box-bg)', 
+                      color: 'var(--accent-strong)', 
+                      border: '1px solid var(--countdown-box-border)',
                       padding: '2px 8px',
                       borderRadius: '6px',
                       fontWeight: 600,
@@ -279,7 +279,7 @@ const CommunityList = ({ communities = [] }) => {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  color: 'var(--cyan)',
+                  color: 'var(--accent-strong)',
                   fontSize: '0.85rem',
                   fontWeight: 600,
                   alignSelf: 'flex-start',
@@ -586,7 +586,7 @@ const CommunityList = ({ communities = [] }) => {
           transform: translateY(-3px);
         }
         .community-link:hover {
-          color: white;
+          color: var(--accent-strong);
         }
       `}</style>
     </section>
